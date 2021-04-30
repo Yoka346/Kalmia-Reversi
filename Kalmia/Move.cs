@@ -11,6 +11,8 @@ namespace Kalmia
 
     public struct Move
     {
+        public const int PASS = 64;
+
         public Color Color;
         public int Pos;
 
@@ -26,9 +28,30 @@ namespace Kalmia
 
         public override string ToString()
         {
+            if (this.Pos == PASS)
+                return "PASS";
+
             var posX = (char)(this.Pos % LINE_LENGTH);
             var posY = this.Pos / LINE_LENGTH;
             return $"{char.ToUpper(posX)}{posY}";
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Move))
+                return false;
+            var move = (Move)obj;
+            return (move.Color == this.Color) && (move.Pos == this.Pos);
+        }
+
+        public static bool operator==(Move left, Move right)
+        {
+            return left.Equals(right);
+        }
+        
+        public static bool operator !=(Move left, Move right)
+        {
+            return !(left == right);
         }
 
         static int StringToPos(string pos)
