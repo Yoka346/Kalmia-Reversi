@@ -359,6 +359,115 @@ namespace Kalmia
                 return Vector256.Create(ByteRotateRight(bits.GetLower(), i), ByteRotateRight(bits.GetLower(), i));
         }
 
+        /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong PseudoRotate45Clockwise(ulong bitboard)
+        {
+            const ulong MASK0 = 0xaaaaaaaaaaaaaaaaUL;
+            const ulong MASK1 = 0xccccccccccccccccUL;
+            const ulong MASK2 = 0xf0f0f0f0f0f0f0f0UL;
+            bitboard ^= MASK0 & (bitboard ^ BitOperations.RotateRight(bitboard, 8));
+            bitboard ^= MASK1 & (bitboard ^ BitOperations.RotateRight(bitboard, 16));
+            return bitboard ^ MASK2 & (bitboard ^ BitOperations.RotateRight(bitboard, 32));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector128<ulong> PseudoRotate45Clockwise(Vector128<ulong> bitboard)
+        {
+            var mask0 = Vector128.Create((byte)0xaa).AsUInt64();
+            var mask1 = Vector128.Create((byte)0xcc).AsUInt64();
+            var mask2 = Vector128.Create((byte)0xf0).AsUInt64();
+            var data = Sse2.Xor(bitboard, Sse2.And(mask0, Sse2.Xor(bitboard, ByteRotateRight(bitboard, 1))));
+            data = Sse2.Xor(data, Sse2.And(mask1, Sse2.Xor(data, ByteRotateRight(data, 2))));
+            return Sse2.Xor(data, Sse2.And(mask2, Sse2.Xor(data, ByteRotateRight(data, 4))));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector256<ulong> PseudoRotate45Clockwise(Vector256<ulong> bitboard)
+        {
+            if (Avx2.IsSupported)
+            {
+                var mask0 = Vector256.Create((byte)0xaa).AsUInt64();
+                var mask1 = Vector256.Create((byte)0xcc).AsUInt64();
+                var mask2 = Vector256.Create((byte)0xf0).AsUInt64();
+                var data = Avx2.Xor(bitboard, Avx2.And(mask0, Avx2.Xor(bitboard, ByteRotateRight(bitboard, 1))));
+                data = Avx2.Xor(data, Avx2.And(mask1, Avx2.Xor(data, ByteRotateRight(data, 2))));
+                return Avx2.Xor(data, Avx2.And(mask2, Avx2.Xor(data, ByteRotateRight(data, 4))));
+            }
+            else
+                return Vector256.Create(PseudoRotate45Clockwise(bitboard.GetLower()), PseudoRotate45Clockwise(bitboard.GetUpper()));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong PseudoRotate45AntiClockwise(ulong bitboard)
+        {
+            const ulong MASK0 = 0x5555555555555555UL;
+            const ulong MASK1 = 0x3333333333333333UL;
+            const ulong MASK2 = 0x0f0f0f0f0f0f0f0fUL;
+            bitboard ^= (MASK0 & (bitboard ^ BitOperations.RotateRight(bitboard, 8)));
+            bitboard ^= (MASK1 & (bitboard ^ BitOperations.RotateRight(bitboard, 16)));
+            return bitboard ^ (MASK2 & (bitboard ^ BitOperations.RotateRight(bitboard, 32)));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector128<ulong> PseudoRotate45AntiClockwise(Vector128<ulong> bitboard)
+        {
+            var mask0 = Vector128.Create((byte)0x55).AsUInt64();
+            var mask1 = Vector128.Create((byte)0x33).AsUInt64();
+            var mask2 = Vector128.Create((byte)0x0f).AsUInt64();
+            var data = Sse2.Xor(bitboard, Sse2.And(mask0, Sse2.Xor(bitboard, ByteRotateRight(bitboard, 1))));
+            data = Sse2.Xor(data, Sse2.And(mask1, Sse2.Xor(data, ByteRotateRight(data, 2))));
+            return Sse2.Xor(data, Sse2.And(mask2, Sse2.Xor(data, ByteRotateRight(data, 4))));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector256<ulong> PseudoRotate45AntiClockwise(Vector256<ulong> bitboard)
+        {
+            if (Avx2.IsSupported)
+            {
+                var mask0 = Vector256.Create((byte)0x55).AsUInt64();
+                var mask1 = Vector256.Create((byte)0x33).AsUInt64();
+                var mask2 = Vector256.Create((byte)0x0f).AsUInt64();
+                var data = Avx2.Xor(bitboard, Avx2.And(mask0, Avx2.Xor(bitboard, ByteRotateRight(bitboard, 1))));
+                data = Avx2.Xor(data, Avx2.And(mask1, Avx2.Xor(data, ByteRotateRight(data, 2))));
+                return Avx2.Xor(data, Avx2.And(mask2, Avx2.Xor(data, ByteRotateRight(data, 4))));
+            }
+            else
+                return Vector256.Create(PseudoRotate45AntiClockwise(bitboard.GetLower()), PseudoRotate45AntiClockwise(bitboard.GetUpper()));
+        }*/
+
+        static Vector128<ulong> RotateRight(Vector128<ulong> bits, int n)
+        {
+            return Sse2.Or(Sse2.ShiftRightLogical(bits, (byte)n), Sse2.ShiftLeftLogical(bits, (byte)(64 - n)));
+        }
+
+        static Vector256<ulong> RotateRight(Vector256<ulong> bits, int n)
+        {
+            return Avx2.Or(Avx2.ShiftRightLogical(bits, (byte)n), Avx2.ShiftLeftLogical(bits, (byte)(64 - n)));
+        }
+
+        static ulong ByteRotateRight(ulong bits, int i)
+        {
+            return BitOperations.RotateRight(bits, i * 8);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Vector128<ulong> ByteRotateRight(Vector128<ulong> bits, int i)
+        {
+            if (Ssse3.IsSupported)
+                return Ssse3.Shuffle(bits.AsByte(), BYTE_ROTATE_RIGHT_SHUFFLE_TABLES_128[i]).AsUInt64();
+            else
+                return Vector128.Create(ByteRotateRight(bits.GetElement(0), i), ByteRotateRight(bits.GetElement(1), i));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Vector256<ulong> ByteRotateRight(Vector256<ulong> bits, int i)
+        {
+            if (Avx2.IsSupported)
+                return Avx2.Shuffle(bits.AsByte(), BYTE_ROTATE_RIGHT_SHUFFLE_TABLES_256[i]).AsUInt64();
+            else
+                return Vector256.Create(ByteRotateRight(bits.GetLower(), i), ByteRotateRight(bits.GetLower(), i));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong DeltaSwap(ulong bits, ulong mask, int delta)
         {

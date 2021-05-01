@@ -115,6 +115,15 @@ namespace Kalmia
             // kokokara
         }
 
+        public void Update(Move move)
+        {
+            this.mobilityWasCalculated = false;
+        }
+
+        public int GetNextMoves(Move[] moves)
+        {
+        }
+
         ulong CalculateMobility()
         {
             if (this.mobilityWasCalculated)
