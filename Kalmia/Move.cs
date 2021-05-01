@@ -31,9 +31,9 @@ namespace Kalmia
             if (this.Pos == PASS)
                 return "PASS";
 
-            var posX = (char)(this.Pos % LINE_LENGTH);
+            var posX = (char)('A' + this.Pos % LINE_LENGTH);
             var posY = this.Pos / LINE_LENGTH;
-            return $"{char.ToUpper(posX)}{posY}";
+            return $"{char.ToUpper(posX)}{posY + 1}";
         }
 
         public override bool Equals(object obj)

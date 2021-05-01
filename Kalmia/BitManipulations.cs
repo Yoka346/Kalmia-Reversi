@@ -435,39 +435,6 @@ namespace Kalmia
                 return Vector256.Create(PseudoRotate45AntiClockwise(bitboard.GetLower()), PseudoRotate45AntiClockwise(bitboard.GetUpper()));
         }*/
 
-        static Vector128<ulong> RotateRight(Vector128<ulong> bits, int n)
-        {
-            return Sse2.Or(Sse2.ShiftRightLogical(bits, (byte)n), Sse2.ShiftLeftLogical(bits, (byte)(64 - n)));
-        }
-
-        static Vector256<ulong> RotateRight(Vector256<ulong> bits, int n)
-        {
-            return Avx2.Or(Avx2.ShiftRightLogical(bits, (byte)n), Avx2.ShiftLeftLogical(bits, (byte)(64 - n)));
-        }
-
-        static ulong ByteRotateRight(ulong bits, int i)
-        {
-            return BitOperations.RotateRight(bits, i * 8);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static Vector128<ulong> ByteRotateRight(Vector128<ulong> bits, int i)
-        {
-            if (Ssse3.IsSupported)
-                return Ssse3.Shuffle(bits.AsByte(), BYTE_ROTATE_RIGHT_SHUFFLE_TABLES_128[i]).AsUInt64();
-            else
-                return Vector128.Create(ByteRotateRight(bits.GetElement(0), i), ByteRotateRight(bits.GetElement(1), i));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static Vector256<ulong> ByteRotateRight(Vector256<ulong> bits, int i)
-        {
-            if (Avx2.IsSupported)
-                return Avx2.Shuffle(bits.AsByte(), BYTE_ROTATE_RIGHT_SHUFFLE_TABLES_256[i]).AsUInt64();
-            else
-                return Vector256.Create(ByteRotateRight(bits.GetLower(), i), ByteRotateRight(bits.GetLower(), i));
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong DeltaSwap(ulong bits, ulong mask, int delta)
         {

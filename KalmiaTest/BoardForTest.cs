@@ -1,4 +1,5 @@
 ﻿using Kalmia;
+using System.Diagnostics;
 using static Kalmia.Move;
 using static KalmiaTest.BoardForTest;
 
@@ -30,6 +31,7 @@ namespace KalmiaTest
                 Put(secondPlayer, "D4");
                 Put(secondPlayer, "E4");
             }
+            this.Turn = firstPlayer;
         }
 
         public Color[,] GetDiscsArray()
@@ -61,14 +63,15 @@ namespace KalmiaTest
         {
             var posX = move.Pos % LINE_LENGTH;
             var posY = move.Pos / LINE_LENGTH;
-            var flip = CalculateFlippedDiscs(posX, posY);
 
             if(move.Pos != PASS)
             {
-                this.DISCS[move.Pos % LINE_LENGTH, move.Pos / LINE_LENGTH] = this.Turn;
+                var flip = CalculateFlippedDiscs(posX, posY);
+                this.DISCS[posX, posY] = this.Turn;
                 for (var x = 0; x < flip.GetLength(0); x++)
                     for (var y = 0; y < flip.GetLength(1); y++)
-                        this.DISCS[x, y] = this.Turn;
+                        if(flip[x, y])
+                            this.DISCS[x, y] = this.Turn;
             }
             SwitchTurn();
         }
@@ -115,7 +118,7 @@ namespace KalmiaTest
 
                     // left 
                     if (posX != 0 && this.DISCS[posX - 1, posY] == opponentColor)
-                        for (var x = posX - 2; x < LINE_LENGTH; x--)
+                        for (var x = posX - 2; x >= 0; x--)
                             if (this.DISCS[x, posY] == currentColor)
                             {
                                 mobility[posX, posY] = true;
@@ -143,7 +146,7 @@ namespace KalmiaTest
 
                     // upward
                     if (posY != 0 && this.DISCS[posX, posY - 1] == opponentColor)
-                        for (var y = posY - 2; y < LINE_LENGTH; y--)
+                        for (var y = posY - 2; y >= 0; y--)
                             if (this.DISCS[posX, y] == currentColor)
                             {
                                 mobility[posX, posY] = true;
@@ -157,11 +160,11 @@ namespace KalmiaTest
 
                     (int x, int y) pos = (posX, posY);
                     // diagonal(upper left to lower right)
-                    if (pos != (LINE_LENGTH - 1, LINE_LENGTH - 1) && this.DISCS[pos.x + 1, pos.y + 1] == opponentColor)
-                        for ((int x, int y) p = (pos.x + 2, pos.y + 2); (p.x - LINE_LENGTH, p.y - LINE_LENGTH) != (0, 0); p = (p.x + 1, p.y + 1))
+                    if (pos.x != LINE_LENGTH - 1 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x + 1, pos.y + 1] == opponentColor)
+                        for ((int x, int y) p = (pos.x + 2, pos.y + 2); p.x - LINE_LENGTH!= 0 && p.y - LINE_LENGTH != 0; p = (p.x + 1, p.y + 1))
                             if (this.DISCS[p.x, p.y] == currentColor)
                             {
-                                mobility[p.x, p.y] = true;
+                                mobility[posX, posY] = true;
                                 break;
                             }
                             else if (this.DISCS[p.x, p.y] == Color.Blank)
@@ -171,11 +174,11 @@ namespace KalmiaTest
                         continue;
 
                     // diagonal(lower right to upper left)
-                    if (pos != (0, 0) && this.DISCS[pos.x - 1, pos.y - 1] == opponentColor)
-                        for ((int x, int y) p = (pos.x - 2, pos.y - 2); (p.x, p.y) != (-1, -1); p = (p.x - 1, p.y - 1))
+                    if (pos.x != 0 && pos.y != 0 && this.DISCS[pos.x - 1, pos.y - 1] == opponentColor)
+                        for ((int x, int y) p = (pos.x - 2, pos.y - 2); p.x != -1 && p.y != -1; p = (p.x - 1, p.y - 1))
                             if (this.DISCS[p.x, p.y] == currentColor)
                             {
-                                mobility[p.x, p.y] = true;
+                                mobility[posX, posY] = true;
                                 break;
                             }
                             else if (this.DISCS[p.x, p.y] == Color.Blank)
@@ -185,11 +188,11 @@ namespace KalmiaTest
                         continue;
 
                     // diagonal(upper right to lower left)
-                    if (pos != (0, LINE_LENGTH - 1) && this.DISCS[pos.x - 1, pos.y + 1] == opponentColor)
-                        for ((int x, int y) p = (pos.x - 2, pos.y + 2); (p.x, p.y - LINE_LENGTH) != (-1, 0); p = (p.x - 1, p.y + 1))
+                    if (pos.x != 0 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x - 1, pos.y + 1] == opponentColor)
+                        for ((int x, int y) p = (pos.x - 2, pos.y + 2); p.x != -1 && p.y - LINE_LENGTH != 0; p = (p.x - 1, p.y + 1))
                             if (this.DISCS[p.x, p.y] == currentColor)
                             {
-                                mobility[p.x, p.y] = true;
+                                mobility[posX, posY] = true;
                                 break;
                             }
                             else if (this.DISCS[p.x, p.y] == Color.Blank)
@@ -199,11 +202,11 @@ namespace KalmiaTest
                         continue;
 
                     // diagonal(lower left to upper right)
-                    if (pos != (LINE_LENGTH - 1, 0) && this.DISCS[pos.x + 1, pos.y - 1] == opponentColor)
-                        for ((int x, int y) p = (pos.x + 2, pos.y - 2); (p.x - LINE_LENGTH, p.y) != (0, -1); p = (p.x + 1, p.y - 1))
+                    if (pos.x != LINE_LENGTH - 1 && pos.y != 0 && this.DISCS[pos.x + 1, pos.y - 1] == opponentColor)
+                        for ((int x, int y) p = (pos.x + 2, pos.y - 2); p.x - LINE_LENGTH != 0 && p.y !=-1; p = (p.x + 1, p.y - 1))
                             if (this.DISCS[p.x, p.y] == currentColor)
                             {
-                                mobility[p.x, p.y] = true;
+                                mobility[posX, posY] = true;
                                 break;
                             }
                             else if (this.DISCS[p.x, p.y] == Color.Blank)
@@ -217,24 +220,29 @@ namespace KalmiaTest
             var currentColor = this.Turn;
             var opponentColor = (Color)(-(int)this.Turn);
             var flipped = new bool[LINE_LENGTH, LINE_LENGTH];
-            if (this.DISCS[posX, posY] == Color.Blank)
-                return flipped;
+
+            if (posY < 0 || posY >= 8)
+                Debugger.Break();
 
             // right 
             if (posX != LINE_LENGTH - 1 && this.DISCS[posX + 1, posY] == opponentColor)
                 for (var x = posX + 2; x < LINE_LENGTH; x++)
+                {
+                    if (x == 8)
+                        Debugger.Break();
                     if (this.DISCS[x, posY] == currentColor)
                     {
-                        for (var xx = x - 1; x > posX; x--)
+                        for (var xx = x - 1; xx > posX; xx--)
                             flipped[xx, posY] = true;
                         break;
                     }
                     else if (this.DISCS[x, posY] == Color.Blank)
                         break;
+                }
 
             // left 
             if (posX != 0 && this.DISCS[posX - 1, posY] == opponentColor)
-                for (var x = posX - 2; x < LINE_LENGTH; x--)
+                for (var x = posX - 2; x >= 0; x--)
                     if (this.DISCS[x, posY] == currentColor)
                     {
                         for (var xx = x + 1; xx < posX; xx++)
@@ -258,7 +266,7 @@ namespace KalmiaTest
 
             // upward
             if (posY != 0 && this.DISCS[posX, posY - 1] == opponentColor)
-                for (var y = posY - 2; y < LINE_LENGTH; y--)
+                for (var y = posY - 2; y >= 0; y--)
                     if (this.DISCS[posX, y] == currentColor)
                     {
                         for (var yy = y + 1; yy < posY; yy++)
@@ -270,11 +278,11 @@ namespace KalmiaTest
 
             (int x, int y) pos = (posX, posY);
             // diagonal(upper left to lower right)
-            if (pos != (LINE_LENGTH - 1, LINE_LENGTH - 1) && this.DISCS[pos.x + 1, pos.y + 1] == opponentColor)
-                for ((int x, int y) p = (pos.x + 2, pos.y + 2); (p.x - LINE_LENGTH, p.y - LINE_LENGTH) != (0, 0); p = (p.x + 1, p.y + 1))
+            if (pos.x != LINE_LENGTH - 1 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x + 1, pos.y + 1] == opponentColor)
+                for ((int x, int y) p = (pos.x + 2, pos.y + 2); p.x - LINE_LENGTH != 0 && p.y - LINE_LENGTH != 0; p = (p.x + 1, p.y + 1))
                     if (this.DISCS[p.x, p.y] == currentColor)
                     {
-                        for ((int x, int y) pp = (p.x - 1, p.y - 1); (pp.x - p.x, pp.y - p.y) != (0, 0); pp = (pp.x - 1, pp.y - 1))
+                        for ((int x, int y) pp = (p.x - 1, p.y - 1); pp.x - posX != 0 && pp.y - posY != 0; pp = (pp.x - 1, pp.y - 1))
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
@@ -282,11 +290,11 @@ namespace KalmiaTest
                         break;
 
             // diagonal(lower right to upper left)
-            if (pos != (0, 0) && this.DISCS[pos.x - 1, pos.y - 1] == opponentColor)
-                for ((int x, int y) p = (pos.x - 2, pos.y - 2); (p.x, p.y) != (-1, -1); p = (p.x - 1, p.y - 1))
+            if (pos.x != 0 && pos.y != 0 && this.DISCS[pos.x - 1, pos.y - 1] == opponentColor)
+                for ((int x, int y) p = (pos.x - 2, pos.y - 2); p.x != -1 && p.y != -1; p = (p.x - 1, p.y - 1))
                     if (this.DISCS[p.x, p.y] == currentColor)
                     {
-                        for ((int x, int y) pp = (p.x + 1, p.y + 1); (pp.x - p.x, pp.y - p.y) != (0, 0); pp = (pp.x + 1, pp.y + 1))
+                        for ((int x, int y) pp = (p.x + 1, p.y + 1); pp.x - pos.x != 0 && pp.y - pos.y != 0; pp = (pp.x + 1, pp.y + 1))
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
@@ -294,11 +302,11 @@ namespace KalmiaTest
                         break;
 
             // diagonal(upper right to lower left)
-            if (pos != (0, LINE_LENGTH - 1) && this.DISCS[pos.x - 1, pos.y + 1] == opponentColor)
-                for ((int x, int y) p = (pos.x - 2, pos.y + 2); (p.x, p.y - LINE_LENGTH) != (-1, 0); p = (p.x - 1, p.y + 1))
+            if (pos.x != 0 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x - 1, pos.y + 1] == opponentColor)
+                for ((int x, int y) p = (pos.x - 2, pos.y + 2); p.x != -1 && p.y - LINE_LENGTH != 0; p = (p.x - 1, p.y + 1))
                     if (this.DISCS[p.x, p.y] == currentColor)
                     {
-                        for ((int x, int y) pp = (p.x + 1, p.y - 1); (pp.x - p.x, pp.y - p.y) != (0, 0); pp = (pp.x + 1, pp.y - 1))
+                        for ((int x, int y) pp = (p.x + 1, p.y - 1); pp.x - pos.x != 0 && pp.y - pos.y != 0; pp = (pp.x + 1, pp.y - 1))
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
@@ -306,11 +314,11 @@ namespace KalmiaTest
                         break;
 
             // diagonal(lower left to upper right)
-            if (pos != (LINE_LENGTH - 1, 0) && this.DISCS[pos.x + 1, pos.y - 1] == opponentColor)
-                for ((int x, int y) p = (pos.x + 2, pos.y - 2); (p.x - LINE_LENGTH, p.y) != (0, -1); p = (p.x + 1, p.y - 1))
+            if (pos.x != LINE_LENGTH - 1 && pos.y != 0 && this.DISCS[pos.x + 1, pos.y - 1] == opponentColor)
+                for ((int x, int y) p = (pos.x + 2, pos.y - 2); p.x - LINE_LENGTH != 0 && p.y != -1; p = (p.x + 1, p.y - 1))
                     if (this.DISCS[p.x, p.y] == currentColor)
                     {
-                        for ((int x, int y) pp = (p.x - 1, p.y + 1); (pp.x - p.x, pp.y - p.y) != (0, 0); pp = (pp.x - 1, pp.y + 1))
+                        for ((int x, int y) pp = (p.x - 1, p.y + 1); pp.x - pos.x != 0 && pp.y - pos.y != 0; pp = (pp.x - 1, pp.y + 1))
                             flipped[pp.x, pp.y] = true;
                         break;
                     }

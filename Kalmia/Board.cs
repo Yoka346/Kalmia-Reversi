@@ -1,4 +1,5 @@
-﻿using System.Runtime.Intrinsics;
+﻿using System;
+using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
 namespace Kalmia
@@ -13,10 +14,13 @@ namespace Kalmia
     {
         public const int LINE_LENGTH = 8;
         public const int GRID_NUM = LINE_LENGTH * LINE_LENGTH;
+        public const int MAX_MOVES_NUM = 46;
 
         static readonly Vector256<ulong> SHIFT_1897 = Vector256.Create(1UL, 8UL, 9UL, 7UL);
         static readonly Vector256<ulong> SHIFT_1897_2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
         static readonly Vector256<ulong> FLIP_MASK = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
+        static readonly Vector128<byte> ZEROS_128 = Vector128.Create(0UL, 0UL).AsByte();
+        static readonly Vector256<ulong> ZEROS_256 = Vector256.Create(0UL, 0UL, 0UL, 0UL);
 
         ulong currentPlayersBoard;
         ulong opponentPlayersBoard;
@@ -59,8 +63,8 @@ namespace Kalmia
             var opponentPlayer = (Color)(-(int)this.Turn);
 
             var mask = 1UL;
-            for(var x = 0; x < discs.Length; x++)
-                for(var y = 0; y < discs.Length; y++)
+            for(var y = 0; y < discs.GetLength(0); y++)
+                for(var x = 0; x < discs.GetLength(1); x++)
                 {
                     if ((this.currentPlayersBoard & mask) != 0)
                         discs[x, y] = currentPlayer;
@@ -98,30 +102,41 @@ namespace Kalmia
 
         public void Update(Move move)
         {
+            if (move.Pos != Move.PASS)
+            {
+                var x = 1UL << move.Pos;
+                var flipped = CalculateFlippedDiscs(move.Pos);
+                this.opponentPlayersBoard ^= flipped;
+                this.currentPlayersBoard |= (flipped | x);
+            }
+
+            // swap bitboard
+            var tmp = this.currentPlayersBoard;
+            this.currentPlayersBoard = this.opponentPlayersBoard;
+            this.opponentPlayersBoard = tmp;
             this.mobilityWasCalculated = false;
+            SwitchTurn();
         }
 
         public int GetNextMoves(Move[] moves)
         {
             var mobility = CalculateMobility();
-            var mask = 1UL;
-            var moveNum = BitManipulations.PopCount(mobility);
+            var moveNum = (int)BitManipulations.PopCount(mobility);
             if(moveNum == 0)
             {
-                moves[0].Color = this.Turn;
-                moves[0].Pos = Move.PASS;
+                moves[0] = new Move(this.Turn, Move.PASS);
                 return 1;
             }
-            // kokokara
-        }
 
-        public void Update(Move move)
-        {
-            this.mobilityWasCalculated = false;
-        }
-
-        public int GetNextMoves(Move[] moves)
-        {
+            var mask = 1UL;
+            var idx = 0;
+            for(var i = 0; idx < moveNum; i++)
+            {
+                if ((mobility & mask) != 0)
+                    moves[idx++] = new Move(this.Turn, i);
+                mask <<= 1;
+            }
+            return moveNum;
         }
 
         ulong CalculateMobility()
@@ -143,26 +158,32 @@ namespace Kalmia
             }
         }
 
-        ulong CalculateFlippedDiscs()
+        ulong CalculateFlippedDiscs(int pos)
         {
-
+            if (Avx2.IsSupported)
+                return CalculateFilippedDiscs_AVX2(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
+            else
+                return CalculateFlippedDiscs_SSE(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
         }
 
         static ulong CalculateMobility_AVX2(ulong p, ulong o)   // p is current player's board      o is opponent player's board
         {
+            var shift = SHIFT_1897;
+            var shift2 = SHIFT_1897_2;
+
             var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
             var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), FLIP_MASK);
             var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, SHIFT_1897));
             var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, SHIFT_1897);
 
-            var flipLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(p4, SHIFT_1897));
+            var flipLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(p4, shift));
             var flipRight = Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(p4, SHIFT_1897));
             flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, SHIFT_1897)));
             flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, SHIFT_1897)));
-            flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, SHIFT_1897_2)));
-            flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, SHIFT_1897_2)));
-            flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, SHIFT_1897_2)));
-            flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, SHIFT_1897_2)));
+            flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+            flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+            flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+            flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
 
             var mobility4 = Avx2.ShiftLeftLogicalVariable(flipLeft, SHIFT_1897);
             mobility4 = Avx2.Or(mobility4, Avx2.ShiftRightLogicalVariable(flipRight, SHIFT_1897));
@@ -216,6 +237,106 @@ namespace Kalmia
             else
                 mobility |= mobility2.GetElement(0) | BitManipulations.ByteSwap(Sse2.UnpackHigh(mobility2, mobility2).GetElement(0));
             return mobility & ~(p | o);
+        }
+
+        static ulong CalculateFilippedDiscs_AVX2(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
+        {
+            var shift = SHIFT_1897;
+            var shift2 = SHIFT_1897_2;
+            var zeros = ZEROS_256;
+
+            var x = 1UL << pos;
+            var x4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(x));
+            var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
+            var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), FLIP_MASK);
+            var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
+            var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
+
+            var flipLeft = Avx2.And(Avx2.ShiftLeftLogicalVariable(x4, shift), maskedO4);
+            var flipRight = Avx2.And(Avx2.ShiftRightLogicalVariable(x4, shift), maskedO4);
+            flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift)));
+            flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, shift)));
+            flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+            flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+            flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+            flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+
+            var outflankLeft = Avx2.And(p4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift));
+            var outflankRight = Avx2.And(p4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
+            flipLeft = Avx2.AndNot(Avx2.CompareEqual(outflankLeft, zeros), flipLeft);
+            flipRight = Avx2.AndNot(Avx2.CompareEqual(outflankRight, zeros), flipRight);
+            var flip4 = Avx2.Or(flipLeft, flipRight);
+            var flip2 = Sse2.Or(Avx2.ExtractVector128(flip4, 0), Avx2.ExtractVector128(flip4, 1));
+            flip2 = Sse2.Or(flip2, Sse2.UnpackHigh(flip2, flip2));
+            return Sse2.X64.ConvertToUInt64(flip2);
+        }
+
+        static ulong CalculateFlippedDiscs_SSE(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
+        {
+            var zeros = ZEROS_128;
+
+            var x = 1UL << pos;
+            var maskedO = o & 0x7e7e7e7e7e7e7e7eUL;
+            var x2 = Vector128.Create(x, BitManipulations.ByteSwap(x));   // byte swap = vertical mirror
+            var p2 = Vector128.Create(p, BitManipulations.ByteSwap(p));
+            var maskedO2 = Vector128.Create(maskedO, BitManipulations.ByteSwap(maskedO));
+            var prefix = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(maskedO2, 7));
+            var prefix1 = maskedO & (maskedO << 1);
+            var prefix8 = o & (o << 8);
+
+            var flipLeft = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 7));
+            var flip1Left = maskedO & (x << 1);
+            var flip8Left = o & (x << 8);
+            flipLeft = Sse2.Or(flipLeft, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flipLeft, 7)));
+            flip1Left |= maskedO & (flip1Left << 1);
+            flip8Left |= o & (flip8Left << 8);
+            flipLeft = Sse2.Or(flipLeft, Sse2.And(prefix, Sse2.ShiftLeftLogical(flipLeft, 14)));
+            flip1Left |= prefix1 & (flip1Left << 2);
+            flip8Left |= prefix8 & (flip8Left << 16);
+            flipLeft = Sse2.Or(flipLeft, Sse2.And(prefix, Sse2.ShiftLeftLogical(flipLeft, 14)));
+            flip1Left |= prefix1 & (flip1Left << 2);
+            flip8Left |= prefix8 & (flip8Left << 16);
+
+            prefix = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(maskedO2, 9));
+            prefix1 >>= 1;
+            prefix8 >>= 8;
+
+            var flipRight = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 9));
+            var flip1Right = maskedO & (x >> 1);
+            var flip8Right = o & (x >> 8);
+            flipRight = Sse2.Or(flipRight, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flipRight, 9)));
+            flip1Right |= maskedO & (flip1Right >> 1);
+            flip8Right |= o & (flip8Right >> 8);
+            flipRight = Sse2.Or(flipRight, Sse2.And(prefix, Sse2.ShiftLeftLogical(flipRight, 18)));
+            flip1Right |= prefix1 & (flip1Right >> 2);
+            flip8Right |= prefix8 & (flip8Right >> 16);
+
+            var outflankLeft = Sse2.And(p2, Sse2.ShiftLeftLogical(flipLeft, 7));
+            var outflankLeft1 = p & (flip1Left << 1);
+            var outflankLeft8 = p & (flip8Left << 8);
+            var outflankRight = Sse2.And(p2, Sse2.ShiftRightLogical(flipLeft, 7));
+            var outflankRight1 = p & (flip1Left << 1);
+            var outflankRight8 = p & (flip8Left << 8);
+
+            flipLeft = Sse2.AndNot(Sse2.CompareEqual(outflankLeft.AsByte(), zeros).AsUInt64(), flipLeft);
+            if (outflankLeft1 == 0)
+                flip1Left = 0UL;
+            if (outflankLeft8 == 0)
+                flip8Left = 0UL;
+            flipRight = Sse2.AndNot(Sse2.CompareEqual(outflankRight.AsByte(), zeros).AsUInt64(), flipRight);
+            if (outflankRight1 == 0)
+                flip1Left = 0UL;
+            if (outflankRight8 == 0)
+                flip8Left = 0UL;
+
+            var flippedDiscs2 = Sse2.Or(Sse2.ShiftLeftLogical(flipLeft, 7), Sse2.ShiftLeftLogical(flipRight, 9));
+            var flippedDiscs = (flip1Left << 1) | (flip8Left << 8) | (flip1Right >> 1) | (flip8Right >> 8);
+            if (Sse2.X64.IsSupported)
+                flippedDiscs |= Sse2.X64.ConvertToUInt64(flippedDiscs2) 
+                             | BitManipulations.ByteSwap(Sse2.X64.ConvertToUInt64(Sse2.UnpackHigh(flippedDiscs2, flippedDiscs2)));
+            else
+                flippedDiscs |= flippedDiscs2.GetElement(0) | BitManipulations.ByteSwap(Sse2.UnpackHigh(flippedDiscs2, flippedDiscs2).GetElement(0));
+            return flippedDiscs;
         }
 
         static int StringToPos(string pos)

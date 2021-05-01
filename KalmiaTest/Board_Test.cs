@@ -27,7 +27,7 @@ namespace KalmiaTest
                 var moveNum = board.GetNextMoves(moves);
                 var moveNumTest = boardTest.GetNextMoves(movesTest);
                 Assert.AreEqual(moveNumTest, moveNum);
-                AssertMovesAreEqual(movesTest, moves, moveNum);
+                AssertMovesAreEqual(boardTest, movesTest, moves, moveNum);
                 var nextMove = moves[rand.Next(moveNum)];
                 board.Update(nextMove);
                 boardTest.Update(nextMove);
@@ -37,17 +37,20 @@ namespace KalmiaTest
                         passed = true;
                     else
                         gameover = true;
+                else if (passed)
+                    passed = false;
             }
         }
 
-        void AssertMovesAreEqual(Move[] expected, Move[] actual, int moveNum)
+        void AssertMovesAreEqual(BoardForTest board, Move[] expected, Move[] actual, int moveNum)
         {
             for (var i = 0; i < moveNum; i++)
             {
                 var idx = Array.IndexOf(actual, expected[i]);
                 if (idx == -1 || idx >= moveNum)
-                    Assert.Fail($"Expected to contain move {actual[i]}, but it was not found." +
-                                $"\nexpected = {MoveArrayToString(expected, moveNum)}\nactual = {MoveArrayToString(actual, moveNum)}");
+                    Assert.Fail($"Expected to contain move {expected[i]}, but it was not found." +
+                                $"\nexpected = {MoveArrayToString(expected, moveNum)}\nactual = {MoveArrayToString(actual, moveNum)}" +
+                                $"\n{DiscsToString(board.GetDiscsArray())}");
             }
         }
 
@@ -62,7 +65,7 @@ namespace KalmiaTest
                         break;
                     }
             if (!equal)
-                Assert.Fail($"expected = \n{DiscsToString(expected)}\nactual = \n{DiscsToString(actual)}");
+                Assert.Fail($"\nexpected = \n{DiscsToString(expected)}\nactual = \n{DiscsToString(actual)}");
         }
 
         string MoveArrayToString(Move[] moves, int moveNum)
@@ -70,7 +73,7 @@ namespace KalmiaTest
             var sb = new StringBuilder("{ ");
             for (var i = 0; i < moveNum - 1; i++)
                 sb.Append(moves[i].ToString() + ", ");
-            sb.Append(moveNum - 1 + " }");
+            sb.Append(moves[moveNum - 1] + " }");
             return sb.ToString();
         }
 
