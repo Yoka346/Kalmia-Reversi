@@ -1,6 +1,10 @@
-﻿using System;
+﻿#define DEBUG_AVX2
+//#define DEBUG_SSE  
+
+using System;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Runtime.CompilerServices;
 
 namespace Kalmia
 {
@@ -19,7 +23,7 @@ namespace Kalmia
         static readonly Vector256<ulong> SHIFT_1897 = Vector256.Create(1UL, 8UL, 9UL, 7UL);
         static readonly Vector256<ulong> SHIFT_1897_2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
         static readonly Vector256<ulong> FLIP_MASK = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
-        static readonly Vector128<byte> ZEROS_128 = Vector128.Create(0UL, 0UL).AsByte();
+        static readonly Vector128<ulong> ZEROS_128 = Vector128.Create(0UL, 0UL);
         static readonly Vector256<ulong> ZEROS_256 = Vector256.Create(0UL, 0UL, 0UL, 0UL);
 
         ulong currentPlayersBoard;
@@ -100,6 +104,7 @@ namespace Kalmia
             this.mobilityWasCalculated = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update(Move move)
         {
             if (move.Pos != Move.PASS)
@@ -116,6 +121,11 @@ namespace Kalmia
             this.opponentPlayersBoard = tmp;
             this.mobilityWasCalculated = false;
             SwitchTurn();
+        }
+
+        public int GetNextMovesNum()
+        {
+            return (int)BitManipulations.PopCount(CalculateMobility());
         }
 
         public int GetNextMoves(Move[] moves)
@@ -139,11 +149,28 @@ namespace Kalmia
             return moveNum;
         }
 
+        public Move GetNextMove(int idx)
+        {
+            var mobility = CalculateMobility();
+            var mask = 1UL;
+            var i = 0;
+            int pos;
+            for(pos = 0; i < idx; pos++)
+            {
+                if ((mobility & mask) != 0UL)
+                    i++;
+                mask <<= 1;
+            }
+            return new Move(this.Turn, pos);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ulong CalculateMobility()
         {
             if (this.mobilityWasCalculated)
                 return this.mobility;
 
+#if RELEASE
             if (Avx2.IsSupported)
             {
                 this.mobility = CalculateMobility_AVX2(this.currentPlayersBoard, this.opponentPlayersBoard);
@@ -156,16 +183,33 @@ namespace Kalmia
                 this.mobilityWasCalculated = true;
                 return this.mobility;
             }
+#elif DEBUG_AVX2
+                this.mobility = CalculateMobility_AVX2(this.currentPlayersBoard, this.opponentPlayersBoard);
+                this.mobilityWasCalculated = true;
+                return this.mobility;
+#elif DEBUG_SSE
+            this.mobility = CalculateMobility_SSE(this.currentPlayersBoard, this.opponentPlayersBoard);
+            this.mobilityWasCalculated = true;
+            return this.mobility;
+#endif
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ulong CalculateFlippedDiscs(int pos)
         {
+#if RELEASE
             if (Avx2.IsSupported)
                 return CalculateFilippedDiscs_AVX2(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
             else
                 return CalculateFlippedDiscs_SSE(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
+#elif DEBUG_AVX2
+            return CalculateFilippedDiscs_AVX2(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
+#elif DEBUG_SSE
+            return CalculateFlippedDiscs_SSE(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
+#endif
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateMobility_AVX2(ulong p, ulong o)   // p is current player's board      o is opponent player's board
         {
             var shift = SHIFT_1897;
@@ -192,6 +236,7 @@ namespace Kalmia
             return Sse2.X64.ConvertToUInt64(mobility2) & ~(p | o);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateMobility_SSE(ulong p, ulong o)    // p is current player's board      o is opponent player's board
         {
             var maskedO = o & 0x7e7e7e7e7e7e7e7eUL;
@@ -229,16 +274,20 @@ namespace Kalmia
             flip = Sse2.Or(flip, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip, 18)));
             flip1 |= prefix1 & (flip1 >> 2);
             flip8 |= prefix8 & (flip8 >> 16);
+            flip = Sse2.Or(flip, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip, 18)));
+            flip1 |= prefix1 & (flip1 >> 2);
+            flip8 |= prefix8 & (flip8 >> 16);
             mobility2 = Sse2.Or(mobility2, Sse2.ShiftLeftLogical(flip, 9));
             mobility |= (flip1 >> 1) | (flip8 >> 8);
 
-            if(Sse2.X64.IsSupported)
+            if (Sse2.X64.IsSupported)
                 mobility |= Sse2.X64.ConvertToUInt64(mobility2) | BitManipulations.ByteSwap(Sse2.X64.ConvertToUInt64(Sse2.UnpackHigh(mobility2, mobility2)));
             else
                 mobility |= mobility2.GetElement(0) | BitManipulations.ByteSwap(Sse2.UnpackHigh(mobility2, mobility2).GetElement(0));
             return mobility & ~(p | o);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateFilippedDiscs_AVX2(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
         {
             var shift = SHIFT_1897;
@@ -271,6 +320,7 @@ namespace Kalmia
             return Sse2.X64.ConvertToUInt64(flip2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateFlippedDiscs_SSE(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
         {
             var zeros = ZEROS_128;
@@ -284,16 +334,16 @@ namespace Kalmia
             var prefix1 = maskedO & (maskedO << 1);
             var prefix8 = o & (o << 8);
 
-            var flipLeft = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 7));
+            var flip7 = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 7));
             var flip1Left = maskedO & (x << 1);
             var flip8Left = o & (x << 8);
-            flipLeft = Sse2.Or(flipLeft, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flipLeft, 7)));
+            flip7 = Sse2.Or(flip7, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flip7, 7)));
             flip1Left |= maskedO & (flip1Left << 1);
             flip8Left |= o & (flip8Left << 8);
-            flipLeft = Sse2.Or(flipLeft, Sse2.And(prefix, Sse2.ShiftLeftLogical(flipLeft, 14)));
+            flip7 = Sse2.Or(flip7, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip7, 14)));
             flip1Left |= prefix1 & (flip1Left << 2);
             flip8Left |= prefix8 & (flip8Left << 16);
-            flipLeft = Sse2.Or(flipLeft, Sse2.And(prefix, Sse2.ShiftLeftLogical(flipLeft, 14)));
+            flip7 = Sse2.Or(flip7, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip7, 14)));
             flip1Left |= prefix1 & (flip1Left << 2);
             flip8Left |= prefix8 & (flip8Left << 16);
 
@@ -301,36 +351,48 @@ namespace Kalmia
             prefix1 >>= 1;
             prefix8 >>= 8;
 
-            var flipRight = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 9));
+            var flip9 = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 9));
             var flip1Right = maskedO & (x >> 1);
             var flip8Right = o & (x >> 8);
-            flipRight = Sse2.Or(flipRight, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flipRight, 9)));
+            flip9 = Sse2.Or(flip9, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flip9, 9)));
             flip1Right |= maskedO & (flip1Right >> 1);
             flip8Right |= o & (flip8Right >> 8);
-            flipRight = Sse2.Or(flipRight, Sse2.And(prefix, Sse2.ShiftLeftLogical(flipRight, 18)));
+            flip9 = Sse2.Or(flip9, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip9, 18)));
+            flip1Right |= prefix1 & (flip1Right >> 2);
+            flip8Right |= prefix8 & (flip8Right >> 16);
+            flip9 = Sse2.Or(flip9, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip9, 18)));
             flip1Right |= prefix1 & (flip1Right >> 2);
             flip8Right |= prefix8 & (flip8Right >> 16);
 
-            var outflankLeft = Sse2.And(p2, Sse2.ShiftLeftLogical(flipLeft, 7));
+            var outflank7 = Sse2.And(p2, Sse2.ShiftLeftLogical(flip7, 7));
             var outflankLeft1 = p & (flip1Left << 1);
             var outflankLeft8 = p & (flip8Left << 8);
-            var outflankRight = Sse2.And(p2, Sse2.ShiftRightLogical(flipLeft, 7));
-            var outflankRight1 = p & (flip1Left << 1);
-            var outflankRight8 = p & (flip8Left << 8);
+            var outflank9 = Sse2.And(p2, Sse2.ShiftLeftLogical(flip9, 9));
+            var outflankRight1 = p & (flip1Right >> 1);
+            var outflankRight8 = p & (flip8Right >> 8);
 
-            flipLeft = Sse2.AndNot(Sse2.CompareEqual(outflankLeft.AsByte(), zeros).AsUInt64(), flipLeft);
+            if (Sse41.IsSupported)
+            {
+                flip7 = Sse2.AndNot(Sse41.CompareEqual(outflank7, zeros), flip7);
+                flip9 = Sse2.AndNot(Sse41.CompareEqual(outflank9, zeros), flip9);
+            }
+            else
+            {
+                flip7 = Sse2.And(Sse2.CompareNotEqual(outflank7.AsDouble(), zeros.AsDouble()).AsUInt64(), flip7);
+                flip9 = Sse2.And(Sse2.CompareNotEqual(outflank9.AsDouble(), zeros.AsDouble()).AsUInt64(), flip9);
+            }
+
             if (outflankLeft1 == 0)
                 flip1Left = 0UL;
             if (outflankLeft8 == 0)
                 flip8Left = 0UL;
-            flipRight = Sse2.AndNot(Sse2.CompareEqual(outflankRight.AsByte(), zeros).AsUInt64(), flipRight);
             if (outflankRight1 == 0)
-                flip1Left = 0UL;
+                flip1Right = 0UL;
             if (outflankRight8 == 0)
-                flip8Left = 0UL;
+                flip8Right = 0UL;
 
-            var flippedDiscs2 = Sse2.Or(Sse2.ShiftLeftLogical(flipLeft, 7), Sse2.ShiftLeftLogical(flipRight, 9));
-            var flippedDiscs = (flip1Left << 1) | (flip8Left << 8) | (flip1Right >> 1) | (flip8Right >> 8);
+            var flippedDiscs2 = Sse2.Or(flip7, flip9);
+            var flippedDiscs = flip1Left | flip8Left | flip1Right | flip8Right;
             if (Sse2.X64.IsSupported)
                 flippedDiscs |= Sse2.X64.ConvertToUInt64(flippedDiscs2) 
                              | BitManipulations.ByteSwap(Sse2.X64.ConvertToUInt64(Sse2.UnpackHigh(flippedDiscs2, flippedDiscs2)));

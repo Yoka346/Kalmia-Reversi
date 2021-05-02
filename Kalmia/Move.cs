@@ -2,7 +2,7 @@
 
 namespace Kalmia
 {
-    public enum Color
+    public enum Color : sbyte
     {
         Black = 1,
         Blank = 0,
@@ -14,7 +14,7 @@ namespace Kalmia
         public const int PASS = 64;
 
         public Color Color;
-        public int Pos;
+        public byte Pos;
 
         public Move(Color color, string pos) : this(color, StringToPos(pos)) { }
 
@@ -23,7 +23,7 @@ namespace Kalmia
         public Move(Color color, int pos)
         {
             this.Color = color;
-            this.Pos = pos;
+            this.Pos = (byte)pos;
         }
 
         public override string ToString()
@@ -42,6 +42,11 @@ namespace Kalmia
                 return false;
             var move = (Move)obj;
             return (move.Color == this.Color) && (move.Pos == this.Pos);
+        }
+
+        public override int GetHashCode()   // This method will not be used. I implemented this just to suppress a caution.
+        {
+            return (int)this.Color * this.Pos;
         }
 
         public static bool operator==(Move left, Move right)
