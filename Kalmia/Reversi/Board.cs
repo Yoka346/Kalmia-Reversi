@@ -6,7 +6,7 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.CompilerServices;
 
-namespace Kalmia
+namespace Kalmia.Reversi
 {
     public enum InitialBoardState
     {
@@ -14,6 +14,8 @@ namespace Kalmia
         Parallel
     }
 
+    // I reffered to the code below to implement mobility and flipped discs calculation. 
+    // get_moves(p, o) in https://github.com/okuhara/edax-reversi-AVX/blob/master/src/board_sse.c 
     public class Board
     {
         public const int LINE_LENGTH = 8;
@@ -58,6 +60,13 @@ namespace Kalmia
             this.Turn = firstPlayer;
             this.currentPlayersBoard = firstPlayersBoard;
             this.opponentPlayersBoard = secondPlayersBoard;
+        }
+
+        public Board(Board board)
+        {
+            this.Turn = board.Turn;
+            this.currentPlayersBoard = board.currentPlayersBoard;
+            this.opponentPlayersBoard = board.opponentPlayersBoard;
         }
 
         public Color[,] GetDiscsArray()

@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kalmia", "Kalmia\Kalmia.csproj", "{57E48C54-971B-4E1C-87AD-005460782EAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KalmiaTest", "KalmiaTest\KalmiaTest.csproj", "{69FDF842-0D97-4D8F-A12D-832814C996CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KalmiaTest", "KalmiaTest\KalmiaTest.csproj", "{69FDF842-0D97-4D8F-A12D-832814C996CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

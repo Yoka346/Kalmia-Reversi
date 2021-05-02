@@ -1,6 +1,6 @@
-﻿using static Kalmia.Board;
+﻿using static Kalmia.Reversi.Board;
 
-namespace Kalmia
+namespace Kalmia.Reversi
 {
     public enum Color : sbyte
     {

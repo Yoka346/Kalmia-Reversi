@@ -10,10 +10,5 @@ namespace Kalmia
         {
 
         }
-
-        static void PrintBoard(ulong bitboard)
-        {
-
-        }
     }
 }
