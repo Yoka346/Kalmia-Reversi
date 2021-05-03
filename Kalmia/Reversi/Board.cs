@@ -90,6 +90,11 @@ namespace Kalmia.Reversi
 
         public void SwitchTurn()
         {
+            // swap bitboard
+            var tmp = this.currentPlayersBoard;
+            this.currentPlayersBoard = this.opponentPlayersBoard;
+            this.opponentPlayersBoard = tmp;
+            this.mobilityWasCalculated = false;
             this.Turn = (Color)(-(int)this.Turn);
         }
 
@@ -124,11 +129,6 @@ namespace Kalmia.Reversi
                 this.currentPlayersBoard |= (flipped | x);
             }
 
-            // swap bitboard
-            var tmp = this.currentPlayersBoard;
-            this.currentPlayersBoard = this.opponentPlayersBoard;
-            this.opponentPlayersBoard = tmp;
-            this.mobilityWasCalculated = false;
             SwitchTurn();
         }
 

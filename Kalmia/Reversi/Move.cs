@@ -18,6 +18,8 @@ namespace Kalmia.Reversi
 
         public Move(Color color, string pos) : this(color, StringToPos(pos)) { }
 
+        public Move(Color color, (int posX, int posY) coord) : this(color, coord.posX, coord.posY) { }
+
         public Move(Color color, int posX, int posY):this(color, posX + posY * LINE_LENGTH) { }
 
         public Move(Color color, int pos)
