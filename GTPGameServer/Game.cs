@@ -15,6 +15,22 @@ namespace GTPGameServer
         Suspended = -3
     }
 
+    public struct TotalGameResult
+    {
+        public int GameNum;
+        public int BlackWinCount;
+        public int WhiteWinCount;
+        public int DrawCount;
+
+        public TotalGameResult(int gameNum, int blackWinCount, int whiteWinCount, int drawCount)
+        {
+            this.GameNum = gameNum;
+            this.BlackWinCount = blackWinCount;
+            this.WhiteWinCount = whiteWinCount;
+            this.DrawCount = drawCount;
+        }
+    }
+
     public delegate void PlayerMovedEventHandler(PlayerMovedEventArgs e);
     public delegate void BoardChangedEventHandler(BoardChangedEventArgs e);
     public delegate void GameStartedEventHandler(GameStartedEventArgs e);
@@ -23,7 +39,7 @@ namespace GTPGameServer
     public class Game
     {
         Board board;
-        Task mainloopTask;
+        Task<TotalGameResult> mainloopTask;
         Player blackPlayer;
         Player whitePlayer;
         Player currentPlayer;
@@ -54,12 +70,13 @@ namespace GTPGameServer
             return true;
         }
 
-        public void Stop()    // returns black player's win or lose.
+        public TotalGameResult Stop()    
         {
             this.IsNowPlaying = false;
             this.blackPlayer.Stop();
             this.whitePlayer.Stop();
             this.mainloopTask.ConfigureAwait(false);
+            return this.mainloopTask.Result;
         }
 
         void SwitchPlayers()
@@ -69,9 +86,12 @@ namespace GTPGameServer
             this.opponentPlayer = tmp;
         }
 
-        async Task MainloopAsync(int gameNum, bool switchTurn)
+        async Task<TotalGameResult> MainloopAsync(int gameNum, bool switchTurn)
         {
-            await Task.Run(() =>
+            var blackWinCount = 0;
+            var whiteWinCount = 0;
+            var drawCount = 0;
+            var ret = await Task.Run(() =>
             {
                 try
                 {
@@ -93,7 +113,7 @@ namespace GTPGameServer
                             if (!this.board.IsLegalMove(nextMove))
                             {
                                 GameEnded(new GameEndedEventArgs(GameError.InvalidMove, nextMove.ToString(), false, string.Empty, Color.Empty, 0));
-                                return;
+                                return new TotalGameResult(0, 0, 0, 0);
                             }
                             this.board.Update(nextMove);
                             this.PlayerMoved(new PlayerMovedEventArgs(this.currentPlayer.Name, nextMove));
@@ -104,11 +124,26 @@ namespace GTPGameServer
 
                         var discDifference = Math.Abs(this.board.GetDiscCount(Color.Black) - this.board.GetDiscCount(Color.White));
                         if (result == GameResult.Win)
+                        {
                             GameEnded(new GameEndedEventArgs(GameError.Success, $"Black wins by {discDifference}points.", false, this.blackPlayer.Name, Color.Black, discDifference));
+                            if (switchTurn && gameID % 2 == 0)
+                                blackWinCount++;
+                            else
+                                whiteWinCount++;
+                        }
                         else if (result == GameResult.Lose)
+                        {
                             GameEnded(new GameEndedEventArgs(GameError.Success, $"White wins by {discDifference}points.", false, this.whitePlayer.Name, Color.White, discDifference));
+                            if (switchTurn && gameID % 2 == 0)
+                                whiteWinCount++;
+                            else
+                                blackWinCount++;
+                        }
                         else
+                        {
                             GameEnded(new GameEndedEventArgs(GameError.Success, $"Draw.", true, string.Empty, Color.Empty, 0));
+                            drawCount++;
+                        }
 
                         if (switchTurn)
                         {
@@ -122,6 +157,7 @@ namespace GTPGameServer
                     this.IsNowPlaying = false;
                     this.blackPlayer.Stop();
                     this.whitePlayer.Stop();
+                    return new TotalGameResult(gameNum, blackWinCount, whiteWinCount, drawCount);
                 }
                 catch
                 {
@@ -131,6 +167,7 @@ namespace GTPGameServer
                     throw;
                 }
             });
+            return ret;
         }
     }
 }

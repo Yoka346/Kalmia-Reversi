@@ -22,10 +22,8 @@ namespace GTPGameServer
 
     class Program
     {
-        static int GameNum = 0;
-        static int BlackPlayerWinCount = 0;
-        static int WhitePlayerWinCount = 0;
-        static int DrawCount = 0;
+        static Player BlackPlayer;
+        static Player WhitePlayer;
 
         static void Main(string[] args)
         {
@@ -49,32 +47,30 @@ namespace GTPGameServer
 
         static void GameMain(Player blackPlayer, Player whitePlayer, int gameNum, bool switchTurn)
         {
-            GameNum = gameNum;
-            var currentBlackPlayer = blackPlayer;
-            var currentWhitePlayer = whitePlayer;
+            BlackPlayer = blackPlayer;
+            WhitePlayer = whitePlayer;
             var game = new Game();
             game.PlayerMoved += Game_PlayerMoved;
             game.BoardChanged += Game_BoardChanged;
             game.GameStarted += Game_GameStarted;
             game.GameEnded += Game_GameEnded;
-            game.Start(currentBlackPlayer, currentWhitePlayer, gameNum, switchTurn);
+            game.Start(BlackPlayer, WhitePlayer, gameNum, switchTurn);
             while (game.IsNowPlaying)
             {
                 // Write some codes that is executed while game is active.
                 System.Threading.Thread.Sleep(1);
             }
-            game.Stop();
-            ShowFinalResult();
+            ShowTotalResult(game.Stop());
         }
 
-        static void ShowFinalResult()
+        static void ShowTotalResult(TotalGameResult result)
         {
             Console.WriteLine($"\n***Final Result***" +
-                              $"\nBlack wins {BlackPlayerWinCount}times." +
-                              $"\nWhite wins {WhitePlayerWinCount}times." +
-                              $"\nGame was drawn {DrawCount}times.\n" +
-                              $"\nBlack player's win rate = {(BlackPlayerWinCount + DrawCount * 0.5) / GameNum}%" +
-                              $"\nWhite player's win rate = {(WhitePlayerWinCount + DrawCount * 0.5) / GameNum}%");
+                              $"\nBlack wins {result.BlackWinCount}times." +
+                              $"\nWhite wins {result.WhiteWinCount}times." +
+                              $"\nGame was drawn {result.DrawCount}times.\n" +
+                              $"\nBlack player's win rate = {(result.BlackWinCount + result.DrawCount * 0.5) * 100.0 / result.GameNum}%" +
+                              $"\nWhite player's win rate = {(result.WhiteWinCount + result.DrawCount * 0.5) * 100.0 / result.GameNum}%");
         }
 
         static void Game_GameStarted(GameStartedEventArgs e)
@@ -87,15 +83,7 @@ namespace GTPGameServer
         static void Game_GameEnded(GameEndedEventArgs e)
         {
             if (e.Error == GameError.Success)
-            {
                 Console.WriteLine($"Game over.\n{e.Message}");
-                if (e.WinnerColor == Color.Black)
-                    BlackPlayerWinCount++;
-                else if (e.WinnerColor == Color.White)
-                    WhitePlayerWinCount++;
-                else
-                    DrawCount++;
-            }
         }
 
         static void Game_BoardChanged(BoardChangedEventArgs e)
