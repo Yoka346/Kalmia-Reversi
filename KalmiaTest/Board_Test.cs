@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using Kalmia;
-using static Kalmia.Board;
+using Kalmia.Reversi;
+using static Kalmia.Reversi.Board;
 
 namespace KalmiaTest
 {

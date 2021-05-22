@@ -1,6 +1,6 @@
-﻿using static Kalmia.Reversi.Board;
+﻿using static GTPGameServer.Reversi.Board;
 
-namespace Kalmia.Reversi
+namespace GTPGameServer.Reversi
 {
     public enum Color : sbyte
     {

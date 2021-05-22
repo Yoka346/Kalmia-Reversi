@@ -10,24 +10,22 @@ namespace Kalmia.GoTextProtocol
         void Quit();
         string GetName();
         string GetVersion();
+        int GetBoardSize();
         bool SetBoardSize(int size);
         void ClearBoard();
-        void SetKomi(double komi);
-        bool Play(Color color, Move move);
-        bool Put(Color color, (int posX, int posY) coord);
-        List<(int x, int y)> SetHandicap(int num);
+        bool Play(Move move);
         string LoadSGF(string path);
         string LoadSGF(string path, int posX, int posY);
         string LoadSGF(string path, int moveNum);
-        string GenerateMove(Color color);
-        string RegGenerateMove(Color color);
+        Move GenerateMove(Color color);
+        Move RegGenerateMove(Color color);
+        public Color GetColor(int posX, int posY);
         string ShowBoard();
         bool Undo();
-        void SetTime(int mainTime, int countdownTime, int countdownNum);
-        void SendTimeLeft(int timeLeft, int countdownNumLeft);
-        string GetFinalScore();
-        Color GetColor(int posX, int posY);
-        string ExecuteOriginalCommand(string command, string[] args);   //args contains command's name.
-        string[] GetOriginalCommands();
+        string GetFinalResult();
+        Move[] GetLegalMoves();
+        Color GetSideToMove();
+        void SetTime(int mainTime, int byoYomiTime, int byoYomiStones);
+        void SendTimeLeft(int timeLeft, int byoYomiStonesLeft);
     }
 }

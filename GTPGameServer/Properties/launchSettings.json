@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GTPGameServer": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\admin\\source\\repos\\Kalmia\\GTPGameServer\\bin\\Debug\\netcoreapp3.1\\gameInfo.json"
+    }
+  }
+}

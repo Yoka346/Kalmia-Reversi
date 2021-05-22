@@ -1,6 +1,6 @@
-﻿using Kalmia;
-using System.Diagnostics;
-using static Kalmia.Move;
+﻿using System.Diagnostics;
+using Kalmia.Reversi;
+using static Kalmia.Reversi.Move;
 using static KalmiaTest.BoardForTest;
 
 namespace KalmiaTest
@@ -99,7 +99,7 @@ namespace KalmiaTest
             for (var posX = 0; posX < mobility.GetLength(0); posX++)
                 for (var posY = 0; posY < mobility.GetLength(1); posY++)
                 {
-                    if (this.DISCS[posX, posY] != Color.Blank)
+                    if (this.DISCS[posX, posY] != Color.Empty)
                         continue;
 
                     // right 
@@ -110,7 +110,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[x, posY] == Color.Blank)
+                            else if (this.DISCS[x, posY] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -124,7 +124,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[x, posY] == Color.Blank)
+                            else if (this.DISCS[x, posY] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -138,7 +138,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[posX, y] == Color.Blank)
+                            else if (this.DISCS[posX, y] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -152,7 +152,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[posX, y] == Color.Blank)
+                            else if (this.DISCS[posX, y] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -167,7 +167,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[p.x, p.y] == Color.Blank)
+                            else if (this.DISCS[p.x, p.y] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -181,7 +181,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[p.x, p.y] == Color.Blank)
+                            else if (this.DISCS[p.x, p.y] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -195,7 +195,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[p.x, p.y] == Color.Blank)
+                            else if (this.DISCS[p.x, p.y] == Color.Empty)
                                 break;
 
                     if (mobility[posX, posY])
@@ -209,7 +209,7 @@ namespace KalmiaTest
                                 mobility[posX, posY] = true;
                                 break;
                             }
-                            else if (this.DISCS[p.x, p.y] == Color.Blank)
+                            else if (this.DISCS[p.x, p.y] == Color.Empty)
                                 break;
                 }
             return mobility;
@@ -236,7 +236,7 @@ namespace KalmiaTest
                             flipped[xx, posY] = true;
                         break;
                     }
-                    else if (this.DISCS[x, posY] == Color.Blank)
+                    else if (this.DISCS[x, posY] == Color.Empty)
                         break;
                 }
 
@@ -249,7 +249,7 @@ namespace KalmiaTest
                             flipped[xx, posY] = true;
                         break;
                     }
-                    else if (this.DISCS[x, posY] == Color.Blank)
+                    else if (this.DISCS[x, posY] == Color.Empty)
                         break;
 
             // downward
@@ -261,7 +261,7 @@ namespace KalmiaTest
                             flipped[posX, yy] = true;
                         break;
                     }
-                    else if (this.DISCS[posX, y] == Color.Blank)
+                    else if (this.DISCS[posX, y] == Color.Empty)
                         break;
 
             // upward
@@ -273,7 +273,7 @@ namespace KalmiaTest
                             flipped[posX, yy] = true;
                         break;
                     }
-                    else if (this.DISCS[posX, y] == Color.Blank)
+                    else if (this.DISCS[posX, y] == Color.Empty)
                         break;
 
             (int x, int y) pos = (posX, posY);
@@ -286,7 +286,7 @@ namespace KalmiaTest
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
-                    else if (this.DISCS[p.x, p.y] == Color.Blank)
+                    else if (this.DISCS[p.x, p.y] == Color.Empty)
                         break;
 
             // diagonal(lower right to upper left)
@@ -298,7 +298,7 @@ namespace KalmiaTest
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
-                    else if (this.DISCS[p.x, p.y] == Color.Blank)
+                    else if (this.DISCS[p.x, p.y] == Color.Empty)
                         break;
 
             // diagonal(upper right to lower left)
@@ -310,7 +310,7 @@ namespace KalmiaTest
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
-                    else if (this.DISCS[p.x, p.y] == Color.Blank)
+                    else if (this.DISCS[p.x, p.y] == Color.Empty)
                         break;
 
             // diagonal(lower left to upper right)
@@ -322,7 +322,7 @@ namespace KalmiaTest
                             flipped[pp.x, pp.y] = true;
                         break;
                     }
-                    else if (this.DISCS[p.x, p.y] == Color.Blank)
+                    else if (this.DISCS[p.x, p.y] == Color.Empty)
                         break;
             return flipped;
         }

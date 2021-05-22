@@ -1,58 +1,159 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
+using System.IO;
 
 using Kalmia.Reversi;
 
 namespace Kalmia.GoTextProtocol
 {
+    public enum GTPCoordinateRule
+    {
+        Chess,  //  A B C D E F G H         GoGui's style
+                // 8 . . . . . . . . 
+                // 7 . . . . . . . . 
+                // 6 . . . . . . . . 
+                // 5 . . . . . . . . 
+                // 4 . . . . . . . . 
+                // 3 . . . . . . . . 
+                // 2 . . . . . . . . 
+                // 1 . . . . . . . . 
+
+        Othello //   A B C D E F G H        The game of Othello(Japanese game almost same as Reversi) style
+                // 1 . . . . . . . . 
+                // 2 . . . . . . . . 
+                // 3 . . . . . . . . 
+                // 4 . . . . . . . . 
+                // 5 . . . . . . . . 
+                // 6 . . . . . . . . 
+                // 7 . . . . . . . . 
+                // 8 . . . . . . . . 
+    }
+
     public static class GTP
     {
         const string VERSION = "2.0";
-        const int BOARD_SIZE = 8;
-        const char BLACK_CHAR = 'X';
-        const char WHITE_CHAR = 'O';
-        const char BLANK_CHAR = '.';
+        const GTPCoordinateRule DEFAULT_COORDINATE_RULE = GTPCoordinateRule.Chess;
 
-        static IGTPEngine engine;
+        static GTPCoordinateRule CoordinateRule;
+        static IGTPEngine Engine;
         static readonly ReadOnlyDictionary<string, Action<int, string[]>> COMMANDS;
-        static bool quit = false;
+        static bool Quit = false;
+        static FileStream LogFileStream;
+        static StreamWriter Logger;
 
         static GTP()
         {
+            COMMANDS = new ReadOnlyDictionary<string, Action<int, string[]>>(InitCommands());
+        }
 
+        static Dictionary<string, Action<int, string[]>> InitCommands()
+        {
+            var commands = new Dictionary<string, Action<int, string[]>>();
+            commands.Add("protocol_version", ExecuteProtocolVersionCommand);
+            commands.Add("name", ExecuteNameCommand);
+            commands.Add("version", ExecuteVersionCommand);
+            commands.Add("known_command", ExecuteKnownCommandCommand);
+            commands.Add("list_commands", ExecuteListCommandsCommand);
+            commands.Add("quit", ExecuteQuitCommand);
+            commands.Add("boardsize", ExecuteBoardSizeCommand);
+            commands.Add("clear_board", ExecuteClearBoardCommand);
+            commands.Add("komi", ExecuteKomiCommand);
+            commands.Add("play", ExecutePlayCommand);
+            commands.Add("genmove", ExecuteGenMoveCommand);
+            commands.Add("undo", ExecuteUndoCommand);
+            commands.Add("time_settings", ExecuteTimeSettingsCommand);
+            commands.Add("time_left", ExecuteTimeLeftCommand);
+            commands.Add("set_game", ExecuteSetGameCommand);
+            commands.Add("list_games", ExecuteListGamesCommand);
+            commands.Add("loadsgf", LoadSGFCommand);
+            commands.Add("color", ExecuteColorCommand);
+            commands.Add("reg_genmove", ExecuteRegGenMoveCommand);
+            commands.Add("showboard", ExecuteShowBoardCommand);
+
+            // version 1 commands(legacy)
+            commands.Add("black", ExecuteBlackCommand);
+            commands.Add("playwhite", ExecutePlayWhiteCommand);
+            commands.Add("genmove_black", ExecuteGenMoveBlackCommand);
+            commands.Add("genmove_white", ExecuteGenMoveWhiteCommand);
+
+            // gogui-rules commands
+            commands.Add("gogui-rules_game_id", ExecuteRulesGameIDCommand);
+            commands.Add("gogui-rules_board", ExecuteShowBoardCommand);
+            commands.Add("gogui-rules_board_size", ExecuteRulesBoardSizeCommand);
+            commands.Add("gogui-rules_legal_moves", ExecuteRulesLegalMovesCommand);
+            commands.Add("gogui-rules_side_to_move", ExecuteRulesSideToMoveCommand);
+            commands.Add("gogui-rules_final_result", ExecuteRulesFinalResult);
+            return commands;
         }
 
         public static void Mainloop(IGTPEngine engine)
         {
+            Mainloop(engine, null);
+        }
+
+        public static void Mainloop(IGTPEngine engine, GTPCoordinateRule coordRule)
+        {
+            Mainloop(engine, coordRule, null);
+        }
+
+        public static void Mainloop(IGTPEngine engine, string logFilePath)
+        {
+            Mainloop(engine, DEFAULT_COORDINATE_RULE, logFilePath);
+        }
+
+        public static void Mainloop(IGTPEngine engine, GTPCoordinateRule coordRule, string logFilePath)
+        {
+            CoordinateRule = coordRule;
+            Engine = engine;
+            if (logFilePath != null)
+            {
+                LogFileStream = new FileStream(logFilePath, FileMode.Create, FileAccess.Write);
+                Logger = new StreamWriter(LogFileStream);
+            }
+            else
+                Logger = new StreamWriter(Stream.Null);
+
             int id = 0;
-            while (!quit)
+            while (!Quit)
             {
                 try
                 {
-                    COMMANDS[ParseCommand(Console.ReadLine(), out id, out string[] args)](id, args); ;
+                    var input = Console.ReadLine();
+                    Logger.WriteLine($"[{DateTime.Now}] Input: {input}");
+                    Logger.Flush();
+                    COMMANDS[ParseCommand(input, out id, out string[] args)](id, args); ;
                 }
                 catch (KeyNotFoundException)
                 {
                     GTPFailure(id, "unknown command");
                 }
             }
-            quit = false;
+            Quit = false;
+            Engine = null;
+            Logger.Close();
         }
 
         static void GTPSuccess(int id, string msg = "")
         {
             var idStr = (id != -1) ? id.ToString() : string.Empty;
-            Console.Write($"={id}\n {msg}\n\n");
+            var output = $"{idStr} {msg}";
+            Logger.WriteLine($"[{DateTime.Now}] Status: Success  Output: {output}");
+            Console.Write($"={output}\n\n");
             Console.Out.Flush();
+            Logger.Flush();
         }
 
         static void GTPFailure(int id, string msg)
         {
             var idStr = (id != -1) ? id.ToString() : string.Empty;
-            Console.Write($"?{id}\n {msg}\n\n");
+            var output = $"{idStr} {msg}";
+            Logger.WriteLine($"[{DateTime.Now}] Status: Failed  Output: {output}");
+            Console.Write($"?{output}\n\n");
             Console.Out.Flush();
+            Logger.Flush();
         }
 
         static void ExecuteProtocolVersionCommand(int id, string[] args)
@@ -60,19 +161,39 @@ namespace Kalmia.GoTextProtocol
             GTPSuccess(id, VERSION);
         }
 
-        static void ExecuteQuitCommand(int id, string[] args)
-        {
-            quit = true;
-        }
-
         static void ExecuteNameCommand(int id, string[] args)
         {
-            GTPSuccess(id, engine.GetVersion());
+            GTPSuccess(id, Engine.GetName());
         }
 
         static void ExecuteVersionCommand(int id, string[] args)
         {
-            GTPSuccess(id, engine.GetVersion());
+            GTPSuccess(id, Engine.GetVersion());
+        }
+
+        static void ExecuteKnownCommandCommand(int id, string[] args)
+        {
+            if(args.Length == 0)
+            {
+                GTPFailure(id, "invalid option");
+                return;
+            }
+            GTPSuccess(id, COMMANDS.Keys.Contains(args[0]).ToString().ToLower());
+        }
+
+        static void ExecuteListCommandsCommand(int id, string[] args)
+        {
+            var sb = new StringBuilder();
+            foreach (var cmd in COMMANDS.Keys)
+                sb.Append(cmd + "\n");
+            sb.Remove(sb.Length - 1, 1);    // Remove last "\n"
+            GTPSuccess(id, sb.ToString());
+        }
+
+        static void ExecuteQuitCommand(int id, string[] args)
+        {
+            Quit = true;
+            GTPSuccess(id);
         }
 
         static void ExecuteBoardSizeCommand(int id, string[] args)
@@ -85,7 +206,7 @@ namespace Kalmia.GoTextProtocol
                 if (!isInt)
                     GTPFailure(id, "board size must be integer");
 
-                if (engine.SetBoardSize(size))
+                if (Engine.SetBoardSize(size))
                     GTPSuccess(id);
                 else
                     GTPFailure(id, "unacceptable size");
@@ -94,7 +215,7 @@ namespace Kalmia.GoTextProtocol
 
         static void ExecuteClearBoardCommand(int id, string[] args)
         {
-            engine.ClearBoard();
+            Engine.ClearBoard();
             GTPSuccess(id);
         }
 
@@ -111,8 +232,7 @@ namespace Kalmia.GoTextProtocol
             var isDouble = double.TryParse(args[0], out komi);
             if (!isDouble)
                 GTPFailure(id, "komi must be real number");
-            engine.SetKomi(komi);
-            GTPSuccess(id);
+            GTPSuccess(id);     // Do nothing of it.
         }
 
         static void ExecutePlayCommand(int id, string[] args)
@@ -124,7 +244,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == Color.Blank)
+            if (color == Color.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -137,7 +257,7 @@ namespace Kalmia.GoTextProtocol
                 return;
             }
 
-            if (!engine.Play(color, new Move(color, coord)))
+            if (!Engine.Play(new Move(color, coord)))
             {
                 GTPFailure(id, "invalid move");
                 return;
@@ -150,20 +270,21 @@ namespace Kalmia.GoTextProtocol
             if (args.Length < 1)
             {
                 GTPFailure(id, "invalid option");
+                return;
             }
 
             var color = ParseColor(args[0]);
-            if (color == Color.Blank)
+            if (color == Color.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
             }
-            GTPSuccess(id, engine.GenerateMove(color));
+            GTPSuccess(id,  MoveToString(Engine.GenerateMove(color)));
         }
 
         static void ExecuteUndoCommand(int id, string[] args)
         {
-            if (!engine.Undo())
+            if (!Engine.Undo())
             {
                 GTPFailure(id, "cannot undo");
                 return;
@@ -189,7 +310,10 @@ namespace Kalmia.GoTextProtocol
             catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException) 
             {
                 GTPFailure(id, "time and byo yomi stones must be integer");
+                return;
             }
+            Engine.SetTime(mainTime, byoYomiTime, byoYomiStones);
+            GTPSuccess(id);
         }
 
         static void ExecuteTimeLeftCommand(int id, string[] args)   // The unit of time is second.
@@ -201,7 +325,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if(color == Color.Blank)
+            if(color == Color.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -217,7 +341,25 @@ namespace Kalmia.GoTextProtocol
             catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException)
             {
                 GTPFailure(id, "time and byo yomi stones must be integer");
+                return;
             }
+            Engine.SendTimeLeft(timeLeft, byoYomiStonesLeft);
+        }
+
+        static void ExecuteSetGameCommand(int id, string[] args)
+        {
+            if(args.Length == 0)
+            {
+                GTPFailure(id, "invali option");
+                return;
+            }
+
+            if(args[0].ToLower() != "othello")
+            {
+                GTPFailure(id, "unsurpported game");
+                return;
+            }
+            GTPSuccess(id);
         }
 
         static void ExecuteListGamesCommand(int id, string[] args)
@@ -230,7 +372,24 @@ namespace Kalmia.GoTextProtocol
             GTPFailure(id, "not supported");
         }
 
-        static void ExecuteReggenMoveCommand(int id, string[] args)
+        static void ExecuteColorCommand(int id, string[] args)
+        {
+            if(args.Length < 1)
+            {
+                GTPFailure(id, "invalid option");
+                return;
+            }
+            var move = new Move(Color.Black, args[0]);
+            var color = Engine.GetColor(move.PosX, move.PosY);
+            if(color == Color.Empty)
+            {
+                GTPSuccess(id, "empty");
+                return;
+            }
+            GTPSuccess(id, (color == Color.Black) ? "black" : "white");
+        }
+
+        static void ExecuteRegGenMoveCommand(int id, string[] args)
         {
             if (args.Length < 1)
             {
@@ -238,24 +397,92 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == Color.Blank)
+            if (color == Color.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
             }
-            GTPSuccess(id, engine.RegGenerateMove(color));
+            GTPSuccess(id, MoveToString(Engine.RegGenerateMove(color)));
         }
 
         static void ExecuteShowBoardCommand(int id, string[] args)
         {
-            GTPSuccess(id, engine.ShowBoard());
+            GTPSuccess(id, $"\n {Engine.ShowBoard()}");
+        }
+
+        // version 1 commands
+        static void ExecuteBlackCommand(int id, string[] args)
+        {
+            if(args.Length < 1)
+            {
+                GTPFailure(id, "invalid option");
+                return;
+            }
+            ExecutePlayCommand(id, new string[] { "black", args[0] });
+        }
+
+        static void ExecutePlayWhiteCommand(int id, string[] args)
+        {
+            if (args.Length < 1)
+            {
+                GTPFailure(id, "invalid option");
+                return;
+            }
+            ExecutePlayCommand(id, new string[] { "white", args[0] });
+        }
+
+        static void ExecuteGenMoveBlackCommand(int id, string[] args)
+        {
+            ExecuteGenMoveCommand(id, new string[] { "black" });
+        }
+
+        static void ExecuteGenMoveWhiteCommand(int id, string[] args)
+        {
+            ExecuteGenMoveCommand(id, new string[] { "white" });
+        }
+
+        // gogui-rule commands
+        static void ExecuteRulesGameIDCommand(int id, string[] args)
+        {
+            GTPSuccess(id, "Othello");
+        }
+
+        static void ExecuteRulesBoardSizeCommand(int id, string[] args)
+        {
+            GTPSuccess(id, Engine.GetBoardSize().ToString());
+        }
+
+        static void ExecuteRulesLegalMovesCommand(int id, string[] args)
+        {
+            var sb = new StringBuilder();
+            foreach (var move in Engine.GetLegalMoves())
+                sb.Append($"{move} ");
+            GTPSuccess(id, sb.ToString());
+        }
+
+        static void ExecuteRulesSideToMoveCommand(int id, string[] args)
+        {
+            GTPSuccess(id, (Engine.GetSideToMove() == Color.Black) ? "black" : "white");
+        }
+
+        static void ExecuteRulesFinalResult(int id, string[] args)
+        {
+            GTPSuccess(id, Engine.GetFinalResult());
         }
 
         static string ParseCommand(string cmd, out int id, out string[] args)
         {
             var splitedCmd = cmd.ToLower().Split(' ');
             var hasID = int.TryParse(splitedCmd[0], out id);
-            var cmdNameIdx = hasID ? 1 : 0;
+            int cmdNameIdx;
+            if (hasID)
+                cmdNameIdx = 1;
+            else
+            {
+                id = -1;
+                cmdNameIdx = 0;
+            }
+
             args = new string[splitedCmd.Length - cmdNameIdx - 1];
             Array.Copy(splitedCmd, cmdNameIdx + 1, args, 0, args.Length);
             return splitedCmd[cmdNameIdx];
@@ -268,7 +495,18 @@ namespace Kalmia.GoTextProtocol
                 return Color.Black;
             else if (str == "w" || str == "white")
                 return Color.White;
-            return Color.Blank;
+            return Color.Empty;
+        }
+
+        static string MoveToString(Move move)
+        {
+            var str = move.ToString();
+            if (str == "PASS" || CoordinateRule == GTPCoordinateRule.Othello)
+                return str;
+            var sb = new StringBuilder(str);
+            sb.Remove(1, 1);
+            sb.Append((Board.BOARD_SIZE - 1) - move.PosY);
+            return sb.ToString();
         }
 
         static bool ParseCoordinate(string str, out (int posX, int posY) coord)
@@ -280,7 +518,11 @@ namespace Kalmia.GoTextProtocol
                 return true;
             }
             coord.posX = str[0] - 'a';
-            return int.TryParse(str[1].ToString(), out coord.posY);
+            var isInt = int.TryParse(str[1].ToString(), out coord.posY);
+            coord.posY -= 1;
+            if (CoordinateRule == GTPCoordinateRule.Chess)
+                coord.posY = (Board.BOARD_SIZE - 1) - coord.posY;
+            return isInt;
         }
     }
 }
