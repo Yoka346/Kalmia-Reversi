@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 using Kalmia.Reversi;
 using Kalmia.GoTextProtocol;
@@ -15,18 +17,17 @@ namespace Kalmia.Engines
         readonly int THREAD_NUM;
         readonly Random[] RAND;
         ParallelOptions parallelOptions;
-        Board[] boards;
 
         public MonteCarloEngine(int playoutNum) :this(playoutNum, Environment.ProcessorCount){ }
 
         public MonteCarloEngine(int playoutNum, int threadNum)
         {
+            this.currrentBoard = new Board(Color.Black, InitialBoardState.Cross);
             this.PlayoutNum = playoutNum;
             this.THREAD_NUM = threadNum;
             this.parallelOptions = new ParallelOptions();
             this.RAND = new Random[this.THREAD_NUM];
             this.parallelOptions.MaxDegreeOfParallelism = this.THREAD_NUM;
-            this.boards = new Board[this.THREAD_NUM];
 
             var rand = new Random();
             for (var i = 0; i < this.RAND.Length; i++)
@@ -36,18 +37,13 @@ namespace Kalmia.Engines
         public void ClearBoard()
         {
             this.currrentBoard = new Board(Color.Black, InitialBoardState.Cross);
-            for (var i = 0; i < this.boards.Length; i++)
-                this.boards[i] = new Board(this.currrentBoard);
         }
 
         public Move GenerateMove(Color color)
         {
-            var moves = this.currrentBoard.GetNextMoves();
-            Parallel.For(0, moves.Length, i =>
-            {
-
-            });
-            throw new NotImplementedException();
+            var move = RegGenerateMove(color);
+            this.currrentBoard.Update(move);
+            return move;
         }
 
         public int GetBoardSize()
@@ -102,7 +98,10 @@ namespace Kalmia.Engines
 
         public bool Play(Move move)
         {
-            throw new NotImplementedException();
+            if (!this.currrentBoard.IsLegalMove(move))
+                return false;
+            this.currrentBoard.Update(move);
+            return true;
         }
 
         public void Quit()
@@ -112,7 +111,23 @@ namespace Kalmia.Engines
 
         public Move RegGenerateMove(Color color)
         {
-            throw new NotImplementedException();
+            var moves = this.currrentBoard.GetNextMoves();
+            if (moves.Length == 1)
+                return moves[0];
+
+            var moveValues = new double[moves.Length];
+            for (var i = 0; i < moves.Length; i++)
+            {
+                var board = new Board(this.currrentBoard);
+                board.Update(moves[i]);
+                moveValues[i] = Playout(board, color);
+            }
+
+            var maxIdx = 0;
+            for (var i = 0; i < moveValues.Length; i++)
+                if (moveValues[i] > moveValues[maxIdx])
+                    maxIdx = i;
+            return moves[maxIdx];
         }
 
         public void SendTimeLeft(int timeLeft, int byoYomiStonesLeft)
@@ -132,22 +147,59 @@ namespace Kalmia.Engines
 
         public string ShowBoard()
         {
-            throw new NotImplementedException();
+            return this.currrentBoard.ToString();
         }
 
         public bool Undo()
         {
-            throw new NotImplementedException();
+            return this.currrentBoard.Undo();
         }
 
-        double Playout(Board board)
+        double Playout(Board board, Color color)
         {
-            int moveNum;
-            while((moveNum = board.GetNextMovesNum()) != 0)
-            {
+            var boards = new Board[this.THREAD_NUM];
+            for (var i = 0; i < this.THREAD_NUM; i++)
+                boards[i] = new Board(Color.Black, InitialBoardState.Cross);
 
+            var sum = new double[this.THREAD_NUM];
+            Parallel.For(0, this.THREAD_NUM, (threadID) =>
+            {
+                var b = boards[threadID];
+                for (var i = 0; i < this.PlayoutNum / this.THREAD_NUM; i++)
+                {
+                    board.CopyTo(b);
+                    sum[threadID] += Simulate(b, color, threadID);
+                }
+            });
+
+            var b = boards[0];
+            for (var i = 0; i < this.PlayoutNum % this.THREAD_NUM; i++)
+            {
+                board.CopyTo(b);
+                sum[0] += Simulate(b, color, 0);
             }
-            throw new NotImplementedException();
+            return sum.Sum() / this.PlayoutNum;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        double Simulate(Board board, Color color, int threadID)
+        {
+            var rand = this.RAND[threadID];
+            int moveNum;
+            while ((moveNum = board.GetNextMovesNum()) != 0)
+                board.Update(board.GetNextMove(rand.Next(moveNum)));
+
+            switch (board.GetGameResult(color))
+            {
+                case GameResult.Win:
+                    return 1.0;
+
+                case GameResult.Lose:
+                    return 0.0;
+
+                default:
+                    return 0.5;
+            }
         }
     }
 }

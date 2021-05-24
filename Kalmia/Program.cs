@@ -11,7 +11,7 @@ namespace Kalmia
     {
         static void Main(string[] args)
         {
-            GTP.Mainloop(new RandomMoveEngine(), GTPCoordinateRule.Othello);
+            GTP.Mainloop(new MonteCarloEngine(1000, 8), GTPCoordinateRule.Othello);
         }
     }
 }

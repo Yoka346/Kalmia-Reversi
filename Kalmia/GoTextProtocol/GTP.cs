@@ -11,7 +11,7 @@ namespace Kalmia.GoTextProtocol
 {
     public enum GTPCoordinateRule
     {
-        Chess,  //  A B C D E F G H         GoGui's style
+        Chess,  //  A B C D E F G H         Chess style
                 // 8 . . . . . . . . 
                 // 7 . . . . . . . . 
                 // 6 . . . . . . . . 
@@ -21,7 +21,7 @@ namespace Kalmia.GoTextProtocol
                 // 2 . . . . . . . . 
                 // 1 . . . . . . . . 
 
-        Othello //   A B C D E F G H        The game of Othello(Japanese game almost same as Reversi) style
+        Othello //   A B C D E F G H        Othello(Japanese game almost same as Reversi) style
                 // 1 . . . . . . . . 
                 // 2 . . . . . . . . 
                 // 3 . . . . . . . . 

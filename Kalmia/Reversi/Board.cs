@@ -1,7 +1,9 @@
 ﻿#define DEBUG_AVX2
 //#define DEBUG_SSE  
 
+using System;
 using System.Text;
+using System.Collections.Generic;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.CompilerServices;
@@ -44,9 +46,8 @@ namespace Kalmia.Reversi
         ulong currentPlayerMobility;     // reuse the mobility in same turn.
         bool currentPlayerMobilityWasCalculated = false;
 
-        ulong[] currentPlayerBoardHistory = new ulong[BOARD_HISTORY_STACK_SIZE];
-        ulong[] opponentPlayerBoardHistory = new ulong[BOARD_HISTORY_STACK_SIZE];
-        int boardHistoryCount = 0;
+        Stack<ulong> currentPlayerBoardHistory = new Stack<ulong>(BOARD_HISTORY_STACK_SIZE);
+        Stack<ulong> opponentPlayerBoardHistory = new Stack<ulong>(BOARD_HISTORY_STACK_SIZE);
 
         public Color Turn { get; private set; }
 
@@ -81,6 +82,9 @@ namespace Kalmia.Reversi
             this.Turn = board.Turn;
             this.currentPlayerBoard = board.currentPlayerBoard;
             this.opponentPlayerBoard = board.opponentPlayerBoard;
+            this.currentPlayerMobility = board.currentPlayerMobility;
+            this.currentPlayerMobilityWasCalculated = board.currentPlayerMobilityWasCalculated;
+            this.currentPlayerBoardHistory = new Stack<ulong>(board.currentPlayerBoardHistory);
         }
 
         public int GetDiscCount(Color color)
@@ -158,7 +162,18 @@ namespace Kalmia.Reversi
             else
                 this.opponentPlayerBoard |= putPat;
             this.currentPlayerMobilityWasCalculated = false;
-            this.boardHistoryCount = 0;
+            this.currentPlayerBoardHistory.Clear();
+            this.opponentPlayerBoardHistory.Clear();
+        }
+
+        public void CopyTo(Board destBoard)
+        {
+            destBoard.Turn = this.Turn;
+            destBoard.currentPlayerBoard = this.currentPlayerBoard;
+            destBoard.opponentPlayerBoard = this.opponentPlayerBoard;
+            destBoard.currentPlayerMobility = this.currentPlayerMobility;
+            destBoard.currentPlayerMobilityWasCalculated = this.currentPlayerMobilityWasCalculated;
+            destBoard.currentPlayerBoardHistory = new Stack<ulong>(this.currentPlayerBoardHistory);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -172,19 +187,17 @@ namespace Kalmia.Reversi
                 this.currentPlayerBoard |= (flipped | x);
             }
             SwitchTurn();
-            this.currentPlayerBoardHistory[boardHistoryCount] = this.currentPlayerBoard;
-            this.opponentPlayerBoardHistory[boardHistoryCount] = this.opponentPlayerBoard;
-            boardHistoryCount++;
+            this.currentPlayerBoardHistory.Push(this.currentPlayerBoard);
+            this.opponentPlayerBoardHistory.Push(this.opponentPlayerBoard);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Undo()
         {
-            if (boardHistoryCount == 0)
+            if (this.currentPlayerBoardHistory.Count == 0)
                 return false;
-            boardHistoryCount--;
-            this.currentPlayerBoard = this.currentPlayerBoardHistory[boardHistoryCount];
-            this.opponentPlayerBoard = this.opponentPlayerBoardHistory[boardHistoryCount];
+            this.currentPlayerBoard = this.currentPlayerBoardHistory.Pop();
+            this.opponentPlayerBoard = this.opponentPlayerBoardHistory.Pop();
             return true;
         }
 
