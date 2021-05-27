@@ -1,0 +1,1245 @@
+Ellapsed: 633ms
+[ROOT_EVAL]
+Move: E6
+Rate: NaN%
+WinRate: 50.345467%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: F4
+Rate: 0%
+WinRate: 47.46474%
+SimulationCount: 14180
+
+Move: D6
+Rate: 0%
+WinRate: 50.685417%
+SimulationCount: 233435
+
+Move: F6
+Rate: 0%
+WinRate: 49.813496%
+SimulationCount: 72385
+
+Ellapsed: 616ms
+[ROOT_EVAL]
+Move: C3
+Rate: NaN%
+WinRate: 49.61203%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: D3
+Rate: 0%
+WinRate: 47.823315%
+SimulationCount: 21156
+
+Move: F3
+Rate: 0%
+WinRate: 50.294876%
+SimulationCount: 242477
+
+Move: F4
+Rate: 0%
+WinRate: 45.626583%
+SimulationCount: 7900
+
+Move: F5
+Rate: 0%
+WinRate: 46.10155%
+SimulationCount: 9414
+
+Move: F6
+Rate: 0%
+WinRate: 44.1665%
+SimulationCount: 4997
+
+Move: F7
+Rate: 0%
+WinRate: 48.55532%
+SimulationCount: 34056
+
+Ellapsed: 490ms
+[ROOT_EVAL]
+Move: F4
+Rate: NaN%
+WinRate: 50.169373%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: D3
+Rate: 0%
+WinRate: 50.14767%
+SimulationCount: 72798
+
+Move: G3
+Rate: 0%
+WinRate: 50.73983%
+SimulationCount: 157807
+
+Move: F5
+Rate: 0%
+WinRate: 49.265663%
+SimulationCount: 33704
+
+Move: F6
+Rate: 0%
+WinRate: 47.410126%
+SimulationCount: 11989
+
+Move: F7
+Rate: 0%
+WinRate: 49.59956%
+SimulationCount: 43702
+
+Ellapsed: 523ms
+[ROOT_EVAL]
+Move: C4
+Rate: NaN%
+WinRate: 52.499996%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: B2
+Rate: 0%
+WinRate: 44.27313%
+SimulationCount: 2270
+
+Move: D3
+Rate: 0%
+WinRate: 53.06212%
+SimulationCount: 81202
+
+Move: E3
+Rate: 0%
+WinRate: 51.45358%
+SimulationCount: 22221
+
+Move: B4
+Rate: 0%
+WinRate: 53.00469%
+SimulationCount: 76181
+
+Move: C5
+Rate: 0%
+WinRate: 52.05271%
+SimulationCount: 32859
+
+Move: C6
+Rate: 0%
+WinRate: 52.77114%
+SimulationCount: 59849
+
+Move: F6
+Rate: 0%
+WinRate: 50.79837%
+SimulationCount: 15469
+
+Move: E7
+Rate: 0%
+WinRate: 51.91993%
+SimulationCount: 29949
+
+Ellapsed: 477ms
+[ROOT_EVAL]
+Move: E3
+Rate: NaN%
+WinRate: 56.566406%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: B2
+Rate: 0%
+WinRate: 44.676258%
+SimulationCount: 1390
+
+Move: D2
+Rate: 0%
+WinRate: 50.102146%
+SimulationCount: 3916
+
+Move: E2
+Rate: 0%
+WinRate: 50.291687%
+SimulationCount: 4114
+
+Move: F2
+Rate: 0%
+WinRate: 51.840252%
+SimulationCount: 6385
+
+Move: B3
+Rate: 0%
+WinRate: 57.24164%
+SimulationCount: 289106
+
+Move: B4
+Rate: 0%
+WinRate: 51.520126%
+SimulationCount: 5789
+
+Move: F6
+Rate: 0%
+WinRate: 46.31579%
+SimulationCount: 1805
+
+Move: E7
+Rate: 0%
+WinRate: 50.444134%
+SimulationCount: 4278
+
+Move: F7
+Rate: 0%
+WinRate: 49.269505%
+SimulationCount: 3217
+
+Ellapsed: 475ms
+[ROOT_EVAL]
+Move: G2
+Rate: NaN%
+WinRate: 73.48828%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: G1
+Rate: 0%
+WinRate: 37.704918%
+SimulationCount: 183
+
+Move: H1
+Rate: 0%
+WinRate: 73.734924%
+SimulationCount: 315021
+
+Move: F2
+Rate: 0%
+WinRate: 62.2093%
+SimulationCount: 1634
+
+Move: F5
+Rate: 0%
+WinRate: 54.96183%
+SimulationCount: 655
+
+Move: F6
+Rate: 0%
+WinRate: 55.56358%
+SimulationCount: 692
+
+Move: E7
+Rate: 0%
+WinRate: 57.220215%
+SimulationCount: 831
+
+Move: F7
+Rate: 0%
+WinRate: 58.587395%
+SimulationCount: 984
+
+Ellapsed: 418ms
+[ROOT_EVAL]
+Move: E2
+Rate: NaN%
+WinRate: 73.907974%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: D1
+Rate: 0%
+WinRate: 71.96952%
+SimulationCount: 17258
+
+Move: F1
+Rate: 0%
+WinRate: 69.50071%
+SimulationCount: 6369
+
+Move: D2
+Rate: 0%
+WinRate: 73.094345%
+SimulationCount: 34660
+
+Move: F2
+Rate: 0%
+WinRate: 74.738976%
+SimulationCount: 223922
+
+Move: F5
+Rate: 0%
+WinRate: 70.73282%
+SimulationCount: 9866
+
+Move: F6
+Rate: 0%
+WinRate: 72.01773%
+SimulationCount: 17713
+
+Move: F7
+Rate: 0%
+WinRate: 70.81864%
+SimulationCount: 10212
+
+Ellapsed: 385ms
+[ROOT_EVAL]
+Move: B2
+Rate: NaN%
+WinRate: 81.59906%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: B1
+Rate: 0%
+WinRate: 51.532566%
+SimulationCount: 261
+
+Move: D1
+Rate: 0%
+WinRate: 73.98383%
+SimulationCount: 4207
+
+Move: E1
+Rate: 0%
+WinRate: 77.29652%
+SimulationCount: 13564
+
+Move: F1
+Rate: 0%
+WinRate: 69.06005%
+SimulationCount: 1532
+
+Move: C2
+Rate: 0%
+WinRate: 83.70182%
+SimulationCount: 217377
+
+Move: D2
+Rate: 0%
+WinRate: 75.622284%
+SimulationCount: 6910
+
+Move: C5
+Rate: 0%
+WinRate: 78.09496%
+SimulationCount: 20808
+
+Move: F5
+Rate: 0%
+WinRate: 78.04523%
+SimulationCount: 20253
+
+Move: F6
+Rate: 0%
+WinRate: 77.87275%
+SimulationCount: 18310
+
+Move: E7
+Rate: 0%
+WinRate: 77.366066%
+SimulationCount: 14074
+
+Move: F7
+Rate: 0%
+WinRate: 72.11539%
+SimulationCount: 2704
+
+Ellapsed: 486ms
+[ROOT_EVAL]
+Move: D2
+Rate: NaN%
+WinRate: 87.12937%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: A1
+Rate: 0%
+WinRate: 87.63867%
+SimulationCount: 308110
+
+Move: B1
+Rate: 0%
+WinRate: 46.42857%
+SimulationCount: 140
+
+Move: C1
+Rate: 0%
+WinRate: 72.94289%
+SimulationCount: 1033
+
+Move: D1
+Rate: 0%
+WinRate: 75.50607%
+SimulationCount: 1482
+
+Move: E1
+Rate: 0%
+WinRate: 74.24735%
+SimulationCount: 1229
+
+Move: F1
+Rate: 0%
+WinRate: 68.48%
+SimulationCount: 625
+
+Move: A2
+Rate: 0%
+WinRate: 57.086617%
+SimulationCount: 254
+
+Move: C5
+Rate: 0%
+WinRate: 76.497696%
+SimulationCount: 1736
+
+Move: F5
+Rate: 0%
+WinRate: 76.13219%
+SimulationCount: 1634
+
+Move: F6
+Rate: 0%
+WinRate: 75.58217%
+SimulationCount: 1503
+
+Move: E7
+Rate: 0%
+WinRate: 74.31782%
+SimulationCount: 1246
+
+Move: F7
+Rate: 0%
+WinRate: 72.76786%
+SimulationCount: 1008
+
+Ellapsed: 370ms
+[ROOT_EVAL]
+Move: C6
+Rate: NaN%
+WinRate: 86.61094%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: C1
+Rate: 0%
+WinRate: 84.49324%
+SimulationCount: 11179
+
+Move: D1
+Rate: 0%
+WinRate: 87.530365%
+SimulationCount: 84806
+
+Move: E1
+Rate: 0%
+WinRate: 86.428345%
+SimulationCount: 31820
+
+Move: F1
+Rate: 0%
+WinRate: 82.81711%
+SimulationCount: 6102
+
+Move: C5
+Rate: 0%
+WinRate: 86.06996%
+SimulationCount: 25043
+
+Move: F6
+Rate: 0%
+WinRate: 86.37344%
+SimulationCount: 30602
+
+Move: B7
+Rate: 0%
+WinRate: 84.28237%
+SimulationCount: 10256
+
+Move: C7
+Rate: 0%
+WinRate: 86.75865%
+SimulationCount: 40838
+
+Move: E7
+Rate: 0%
+WinRate: 87.122%
+SimulationCount: 56018
+
+Move: F7
+Rate: 0%
+WinRate: 85.95518%
+SimulationCount: 23336
+
+Ellapsed: 408ms
+[ROOT_EVAL]
+Move: H2
+Rate: NaN%
+WinRate: 88.11516%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: C1
+Rate: 0%
+WinRate: 82.12044%
+SimulationCount: 3504
+
+Move: E1
+Rate: 0%
+WinRate: 85.92039%
+SimulationCount: 11506
+
+Move: F1
+Rate: 0%
+WinRate: 76.50317%
+SimulationCount: 1264
+
+Move: G1
+Rate: 0%
+WinRate: 89.52846%
+SimulationCount: 216673
+
+Move: H3
+Rate: 0%
+WinRate: 85.70615%
+SimulationCount: 10529
+
+Move: G4
+Rate: 0%
+WinRate: 86.31299%
+SimulationCount: 13732
+
+Move: C5
+Rate: 0%
+WinRate: 85.10231%
+SimulationCount: 8357
+
+Move: F5
+Rate: 0%
+WinRate: 85.25815%
+SimulationCount: 8832
+
+Move: G5
+Rate: 0%
+WinRate: 85.02406%
+SimulationCount: 8103
+
+Move: F6
+Rate: 0%
+WinRate: 85.555664%
+SimulationCount: 9907
+
+Move: B7
+Rate: 0%
+WinRate: 80.83176%
+SimulationCount: 2645
+
+Move: D7
+Rate: 0%
+WinRate: 85.512825%
+SimulationCount: 9750
+
+Move: E7
+Rate: 0%
+WinRate: 85.095%
+SimulationCount: 8316
+
+Move: F7
+Rate: 0%
+WinRate: 84.539375%
+SimulationCount: 6882
+
+Ellapsed: 336ms
+[ROOT_EVAL]
+Move: B4
+Rate: NaN%
+WinRate: 89.16047%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: C1
+Rate: 0%
+WinRate: 84.96209%
+SimulationCount: 4748
+
+Move: E1
+Rate: 0%
+WinRate: 83.30684%
+SimulationCount: 3145
+
+Move: H3
+Rate: 0%
+WinRate: 90.401535%
+SimulationCount: 71824
+
+Move: G4
+Rate: 0%
+WinRate: 89.83789%
+SimulationCount: 43057
+
+Move: H4
+Rate: 0%
+WinRate: 88.11467%
+SimulationCount: 14703
+
+Move: B5
+Rate: 0%
+WinRate: 89.37265%
+SimulationCount: 30318
+
+Move: C5
+Rate: 0%
+WinRate: 88.82559%
+SimulationCount: 21415
+
+Move: F5
+Rate: 0%
+WinRate: 88.501564%
+SimulationCount: 17872
+
+Move: G5
+Rate: 0%
+WinRate: 88.90105%
+SimulationCount: 22394
+
+Move: F6
+Rate: 0%
+WinRate: 88.87249%
+SimulationCount: 22013
+
+Move: B7
+Rate: 0%
+WinRate: 84.8037%
+SimulationCount: 4534
+
+Move: D7
+Rate: 0%
+WinRate: 89.23216%
+SimulationCount: 27545
+
+Move: E7
+Rate: 0%
+WinRate: 88.840256%
+SimulationCount: 21591
+
+Move: F7
+Rate: 0%
+WinRate: 88.134224%
+SimulationCount: 14841
+
+Ellapsed: 320ms
+[ROOT_EVAL]
+Move: F1
+Rate: NaN%
+WinRate: 95.14219%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: C1
+Rate: 0%
+WinRate: 79.62057%
+SimulationCount: 817
+
+Move: E1
+Rate: 0%
+WinRate: 96.21306%
+SimulationCount: 265346
+
+Move: G4
+Rate: 0%
+WinRate: 86.60596%
+SimulationCount: 2251
+
+Move: B5
+Rate: 0%
+WinRate: 91.103806%
+SimulationCount: 6840
+
+Move: C5
+Rate: 0%
+WinRate: 89.538925%
+SimulationCount: 4316
+
+Move: F5
+Rate: 0%
+WinRate: 88.21178%
+SimulationCount: 3126
+
+Move: G5
+Rate: 0%
+WinRate: 90.13586%
+SimulationCount: 5079
+
+Move: F6
+Rate: 0%
+WinRate: 89.755615%
+SimulationCount: 4583
+
+Move: B7
+Rate: 0%
+WinRate: 91.27818%
+SimulationCount: 7229
+
+Move: C7
+Rate: 0%
+WinRate: 91.218414%
+SimulationCount: 7083
+
+Move: D7
+Rate: 0%
+WinRate: 88.84922%
+SimulationCount: 3641
+
+Move: E7
+Rate: 0%
+WinRate: 90.44025%
+SimulationCount: 5565
+
+Move: F7
+Rate: 0%
+WinRate: 89.354996%
+SimulationCount: 4124
+
+Ellapsed: 301ms
+[ROOT_EVAL]
+Move: B1
+Rate: NaN%
+WinRate: 96.699844%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: C1
+Rate: 0%
+WinRate: 98.2967%
+SimulationCount: 116685
+
+Move: A2
+Rate: 0%
+WinRate: 93.72015%
+SimulationCount: 6911
+
+Move: A3
+Rate: 0%
+WinRate: 97.28371%
+SimulationCount: 40975
+
+Move: A4
+Rate: 0%
+WinRate: 94.48611%
+SimulationCount: 9068
+
+Move: G4
+Rate: 0%
+WinRate: 94.81956%
+SimulationCount: 10308
+
+Move: A5
+Rate: 0%
+WinRate: 93.01697%
+SimulationCount: 5542
+
+Move: B5
+Rate: 0%
+WinRate: 94.4593%
+SimulationCount: 8979
+
+Move: C5
+Rate: 0%
+WinRate: 94.86106%
+SimulationCount: 10508
+
+Move: F5
+Rate: 0%
+WinRate: 94.95551%
+SimulationCount: 10903
+
+Move: G5
+Rate: 0%
+WinRate: 95.579865%
+SimulationCount: 14400
+
+Move: F6
+Rate: 0%
+WinRate: 97.00658%
+SimulationCount: 33156
+
+Move: B7
+Rate: 0%
+WinRate: 96.17426%
+SimulationCount: 19591
+
+Move: C7
+Rate: 0%
+WinRate: 95.55118%
+SimulationCount: 14206
+
+Move: D7
+Rate: 0%
+WinRate: 93.60421%
+SimulationCount: 6645
+
+Move: E7
+Rate: 0%
+WinRate: 95.19921%
+SimulationCount: 12123
+
+Ellapsed: 303ms
+[ROOT_EVAL]
+Move: G4
+Rate: NaN%
+WinRate: 98.444374%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: A2
+Rate: 0%
+WinRate: 99.29683%
+SimulationCount: 40246
+
+Move: A3
+Rate: 0%
+WinRate: 98.786545%
+SimulationCount: 27772
+
+Move: A4
+Rate: 0%
+WinRate: 98.61313%
+SimulationCount: 24804
+
+Move: H4
+Rate: 0%
+WinRate: 97.46477%
+SimulationCount: 13411
+
+Move: A5
+Rate: 0%
+WinRate: 97.74842%
+SimulationCount: 15367
+
+Move: B5
+Rate: 0%
+WinRate: 98.178276%
+SimulationCount: 19240
+
+Move: C5
+Rate: 0%
+WinRate: 96.91346%
+SimulationCount: 10562
+
+Move: F5
+Rate: 0%
+WinRate: 96.61414%
+SimulationCount: 9392
+
+Move: G5
+Rate: 0%
+WinRate: 99.38505%
+SimulationCount: 43174
+
+Move: H5
+Rate: 0%
+WinRate: 98.01871%
+SimulationCount: 17640
+
+Move: F6
+Rate: 0%
+WinRate: 98.16232%
+SimulationCount: 19073
+
+Move: B7
+Rate: 0%
+WinRate: 98.892395%
+SimulationCount: 29794
+
+Move: C7
+Rate: 0%
+WinRate: 97.444954%
+SimulationCount: 13307
+
+Move: D7
+Rate: 0%
+WinRate: 97.844025%
+SimulationCount: 16118
+
+Move: E7
+Rate: 0%
+WinRate: 98.25622%
+SimulationCount: 20100
+
+Ellapsed: 279ms
+[ROOT_EVAL]
+Move: H5
+Rate: NaN%
+WinRate: 99.29297%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: A2
+Rate: 0%
+WinRate: 99.64647%
+SimulationCount: 31256
+
+Move: A3
+Rate: 0%
+WinRate: 98.97099%
+SimulationCount: 20408
+
+Move: A4
+Rate: 0%
+WinRate: 99.44035%
+SimulationCount: 27160
+
+Move: H4
+Rate: 0%
+WinRate: 99.55985%
+SimulationCount: 29422
+
+Move: A5
+Rate: 0%
+WinRate: 98.99012%
+SimulationCount: 20646
+
+Move: B5
+Rate: 0%
+WinRate: 99.14034%
+SimulationCount: 22509
+
+Move: C5
+Rate: 0%
+WinRate: 99.27245%
+SimulationCount: 24397
+
+Move: F5
+Rate: 0%
+WinRate: 99.510025%
+SimulationCount: 28471
+
+Move: F6
+Rate: 0%
+WinRate: 99.30887%
+SimulationCount: 24959
+
+Move: B7
+Rate: 0%
+WinRate: 99.061646%
+SimulationCount: 21527
+
+Move: C7
+Rate: 0%
+WinRate: 99.18816%
+SimulationCount: 23219
+
+Move: D7
+Rate: 0%
+WinRate: 99.12182%
+SimulationCount: 22262
+
+Move: E7
+Rate: 0%
+WinRate: 99.22993%
+SimulationCount: 23764
+
+Ellapsed: 279ms
+[ROOT_EVAL]
+Move: G6
+Rate: NaN%
+WinRate: 99.57015%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: A3
+Rate: 0%
+WinRate: 99.93263%
+SimulationCount: 26721
+
+Move: A4
+Rate: 0%
+WinRate: 99.40338%
+SimulationCount: 19443
+
+Move: H4
+Rate: 0%
+WinRate: 99.671844%
+SimulationCount: 22703
+
+Move: A5
+Rate: 0%
+WinRate: 99.4336%
+SimulationCount: 19774
+
+Move: B5
+Rate: 0%
+WinRate: 99.67458%
+SimulationCount: 22740
+
+Move: C5
+Rate: 0%
+WinRate: 99.36808%
+SimulationCount: 19069
+
+Move: F5
+Rate: 0%
+WinRate: 99.42613%
+SimulationCount: 19691
+
+Move: F6
+Rate: 0%
+WinRate: 99.28868%
+SimulationCount: 18276
+
+Move: H6
+Rate: 0%
+WinRate: 99.75993%
+SimulationCount: 23952
+
+Move: B7
+Rate: 0%
+WinRate: 99.64983%
+SimulationCount: 22418
+
+Move: C7
+Rate: 0%
+WinRate: 99.51786%
+SimulationCount: 20741
+
+Move: D7
+Rate: 0%
+WinRate: 99.5569%
+SimulationCount: 21214
+
+Move: E7
+Rate: 0%
+WinRate: 99.55372%
+SimulationCount: 21175
+
+Move: F7
+Rate: 0%
+WinRate: 99.51571%
+SimulationCount: 20752
+
+Move: G7
+Rate: 0%
+WinRate: 99.56636%
+SimulationCount: 21331
+
+Ellapsed: 285ms
+[ROOT_EVAL]
+Move: F5
+Rate: NaN%
+WinRate: 99.903595%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: A5
+Rate: 0%
+WinRate: 99.973145%
+SimulationCount: 27924
+
+Move: B5
+Rate: 0%
+WinRate: 99.95655%
+SimulationCount: 27618
+
+Move: C5
+Rate: 0%
+WinRate: 99.92612%
+SimulationCount: 27070
+
+Move: F6
+Rate: 0%
+WinRate: 99.93192%
+SimulationCount: 27173
+
+Move: H6
+Rate: 0%
+WinRate: 99.9822%
+SimulationCount: 28093
+
+Move: B7
+Rate: 0%
+WinRate: 99.90045%
+SimulationCount: 26621
+
+Move: C7
+Rate: 0%
+WinRate: 99.90045%
+SimulationCount: 26621
+
+Move: D7
+Rate: 0%
+WinRate: 99.84636%
+SimulationCount: 25709
+
+Move: E7
+Rate: 0%
+WinRate: 99.882164%
+SimulationCount: 26307
+
+Move: F7
+Rate: 0%
+WinRate: 99.89238%
+SimulationCount: 26482
+
+Move: G7
+Rate: 0%
+WinRate: 99.906456%
+SimulationCount: 26725
+
+Move: H7
+Rate: 0%
+WinRate: 99.71045%
+SimulationCount: 23657
+
+Ellapsed: 211ms
+[ROOT_EVAL]
+Move: H7
+Rate: NaN%
+WinRate: 99.98531%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: A4
+Rate: 0%
+WinRate: 99.99441%
+SimulationCount: 26825
+
+Move: H4
+Rate: 0%
+WinRate: 99.97739%
+SimulationCount: 26530
+
+Move: A5
+Rate: 0%
+WinRate: 99.99441%
+SimulationCount: 26825
+
+Move: B5
+Rate: 0%
+WinRate: 99.99814%
+SimulationCount: 26891
+
+Move: C5
+Rate: 0%
+WinRate: 99.99254%
+SimulationCount: 26792
+
+Move: F6
+Rate: 0%
+WinRate: 99.9831%
+SimulationCount: 26629
+
+Move: B7
+Rate: 0%
+WinRate: 99.9831%
+SimulationCount: 26629
+
+Move: C7
+Rate: 0%
+WinRate: 99.99066%
+SimulationCount: 26760
+
+Move: D7
+Rate: 0%
+WinRate: 99.969696%
+SimulationCount: 26398
+
+Move: E7
+Rate: 0%
+WinRate: 99.97162%
+SimulationCount: 26431
+
+Move: F7
+Rate: 0%
+WinRate: 99.985%
+SimulationCount: 26661
+
+Move: G7
+Rate: 0%
+WinRate: 99.9831%
+SimulationCount: 26629
+
+Ellapsed: 223ms
+[ROOT_EVAL]
+Move: A4
+Rate: NaN%
+WinRate: 99.99563%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: H4
+Rate: 0%
+WinRate: 100%
+SimulationCount: 26743
+
+Move: A5
+Rate: 0%
+WinRate: 99.996254%
+SimulationCount: 26678
+
+Move: C5
+Rate: 0%
+WinRate: 99.996254%
+SimulationCount: 26678
+
+Move: A6
+Rate: 0%
+WinRate: 99.9887%
+SimulationCount: 26547
+
+Move: B6
+Rate: 0%
+WinRate: 99.992485%
+SimulationCount: 26612
+
+Move: F6
+Rate: 0%
+WinRate: 99.996254%
+SimulationCount: 26678
+
+Move: B7
+Rate: 0%
+WinRate: 99.99437%
+SimulationCount: 26645
+
+Move: C7
+Rate: 0%
+WinRate: 99.996254%
+SimulationCount: 26677
+
+Move: D7
+Rate: 0%
+WinRate: 99.99437%
+SimulationCount: 26645
+
+Move: E7
+Rate: 0%
+WinRate: 100%
+SimulationCount: 26743
+
+Move: F7
+Rate: 0%
+WinRate: 99.996254%
+SimulationCount: 26677
+
+Move: G7
+Rate: 0%
+WinRate: 99.996254%
+SimulationCount: 26677
+

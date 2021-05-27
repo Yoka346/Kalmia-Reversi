@@ -66,11 +66,11 @@ namespace GTPGameServer
         static void ShowTotalResult(TotalGameResult result)
         {
             Console.WriteLine($"\n***Final Result***" +
-                              $"\nBlack wins {result.BlackWinCount}times." +
-                              $"\nWhite wins {result.WhiteWinCount}times." +
+                              $"\n{BlackPlayer.Name} wins {result.BlackWinCount}times." +
+                              $"\n{WhitePlayer.Name} wins {result.WhiteWinCount}times." +
                               $"\nGame was drawn {result.DrawCount}times.\n" +
-                              $"\nBlack player's win rate = {(result.BlackWinCount + result.DrawCount * 0.5) * 100.0 / result.GameNum}%" +
-                              $"\nWhite player's win rate = {(result.WhiteWinCount + result.DrawCount * 0.5) * 100.0 / result.GameNum}%");
+                              $"\n{BlackPlayer.Name}'s win rate = {(result.BlackWinCount + result.DrawCount * 0.5) * 100.0 / result.GameNum}%" +
+                              $"\n{WhitePlayer.Name}'s win rate = {(result.WhiteWinCount + result.DrawCount * 0.5) * 100.0 / result.GameNum}%");
         }
 
         static void Game_GameStarted(GameStartedEventArgs e)

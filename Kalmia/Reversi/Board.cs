@@ -3,6 +3,7 @@
 
 using System;
 using System.Text;
+using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -79,12 +80,7 @@ namespace Kalmia.Reversi
 
         public Board(Board board)
         {
-            this.Turn = board.Turn;
-            this.currentPlayerBoard = board.currentPlayerBoard;
-            this.opponentPlayerBoard = board.opponentPlayerBoard;
-            this.currentPlayerMobility = board.currentPlayerMobility;
-            this.currentPlayerMobilityWasCalculated = board.currentPlayerMobilityWasCalculated;
-            this.currentPlayerBoardHistory = new Stack<ulong>(board.currentPlayerBoardHistory);
+            board.CopyTo(this);
         }
 
         public int GetDiscCount(Color color)
@@ -166,19 +162,38 @@ namespace Kalmia.Reversi
             this.opponentPlayerBoardHistory.Clear();
         }
 
-        public void CopyTo(Board destBoard)
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Board))
+                return false;
+            var board = (Board)obj;
+            return board.Turn == this.Turn && board.currentPlayerBoard == this.currentPlayerBoard && board.opponentPlayerBoard == this.opponentPlayerBoard;
+        }
+
+        public void CopyTo(Board destBoard, bool copyHistory = true)
         {
             destBoard.Turn = this.Turn;
             destBoard.currentPlayerBoard = this.currentPlayerBoard;
             destBoard.opponentPlayerBoard = this.opponentPlayerBoard;
             destBoard.currentPlayerMobility = this.currentPlayerMobility;
             destBoard.currentPlayerMobilityWasCalculated = this.currentPlayerMobilityWasCalculated;
-            destBoard.currentPlayerBoardHistory = new Stack<ulong>(this.currentPlayerBoardHistory);
+            if (copyHistory)
+            {
+                destBoard.currentPlayerBoardHistory = this.currentPlayerBoardHistory.Copy(BOARD_HISTORY_STACK_SIZE);
+                destBoard.opponentPlayerBoardHistory = this.opponentPlayerBoardHistory.Copy(BOARD_HISTORY_STACK_SIZE);
+            }
+            else
+            {
+                destBoard.currentPlayerBoardHistory.Clear();
+                destBoard.opponentPlayerBoardHistory.Clear();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update(Move move)
         {
+            this.currentPlayerBoardHistory.Push(this.currentPlayerBoard);
+            this.opponentPlayerBoardHistory.Push(this.opponentPlayerBoard);
             if (move.Pos != Move.PASS)
             {
                 var x = 1UL << move.Pos;
@@ -187,8 +202,6 @@ namespace Kalmia.Reversi
                 this.currentPlayerBoard |= (flipped | x);
             }
             SwitchTurn();
-            this.currentPlayerBoardHistory.Push(this.currentPlayerBoard);
-            this.opponentPlayerBoardHistory.Push(this.opponentPlayerBoard);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -196,8 +209,10 @@ namespace Kalmia.Reversi
         {
             if (this.currentPlayerBoardHistory.Count == 0)
                 return false;
+            this.SwitchTurn();
             this.currentPlayerBoard = this.currentPlayerBoardHistory.Pop();
             this.opponentPlayerBoard = this.opponentPlayerBoardHistory.Pop();
+            this.currentPlayerMobilityWasCalculated = false;
             return true;
         }
 
@@ -222,11 +237,29 @@ namespace Kalmia.Reversi
                 return 1;   // pass
         }
 
-        public Move[] GetNextMoves()
+        public IEnumerable<Move> GetNextMoves()
         {
-            var moves = new Move[GetNextMovesNum()];
-            GetNextMoves(moves);
-            return moves;
+            var mobility = CalculateCurrentPlayerMobility();
+            var moveNum = (int)BitManipulations.PopCount(mobility);
+            if (moveNum == 0)
+            {
+                if (BitManipulations.PopCount(CalculateMobility(this.opponentPlayerBoard, this.currentPlayerBoard)) != 0)
+                    yield return new Move(this.Turn, Move.PASS);
+            }
+            else
+            {
+                var mask = 1UL;
+                var count = 0;
+                for (var i = 0; count < moveNum; i++)
+                {
+                    if ((mobility & mask) != 0)
+                    {
+                        yield return new Move(this.Turn, i);
+                        count++;
+                    }
+                    mask <<= 1;
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

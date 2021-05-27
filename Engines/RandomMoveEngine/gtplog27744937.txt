@@ -1,0 +1,5 @@
+[2021/05/27 16:35:08] Input: 0 clear_board 
+[2021/05/27 16:35:08] Status: Success  Output: 0 
+[2021/05/27 16:35:08] Input: 1 play b F5 
+[2021/05/27 16:35:08] Status: Success  Output: 1 
+[2021/05/27 16:35:08] Input: 2 genmove w 

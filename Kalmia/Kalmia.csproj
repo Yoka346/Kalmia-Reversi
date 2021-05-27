@@ -22,8 +22,4 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="MCTS\" />
-  </ItemGroup>
-
 </Project>

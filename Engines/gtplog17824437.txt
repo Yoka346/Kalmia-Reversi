@@ -1,0 +1,1252 @@
+[2021/05/27 13:49:48] Input: 0 clear_board 
+[2021/05/27 13:49:48] Status: Success  Output: 0 
+[2021/05/27 13:49:48] Input: 1 play b F5 
+[2021/05/27 13:49:48] Status: Success  Output: 1 
+[2021/05/27 13:49:48] Input: 2 genmove w 
+[2021/05/27 13:49:48] Status: Success  Output: 2 D6
+[2021/05/27 13:49:49] Input: 3 play b C3 
+[2021/05/27 13:49:49] Status: Success  Output: 3 
+[2021/05/27 13:49:49] Input: 4 genmove w 
+[2021/05/27 13:49:49] Status: Success  Output: 4 F3
+[2021/05/27 13:49:49] Input: 5 play b F4 
+[2021/05/27 13:49:49] Status: Success  Output: 5 
+[2021/05/27 13:49:49] Input: 6 genmove w 
+[2021/05/27 13:49:50] Status: Success  Output: 6 G3
+[2021/05/27 13:49:50] Input: 7 play b F2 
+[2021/05/27 13:49:50] Status: Success  Output: 7 
+[2021/05/27 13:49:50] Input: 8 genmove w 
+[2021/05/27 13:49:51] Status: Success  Output: 8 E3
+[2021/05/27 13:49:51] Input: 9 play b H4 
+[2021/05/27 13:49:51] Status: Success  Output: 9 
+[2021/05/27 13:49:51] Input: 10 genmove w 
+[2021/05/27 13:49:51] Status: Success  Output: 10 H3
+[2021/05/27 13:49:51] Input: 11 play b D7 
+[2021/05/27 13:49:51] Status: Success  Output: 11 
+[2021/05/27 13:49:51] Input: 12 genmove w 
+[2021/05/27 13:49:52] Status: Success  Output: 12 H5
+[2021/05/27 13:49:52] Input: 13 play b G2 
+[2021/05/27 13:49:52] Status: Success  Output: 13 
+[2021/05/27 13:49:52] Input: 14 genmove w 
+[2021/05/27 13:49:52] Status: Success  Output: 14 C5
+[2021/05/27 13:49:52] Input: 15 play b C6 
+[2021/05/27 13:49:52] Status: Success  Output: 15 
+[2021/05/27 13:49:52] Input: 16 genmove w 
+[2021/05/27 13:49:53] Status: Success  Output: 16 C7
+[2021/05/27 13:49:53] Input: 17 play b B7 
+[2021/05/27 13:49:53] Status: Success  Output: 17 
+[2021/05/27 13:49:53] Input: 18 genmove w 
+[2021/05/27 13:49:53] Status: Success  Output: 18 G4
+[2021/05/27 13:49:53] Input: 19 play b D3 
+[2021/05/27 13:49:53] Status: Success  Output: 19 
+[2021/05/27 13:49:53] Input: 20 genmove w 
+[2021/05/27 13:49:54] Status: Success  Output: 20 B3
+[2021/05/27 13:49:54] Input: 21 play b G5 
+[2021/05/27 13:49:54] Status: Success  Output: 21 
+[2021/05/27 13:49:54] Input: 22 genmove w 
+[2021/05/27 13:49:54] Status: Success  Output: 22 H1
+[2021/05/27 13:49:55] Input: 23 play b H2 
+[2021/05/27 13:49:55] Status: Success  Output: 23 
+[2021/05/27 13:49:55] Input: 24 genmove w 
+[2021/05/27 13:49:55] Status: Success  Output: 24 A8
+[2021/05/27 13:49:55] Input: 25 play b D2 
+[2021/05/27 13:49:55] Status: Success  Output: 25 
+[2021/05/27 13:49:55] Input: 26 genmove w 
+[2021/05/27 13:49:56] Status: Success  Output: 26 G1
+[2021/05/27 13:49:56] Input: 27 play b E2 
+[2021/05/27 13:49:56] Status: Success  Output: 27 
+[2021/05/27 13:49:56] Input: 28 genmove w 
+[2021/05/27 13:49:56] Status: Success  Output: 28 F1
+[2021/05/27 13:49:56] Input: 29 play b A3 
+[2021/05/27 13:49:56] Status: Success  Output: 29 
+[2021/05/27 13:49:56] Input: 30 genmove w 
+[2021/05/27 13:49:56] Status: Success  Output: 30 E1
+[2021/05/27 13:49:56] Input: 31 play b C4 
+[2021/05/27 13:49:56] Status: Success  Output: 31 
+[2021/05/27 13:49:56] Input: 32 genmove w 
+[2021/05/27 13:49:57] Status: Success  Output: 32 B8
+[2021/05/27 13:49:57] Input: 33 play b F6 
+[2021/05/27 13:49:57] Status: Success  Output: 33 
+[2021/05/27 13:49:57] Input: 34 genmove w 
+[2021/05/27 13:49:57] Status: Success  Output: 34 G6
+[2021/05/27 13:49:57] Input: 35 play b E7 
+[2021/05/27 13:49:57] Status: Success  Output: 35 
+[2021/05/27 13:49:57] Input: 36 genmove w 
+[2021/05/27 13:49:57] Status: Success  Output: 36 B6
+[2021/05/27 13:49:58] Input: 37 play b B5 
+[2021/05/27 13:49:58] Status: Success  Output: 37 
+[2021/05/27 13:49:58] Input: 38 genmove w 
+[2021/05/27 13:49:58] Status: Success  Output: 38 B2
+[2021/05/27 13:49:58] Input: 39 play b A1 
+[2021/05/27 13:49:58] Status: Success  Output: 39 
+[2021/05/27 13:49:58] Input: 40 genmove w 
+[2021/05/27 13:49:58] Status: Success  Output: 40 A5
+[2021/05/27 13:49:58] Input: 41 play b A4 
+[2021/05/27 13:49:58] Status: Success  Output: 41 
+[2021/05/27 13:49:58] Input: 42 genmove w 
+[2021/05/27 13:49:58] Status: Success  Output: 42 F8
+[2021/05/27 13:49:59] Input: 43 play b D8 
+[2021/05/27 13:49:59] Status: Success  Output: 43 
+[2021/05/27 13:49:59] Input: 44 genmove w 
+[2021/05/27 13:49:59] Status: Success  Output: 44 E6
+[2021/05/27 13:49:59] Input: 45 play b B4 
+[2021/05/27 13:49:59] Status: Success  Output: 45 
+[2021/05/27 13:49:59] Input: 46 genmove w 
+[2021/05/27 13:49:59] Status: Success  Output: 46 C8
+[2021/05/27 13:49:59] Input: 47 play b G7 
+[2021/05/27 13:49:59] Status: Success  Output: 47 
+[2021/05/27 13:49:59] Input: 48 genmove w 
+[2021/05/27 13:49:59] Status: Success  Output: 48 E8
+[2021/05/27 13:50:00] Input: 49 play b D1 
+[2021/05/27 13:50:00] Status: Success  Output: 49 
+[2021/05/27 13:50:00] Input: 50 genmove w 
+[2021/05/27 13:50:00] Status: Success  Output: 50 B1
+[2021/05/27 13:50:00] Input: 51 play b A2 
+[2021/05/27 13:50:00] Status: Success  Output: 51 
+[2021/05/27 13:50:00] Input: 52 genmove w 
+[2021/05/27 13:50:00] Status: Success  Output: 52 H8
+[2021/05/27 13:50:00] Input: 53 play b C1 
+[2021/05/27 13:50:00] Status: Success  Output: 53 
+[2021/05/27 13:50:00] Input: 54 genmove w 
+[2021/05/27 13:50:00] Status: Success  Output: 54 C2
+[2021/05/27 13:50:00] Input: 55 play b A6 
+[2021/05/27 13:50:00] Status: Success  Output: 55 
+[2021/05/27 13:50:00] Input: 56 genmove w 
+[2021/05/27 13:50:00] Status: Success  Output: 56 A7
+[2021/05/27 13:50:00] Input: 57 play b H6 
+[2021/05/27 13:50:00] Status: Success  Output: 57 
+[2021/05/27 13:50:00] Input: 58 genmove w 
+[2021/05/27 13:50:01] Status: Success  Output: 58 F7
+[2021/05/27 13:50:01] Input: 59 play b G8 
+[2021/05/27 13:50:01] Status: Success  Output: 59 
+[2021/05/27 13:50:01] Input: 60 genmove w 
+[2021/05/27 13:50:01] Status: Success  Output: 60 H7
+[2021/05/27 13:50:01] Input: 61 clear_board 
+[2021/05/27 13:50:01] Status: Success  Output: 61 
+[2021/05/27 13:50:01] Input: 62 genmove b 
+[2021/05/27 13:50:01] Status: Success  Output: 62 E6
+[2021/05/27 13:50:01] Input: 63 play w F6 
+[2021/05/27 13:50:01] Status: Success  Output: 63 
+[2021/05/27 13:50:01] Input: 64 genmove b 
+[2021/05/27 13:50:02] Status: Success  Output: 64 F5
+[2021/05/27 13:50:02] Input: 65 play w D6 
+[2021/05/27 13:50:02] Status: Success  Output: 65 
+[2021/05/27 13:50:02] Input: 66 genmove b 
+[2021/05/27 13:50:02] Status: Success  Output: 66 C3
+[2021/05/27 13:50:02] Input: 67 play w F3 
+[2021/05/27 13:50:02] Status: Success  Output: 67 
+[2021/05/27 13:50:02] Input: 68 genmove b 
+[2021/05/27 13:50:03] Status: Success  Output: 68 C7
+[2021/05/27 13:50:03] Input: 69 play w C6 
+[2021/05/27 13:50:03] Status: Success  Output: 69 
+[2021/05/27 13:50:03] Input: 70 genmove b 
+[2021/05/27 13:50:03] Status: Success  Output: 70 E3
+[2021/05/27 13:50:03] Input: 71 play w C8 
+[2021/05/27 13:50:03] Status: Success  Output: 71 
+[2021/05/27 13:50:03] Input: 72 genmove b 
+[2021/05/27 13:50:04] Status: Success  Output: 72 G3
+[2021/05/27 13:50:04] Input: 73 play w G2 
+[2021/05/27 13:50:04] Status: Success  Output: 73 
+[2021/05/27 13:50:04] Input: 74 genmove b 
+[2021/05/27 13:50:04] Status: Success  Output: 74 D7
+[2021/05/27 13:50:04] Input: 75 play w D3 
+[2021/05/27 13:50:04] Status: Success  Output: 75 
+[2021/05/27 13:50:04] Input: 76 genmove b 
+[2021/05/27 13:50:05] Status: Success  Output: 76 H1
+[2021/05/27 13:50:05] Input: 77 play w B3 
+[2021/05/27 13:50:05] Status: Success  Output: 77 
+[2021/05/27 13:50:05] Input: 78 genmove b 
+[2021/05/27 13:50:05] Status: Success  Output: 78 A3
+[2021/05/27 13:50:06] Input: 79 play w B2 
+[2021/05/27 13:50:06] Status: Success  Output: 79 
+[2021/05/27 13:50:06] Input: 80 genmove b 
+[2021/05/27 13:50:06] Status: Success  Output: 80 C4
+[2021/05/27 13:50:06] Input: 81 play w E2 
+[2021/05/27 13:50:06] Status: Success  Output: 81 
+[2021/05/27 13:50:06] Input: 82 genmove b 
+[2021/05/27 13:50:06] Status: Success  Output: 82 A1
+[2021/05/27 13:50:07] Input: 83 play w G6 
+[2021/05/27 13:50:07] Status: Success  Output: 83 
+[2021/05/27 13:50:07] Input: 84 genmove b 
+[2021/05/27 13:50:07] Status: Success  Output: 84 F2
+[2021/05/27 13:50:07] Input: 85 play w G4 
+[2021/05/27 13:50:07] Status: Success  Output: 85 
+[2021/05/27 13:50:07] Input: 86 genmove b 
+[2021/05/27 13:50:07] Status: Success  Output: 86 D2
+[2021/05/27 13:50:08] Input: 87 play w E1 
+[2021/05/27 13:50:08] Status: Success  Output: 87 
+[2021/05/27 13:50:08] Input: 88 genmove b 
+[2021/05/27 13:50:08] Status: Success  Output: 88 G7
+[2021/05/27 13:50:08] Input: 89 play w E8 
+[2021/05/27 13:50:08] Status: Success  Output: 89 
+[2021/05/27 13:50:08] Input: 90 genmove b 
+[2021/05/27 13:50:08] Status: Success  Output: 90 D8
+[2021/05/27 13:50:09] Input: 91 play w F4 
+[2021/05/27 13:50:09] Status: Success  Output: 91 
+[2021/05/27 13:50:09] Input: 92 genmove b 
+[2021/05/27 13:50:09] Status: Success  Output: 92 G5
+[2021/05/27 13:50:09] Input: 93 play w H5 
+[2021/05/27 13:50:09] Status: Success  Output: 93 
+[2021/05/27 13:50:09] Input: 94 genmove b 
+[2021/05/27 13:50:09] Status: Success  Output: 94 F8
+[2021/05/27 13:50:10] Input: 95 play w H6 
+[2021/05/27 13:50:10] Status: Success  Output: 95 
+[2021/05/27 13:50:10] Input: 96 genmove b 
+[2021/05/27 13:50:10] Status: Success  Output: 96 B8
+[2021/05/27 13:50:10] Input: 97 play w H8 
+[2021/05/27 13:50:10] Status: Success  Output: 97 
+[2021/05/27 13:50:10] Input: 98 genmove b 
+[2021/05/27 13:50:10] Status: Success  Output: 98 E7
+[2021/05/27 13:50:10] Input: 99 play w F7 
+[2021/05/27 13:50:10] Status: Success  Output: 99 
+[2021/05/27 13:50:10] Input: 100 genmove b 
+[2021/05/27 13:50:10] Status: Success  Output: 100 H4
+[2021/05/27 13:50:11] Input: 101 play w H3 
+[2021/05/27 13:50:11] Status: Success  Output: 101 
+[2021/05/27 13:50:11] Input: 102 genmove b 
+[2021/05/27 13:50:11] Status: Success  Output: 102 H2
+[2021/05/27 13:50:11] Input: 103 play w C5 
+[2021/05/27 13:50:11] Status: Success  Output: 103 
+[2021/05/27 13:50:11] Input: 104 genmove b 
+[2021/05/27 13:50:11] Status: Success  Output: 104 B4
+[2021/05/27 13:50:11] Input: 105 play w C1 
+[2021/05/27 13:50:11] Status: Success  Output: 105 
+[2021/05/27 13:50:11] Input: 106 genmove b 
+[2021/05/27 13:50:11] Status: Success  Output: 106 D1
+[2021/05/27 13:50:12] Input: 107 play w B6 
+[2021/05/27 13:50:12] Status: Success  Output: 107 
+[2021/05/27 13:50:12] Input: 108 genmove b 
+[2021/05/27 13:50:12] Status: Success  Output: 108 A5
+[2021/05/27 13:50:12] Input: 109 play w A6 
+[2021/05/27 13:50:12] Status: Success  Output: 109 
+[2021/05/27 13:50:12] Input: 110 genmove b 
+[2021/05/27 13:50:12] Status: Success  Output: 110 B5
+[2021/05/27 13:50:12] Input: 111 play w A2 
+[2021/05/27 13:50:12] Status: Success  Output: 111 
+[2021/05/27 13:50:12] Input: 112 genmove b 
+[2021/05/27 13:50:12] Status: Success  Output: 112 B1
+[2021/05/27 13:50:12] Input: 113 play w B7 
+[2021/05/27 13:50:12] Status: Success  Output: 113 
+[2021/05/27 13:50:12] Input: 114 genmove b 
+[2021/05/27 13:50:12] Status: Success  Output: 114 H7
+[2021/05/27 13:50:13] Input: 115 play w C2 
+[2021/05/27 13:50:13] Status: Success  Output: 115 
+[2021/05/27 13:50:13] Input: 116 genmove b 
+[2021/05/27 13:50:13] Status: Success  Output: 116 A4
+[2021/05/27 13:50:13] Input: 117 play w F1 
+[2021/05/27 13:50:13] Status: Success  Output: 117 
+[2021/05/27 13:50:13] Input: 118 genmove b 
+[2021/05/27 13:50:13] Status: Success  Output: 118 A8
+[2021/05/27 13:50:13] Input: 119 play w G1 
+[2021/05/27 13:50:13] Status: Success  Output: 119 
+[2021/05/27 13:50:13] Input: 120 genmove b 
+[2021/05/27 13:50:13] Status: Success  Output: 120 A7
+[2021/05/27 13:50:13] Input: 121 play w PASS 
+[2021/05/27 13:50:13] Status: Success  Output: 121 
+[2021/05/27 13:50:13] Input: 122 genmove b 
+[2021/05/27 13:50:13] Status: Success  Output: 122 G8
+[2021/05/27 13:50:13] Input: 123 clear_board 
+[2021/05/27 13:50:13] Status: Success  Output: 123 
+[2021/05/27 13:50:13] Input: 124 play b F5 
+[2021/05/27 13:50:13] Status: Success  Output: 124 
+[2021/05/27 13:50:13] Input: 125 genmove w 
+[2021/05/27 13:50:14] Status: Success  Output: 125 D6
+[2021/05/27 13:50:14] Input: 126 play b C3 
+[2021/05/27 13:50:14] Status: Success  Output: 126 
+[2021/05/27 13:50:14] Input: 127 genmove w 
+[2021/05/27 13:50:14] Status: Success  Output: 127 F3
+[2021/05/27 13:50:14] Input: 128 play b E3 
+[2021/05/27 13:50:14] Status: Success  Output: 128 
+[2021/05/27 13:50:14] Input: 129 genmove w 
+[2021/05/27 13:50:15] Status: Success  Output: 129 G5
+[2021/05/27 13:50:15] Input: 130 play b G3 
+[2021/05/27 13:50:15] Status: Success  Output: 130 
+[2021/05/27 13:50:15] Input: 131 genmove w 
+[2021/05/27 13:50:15] Status: Success  Output: 131 D3
+[2021/05/27 13:50:15] Input: 132 play b C6 
+[2021/05/27 13:50:15] Status: Success  Output: 132 
+[2021/05/27 13:50:15] Input: 133 genmove w 
+[2021/05/27 13:50:16] Status: Success  Output: 133 B3
+[2021/05/27 13:50:16] Input: 134 play b C2 
+[2021/05/27 13:50:16] Status: Success  Output: 134 
+[2021/05/27 13:50:16] Input: 135 genmove w 
+[2021/05/27 13:50:16] Status: Success  Output: 135 C1
+[2021/05/27 13:50:16] Input: 136 play b A3 
+[2021/05/27 13:50:16] Status: Success  Output: 136 
+[2021/05/27 13:50:16] Input: 137 genmove w 
+[2021/05/27 13:50:17] Status: Success  Output: 137 B6
+[2021/05/27 13:50:17] Input: 138 play b D1 
+[2021/05/27 13:50:17] Status: Success  Output: 138 
+[2021/05/27 13:50:17] Input: 139 genmove w 
+[2021/05/27 13:50:17] Status: Success  Output: 139 E1
+[2021/05/27 13:50:18] Input: 140 play b E6 
+[2021/05/27 13:50:18] Status: Success  Output: 140 
+[2021/05/27 13:50:18] Input: 141 genmove w 
+[2021/05/27 13:50:18] Status: Success  Output: 141 A4
+[2021/05/27 13:50:18] Input: 142 play b A6 
+[2021/05/27 13:50:18] Status: Success  Output: 142 
+[2021/05/27 13:50:18] Input: 143 genmove w 
+[2021/05/27 13:50:18] Status: Success  Output: 143 C4
+[2021/05/27 13:50:19] Input: 144 play b B2 
+[2021/05/27 13:50:19] Status: Success  Output: 144 
+[2021/05/27 13:50:19] Input: 145 genmove w 
+[2021/05/27 13:50:19] Status: Success  Output: 145 H3
+[2021/05/27 13:50:19] Input: 146 play b G2 
+[2021/05/27 13:50:19] Status: Success  Output: 146 
+[2021/05/27 13:50:19] Input: 147 genmove w 
+[2021/05/27 13:50:19] Status: Success  Output: 147 F4
+[2021/05/27 13:50:20] Input: 148 play b A5 
+[2021/05/27 13:50:20] Status: Success  Output: 148 
+[2021/05/27 13:50:20] Input: 149 genmove w 
+[2021/05/27 13:50:20] Status: Success  Output: 149 H1
+[2021/05/27 13:50:20] Input: 150 play b H5 
+[2021/05/27 13:50:20] Status: Success  Output: 150 
+[2021/05/27 13:50:20] Input: 151 genmove w 
+[2021/05/27 13:50:20] Status: Success  Output: 151 A1
+[2021/05/27 13:50:20] Input: 152 play b F2 
+[2021/05/27 13:50:20] Status: Success  Output: 152 
+[2021/05/27 13:50:20] Input: 153 genmove w 
+[2021/05/27 13:50:21] Status: Success  Output: 153 E2
+[2021/05/27 13:50:21] Input: 154 play b H2 
+[2021/05/27 13:50:21] Status: Success  Output: 154 
+[2021/05/27 13:50:21] Input: 155 genmove w 
+[2021/05/27 13:50:21] Status: Success  Output: 155 G4
+[2021/05/27 13:50:21] Input: 156 play b D2 
+[2021/05/27 13:50:21] Status: Success  Output: 156 
+[2021/05/27 13:50:21] Input: 157 genmove w 
+[2021/05/27 13:50:21] Status: Success  Output: 157 G1
+[2021/05/27 13:50:21] Input: 158 play b B1 
+[2021/05/27 13:50:21] Status: Success  Output: 158 
+[2021/05/27 13:50:21] Input: 159 genmove w 
+[2021/05/27 13:50:22] Status: Success  Output: 159 F1
+[2021/05/27 13:50:22] Input: 160 play b C5 
+[2021/05/27 13:50:22] Status: Success  Output: 160 
+[2021/05/27 13:50:22] Input: 161 genmove w 
+[2021/05/27 13:50:22] Status: Success  Output: 161 B4
+[2021/05/27 13:50:22] Input: 162 play b H4 
+[2021/05/27 13:50:22] Status: Success  Output: 162 
+[2021/05/27 13:50:22] Input: 163 genmove w 
+[2021/05/27 13:50:22] Status: Success  Output: 163 H6
+[2021/05/27 13:50:22] Input: 164 play b G6 
+[2021/05/27 13:50:22] Status: Success  Output: 164 
+[2021/05/27 13:50:22] Input: 165 genmove w 
+[2021/05/27 13:50:22] Status: Success  Output: 165 G7
+[2021/05/27 13:50:22] Input: 166 play b H7 
+[2021/05/27 13:50:22] Status: Success  Output: 166 
+[2021/05/27 13:50:22] Input: 167 genmove w 
+[2021/05/27 13:50:23] Status: Success  Output: 167 H8
+[2021/05/27 13:50:23] Input: 168 play b A2 
+[2021/05/27 13:50:23] Status: Success  Output: 168 
+[2021/05/27 13:50:23] Input: 169 genmove w 
+[2021/05/27 13:50:23] Status: Success  Output: 169 A7
+[2021/05/27 13:50:23] Input: 170 play b B5 
+[2021/05/27 13:50:23] Status: Success  Output: 170 
+[2021/05/27 13:50:23] Input: 171 genmove w 
+[2021/05/27 13:50:23] Status: Success  Output: 171 F6
+[2021/05/27 13:50:23] Input: 172 play b B7 
+[2021/05/27 13:50:23] Status: Success  Output: 172 
+[2021/05/27 13:50:23] Input: 173 genmove w 
+[2021/05/27 13:50:23] Status: Success  Output: 173 C7
+[2021/05/27 13:50:23] Input: 174 play b D7 
+[2021/05/27 13:50:23] Status: Success  Output: 174 
+[2021/05/27 13:50:23] Input: 175 genmove w 
+[2021/05/27 13:50:23] Status: Success  Output: 175 E7
+[2021/05/27 13:50:24] Input: 176 play b F7 
+[2021/05/27 13:50:24] Status: Success  Output: 176 
+[2021/05/27 13:50:24] Input: 177 genmove w 
+[2021/05/27 13:50:24] Status: Success  Output: 177 E8
+[2021/05/27 13:50:24] Input: 178 play b A8 
+[2021/05/27 13:50:24] Status: Success  Output: 178 
+[2021/05/27 13:50:24] Input: 179 genmove w 
+[2021/05/27 13:50:24] Status: Success  Output: 179 B8
+[2021/05/27 13:50:24] Input: 180 play b C8 
+[2021/05/27 13:50:24] Status: Success  Output: 180 
+[2021/05/27 13:50:24] Input: 181 genmove w 
+[2021/05/27 13:50:24] Status: Success  Output: 181 D8
+[2021/05/27 13:50:24] Input: 182 play b F8 
+[2021/05/27 13:50:24] Status: Success  Output: 182 
+[2021/05/27 13:50:24] Input: 183 genmove w 
+[2021/05/27 13:50:24] Status: Success  Output: 183 PASS
+[2021/05/27 13:50:24] Input: 184 play b G8 
+[2021/05/27 13:50:24] Status: Success  Output: 184 
+[2021/05/27 13:50:24] Input: 185 clear_board 
+[2021/05/27 13:50:24] Status: Success  Output: 185 
+[2021/05/27 13:50:24] Input: 186 genmove b 
+[2021/05/27 13:50:25] Status: Success  Output: 186 E6
+[2021/05/27 13:50:25] Input: 187 play w F6 
+[2021/05/27 13:50:25] Status: Success  Output: 187 
+[2021/05/27 13:50:25] Input: 188 genmove b 
+[2021/05/27 13:50:25] Status: Success  Output: 188 F5
+[2021/05/27 13:50:25] Input: 189 play w D6 
+[2021/05/27 13:50:25] Status: Success  Output: 189 
+[2021/05/27 13:50:25] Input: 190 genmove b 
+[2021/05/27 13:50:26] Status: Success  Output: 190 C3
+[2021/05/27 13:50:26] Input: 191 play w F3 
+[2021/05/27 13:50:26] Status: Success  Output: 191 
+[2021/05/27 13:50:26] Input: 192 genmove b 
+[2021/05/27 13:50:26] Status: Success  Output: 192 C7
+[2021/05/27 13:50:26] Input: 193 play w C6 
+[2021/05/27 13:50:26] Status: Success  Output: 193 
+[2021/05/27 13:50:26] Input: 194 genmove b 
+[2021/05/27 13:50:27] Status: Success  Output: 194 F4
+[2021/05/27 13:50:27] Input: 195 play w C8 
+[2021/05/27 13:50:27] Status: Success  Output: 195 
+[2021/05/27 13:50:27] Input: 196 genmove b 
+[2021/05/27 13:50:27] Status: Success  Output: 196 G7
+[2021/05/27 13:50:27] Input: 197 play w F7 
+[2021/05/27 13:50:27] Status: Success  Output: 197 
+[2021/05/27 13:50:27] Input: 198 genmove b 
+[2021/05/27 13:50:28] Status: Success  Output: 198 E7
+[2021/05/27 13:50:28] Input: 199 play w F8 
+[2021/05/27 13:50:28] Status: Success  Output: 199 
+[2021/05/27 13:50:28] Input: 200 genmove b 
+[2021/05/27 13:50:28] Status: Success  Output: 200 G6
+[2021/05/27 13:50:28] Input: 201 play w H5 
+[2021/05/27 13:50:28] Status: Success  Output: 201 
+[2021/05/27 13:50:28] Input: 202 genmove b 
+[2021/05/27 13:50:29] Status: Success  Output: 202 D8
+[2021/05/27 13:50:29] Input: 203 play w E8 
+[2021/05/27 13:50:29] Status: Success  Output: 203 
+[2021/05/27 13:50:29] Input: 204 genmove b 
+[2021/05/27 13:50:29] Status: Success  Output: 204 G4
+[2021/05/27 13:50:29] Input: 205 play w D7 
+[2021/05/27 13:50:29] Status: Success  Output: 205 
+[2021/05/27 13:50:29] Input: 206 genmove b 
+[2021/05/27 13:50:30] Status: Success  Output: 206 E2
+[2021/05/27 13:50:30] Input: 207 play w D1 
+[2021/05/27 13:50:30] Status: Success  Output: 207 
+[2021/05/27 13:50:30] Input: 208 genmove b 
+[2021/05/27 13:50:30] Status: Success  Output: 208 G5
+[2021/05/27 13:50:30] Input: 209 play w D3 
+[2021/05/27 13:50:30] Status: Success  Output: 209 
+[2021/05/27 13:50:30] Input: 210 genmove b 
+[2021/05/27 13:50:31] Status: Success  Output: 210 C2
+[2021/05/27 13:50:31] Input: 211 play w H8 
+[2021/05/27 13:50:31] Status: Success  Output: 211 
+[2021/05/27 13:50:31] Input: 212 genmove b 
+[2021/05/27 13:50:31] Status: Success  Output: 212 G3
+[2021/05/27 13:50:31] Input: 213 play w B3 
+[2021/05/27 13:50:31] Status: Success  Output: 213 
+[2021/05/27 13:50:31] Input: 214 genmove b 
+[2021/05/27 13:50:31] Status: Success  Output: 214 C1
+[2021/05/27 13:50:32] Input: 215 play w B2 
+[2021/05/27 13:50:32] Status: Success  Output: 215 
+[2021/05/27 13:50:32] Input: 216 genmove b 
+[2021/05/27 13:50:32] Status: Success  Output: 216 C4
+[2021/05/27 13:50:32] Input: 217 play w H6 
+[2021/05/27 13:50:32] Status: Success  Output: 217 
+[2021/05/27 13:50:32] Input: 218 genmove b 
+[2021/05/27 13:50:32] Status: Success  Output: 218 A1
+[2021/05/27 13:50:32] Input: 219 play w G2 
+[2021/05/27 13:50:32] Status: Success  Output: 219 
+[2021/05/27 13:50:32] Input: 220 genmove b 
+[2021/05/27 13:50:33] Status: Success  Output: 220 H1
+[2021/05/27 13:50:33] Input: 221 play w E3 
+[2021/05/27 13:50:33] Status: Success  Output: 221 
+[2021/05/27 13:50:33] Input: 222 genmove b 
+[2021/05/27 13:50:33] Status: Success  Output: 222 H4
+[2021/05/27 13:50:33] Input: 223 play w G1 
+[2021/05/27 13:50:33] Status: Success  Output: 223 
+[2021/05/27 13:50:33] Input: 224 genmove b 
+[2021/05/27 13:50:33] Status: Success  Output: 224 A2
+[2021/05/27 13:50:33] Input: 225 play w C5 
+[2021/05/27 13:50:33] Status: Success  Output: 225 
+[2021/05/27 13:50:33] Input: 226 genmove b 
+[2021/05/27 13:50:34] Status: Success  Output: 226 F1
+[2021/05/27 13:50:34] Input: 227 play w B1 
+[2021/05/27 13:50:34] Status: Success  Output: 227 
+[2021/05/27 13:50:34] Input: 228 genmove b 
+[2021/05/27 13:50:34] Status: Success  Output: 228 E1
+[2021/05/27 13:50:34] Input: 229 play w D2 
+[2021/05/27 13:50:34] Status: Success  Output: 229 
+[2021/05/27 13:50:34] Input: 230 genmove b 
+[2021/05/27 13:50:34] Status: Success  Output: 230 F2
+[2021/05/27 13:50:34] Input: 231 play w A4 
+[2021/05/27 13:50:34] Status: Success  Output: 231 
+[2021/05/27 13:50:34] Input: 232 genmove b 
+[2021/05/27 13:50:34] Status: Success  Output: 232 H2
+[2021/05/27 13:50:34] Input: 233 play w H3 
+[2021/05/27 13:50:34] Status: Success  Output: 233 
+[2021/05/27 13:50:34] Input: 234 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 234 H7
+[2021/05/27 13:50:35] Input: 235 play w PASS 
+[2021/05/27 13:50:35] Status: Success  Output: 235 
+[2021/05/27 13:50:35] Input: 236 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 236 A3
+[2021/05/27 13:50:35] Input: 237 play w B4 
+[2021/05/27 13:50:35] Status: Success  Output: 237 
+[2021/05/27 13:50:35] Input: 238 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 238 A5
+[2021/05/27 13:50:35] Input: 239 play w PASS 
+[2021/05/27 13:50:35] Status: Success  Output: 239 
+[2021/05/27 13:50:35] Input: 240 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 240 B5
+[2021/05/27 13:50:35] Input: 241 play w B6 
+[2021/05/27 13:50:35] Status: Success  Output: 241 
+[2021/05/27 13:50:35] Input: 242 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 242 A6
+[2021/05/27 13:50:35] Input: 243 play w A7 
+[2021/05/27 13:50:35] Status: Success  Output: 243 
+[2021/05/27 13:50:35] Input: 244 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 244 B7
+[2021/05/27 13:50:35] Input: 245 play w G8 
+[2021/05/27 13:50:35] Status: Success  Output: 245 
+[2021/05/27 13:50:35] Input: 246 genmove b 
+[2021/05/27 13:50:35] Status: Success  Output: 246 A8
+[2021/05/27 13:50:35] Input: 247 clear_board 
+[2021/05/27 13:50:35] Status: Success  Output: 247 
+[2021/05/27 13:50:35] Input: 248 play b F5 
+[2021/05/27 13:50:35] Status: Success  Output: 248 
+[2021/05/27 13:50:35] Input: 249 genmove w 
+[2021/05/27 13:50:36] Status: Success  Output: 249 D6
+[2021/05/27 13:50:36] Input: 250 play b C3 
+[2021/05/27 13:50:36] Status: Success  Output: 250 
+[2021/05/27 13:50:36] Input: 251 genmove w 
+[2021/05/27 13:50:36] Status: Success  Output: 251 F3
+[2021/05/27 13:50:37] Input: 252 play b F4 
+[2021/05/27 13:50:37] Status: Success  Output: 252 
+[2021/05/27 13:50:37] Input: 253 genmove w 
+[2021/05/27 13:50:37] Status: Success  Output: 253 G3
+[2021/05/27 13:50:37] Input: 254 play b F2 
+[2021/05/27 13:50:37] Status: Success  Output: 254 
+[2021/05/27 13:50:37] Input: 255 genmove w 
+[2021/05/27 13:50:38] Status: Success  Output: 255 E3
+[2021/05/27 13:50:38] Input: 256 play b H4 
+[2021/05/27 13:50:38] Status: Success  Output: 256 
+[2021/05/27 13:50:38] Input: 257 genmove w 
+[2021/05/27 13:50:38] Status: Success  Output: 257 H3
+[2021/05/27 13:50:38] Input: 258 play b D7 
+[2021/05/27 13:50:38] Status: Success  Output: 258 
+[2021/05/27 13:50:38] Input: 259 genmove w 
+[2021/05/27 13:50:39] Status: Success  Output: 259 G5
+[2021/05/27 13:50:39] Input: 260 play b G2 
+[2021/05/27 13:50:39] Status: Success  Output: 260 
+[2021/05/27 13:50:39] Input: 261 genmove w 
+[2021/05/27 13:50:39] Status: Success  Output: 261 C4
+[2021/05/27 13:50:39] Input: 262 play b G4 
+[2021/05/27 13:50:39] Status: Success  Output: 262 
+[2021/05/27 13:50:39] Input: 263 genmove w 
+[2021/05/27 13:50:40] Status: Success  Output: 263 H1
+[2021/05/27 13:50:40] Input: 264 play b G6 
+[2021/05/27 13:50:40] Status: Success  Output: 264 
+[2021/05/27 13:50:40] Input: 265 genmove w 
+[2021/05/27 13:50:40] Status: Success  Output: 265 H2
+[2021/05/27 13:50:40] Input: 266 play b D2 
+[2021/05/27 13:50:40] Status: Success  Output: 266 
+[2021/05/27 13:50:40] Input: 267 genmove w 
+[2021/05/27 13:50:41] Status: Success  Output: 267 G1
+[2021/05/27 13:50:41] Input: 268 play b E2 
+[2021/05/27 13:50:41] Status: Success  Output: 268 
+[2021/05/27 13:50:41] Input: 269 genmove w 
+[2021/05/27 13:50:41] Status: Success  Output: 269 C2
+[2021/05/27 13:50:41] Input: 270 play b C1 
+[2021/05/27 13:50:41] Status: Success  Output: 270 
+[2021/05/27 13:50:41] Input: 271 genmove w 
+[2021/05/27 13:50:42] Status: Success  Output: 271 G7
+[2021/05/27 13:50:42] Input: 272 play b C5 
+[2021/05/27 13:50:42] Status: Success  Output: 272 
+[2021/05/27 13:50:42] Input: 273 genmove w 
+[2021/05/27 13:50:42] Status: Success  Output: 273 H5
+[2021/05/27 13:50:42] Input: 274 play b E1 
+[2021/05/27 13:50:42] Status: Success  Output: 274 
+[2021/05/27 13:50:42] Input: 275 genmove w 
+[2021/05/27 13:50:43] Status: Success  Output: 275 D3
+[2021/05/27 13:50:43] Input: 276 play b E6 
+[2021/05/27 13:50:43] Status: Success  Output: 276 
+[2021/05/27 13:50:43] Input: 277 genmove w 
+[2021/05/27 13:50:43] Status: Success  Output: 277 F1
+[2021/05/27 13:50:43] Input: 278 play b H6 
+[2021/05/27 13:50:43] Status: Success  Output: 278 
+[2021/05/27 13:50:43] Input: 279 genmove w 
+[2021/05/27 13:50:43] Status: Success  Output: 279 D1
+[2021/05/27 13:50:43] Input: 280 play b F6 
+[2021/05/27 13:50:43] Status: Success  Output: 280 
+[2021/05/27 13:50:43] Input: 281 genmove w 
+[2021/05/27 13:50:44] Status: Success  Output: 281 E7
+[2021/05/27 13:50:44] Input: 282 play b F8 
+[2021/05/27 13:50:44] Status: Success  Output: 282 
+[2021/05/27 13:50:44] Input: 283 genmove w 
+[2021/05/27 13:50:44] Status: Success  Output: 283 H8
+[2021/05/27 13:50:44] Input: 284 play b F7 
+[2021/05/27 13:50:44] Status: Success  Output: 284 
+[2021/05/27 13:50:44] Input: 285 genmove w 
+[2021/05/27 13:50:44] Status: Success  Output: 285 B1
+[2021/05/27 13:50:44] Input: 286 play b H7 
+[2021/05/27 13:50:44] Status: Success  Output: 286 
+[2021/05/27 13:50:44] Input: 287 genmove w 
+[2021/05/27 13:50:44] Status: Success  Output: 287 B3
+[2021/05/27 13:50:44] Input: 288 play b A2 
+[2021/05/27 13:50:44] Status: Success  Output: 288 
+[2021/05/27 13:50:44] Input: 289 genmove w 
+[2021/05/27 13:50:45] Status: Success  Output: 289 A3
+[2021/05/27 13:50:45] Input: 290 play b B2 
+[2021/05/27 13:50:45] Status: Success  Output: 290 
+[2021/05/27 13:50:45] Input: 291 genmove w 
+[2021/05/27 13:50:45] Status: Success  Output: 291 A1
+[2021/05/27 13:50:45] Input: 292 play b PASS 
+[2021/05/27 13:50:45] Status: Success  Output: 292 
+[2021/05/27 13:50:45] Input: 293 genmove w 
+[2021/05/27 13:50:45] Status: Success  Output: 293 B4
+[2021/05/27 13:50:45] Input: 294 play b A4 
+[2021/05/27 13:50:45] Status: Success  Output: 294 
+[2021/05/27 13:50:45] Input: 295 genmove w 
+[2021/05/27 13:50:45] Status: Success  Output: 295 A5
+[2021/05/27 13:50:45] Input: 296 play b PASS 
+[2021/05/27 13:50:45] Status: Success  Output: 296 
+[2021/05/27 13:50:45] Input: 297 genmove w 
+[2021/05/27 13:50:45] Status: Success  Output: 297 B5
+[2021/05/27 13:50:45] Input: 298 play b B6 
+[2021/05/27 13:50:45] Status: Success  Output: 298 
+[2021/05/27 13:50:45] Input: 299 genmove w 
+[2021/05/27 13:50:45] Status: Success  Output: 299 C6
+[2021/05/27 13:50:45] Input: 300 play b B7 
+[2021/05/27 13:50:45] Status: Success  Output: 300 
+[2021/05/27 13:50:45] Input: 301 genmove w 
+[2021/05/27 13:50:46] Status: Success  Output: 301 A7
+[2021/05/27 13:50:46] Input: 302 play b A6 
+[2021/05/27 13:50:46] Status: Success  Output: 302 
+[2021/05/27 13:50:46] Input: 303 genmove w 
+[2021/05/27 13:50:46] Status: Success  Output: 303 C7
+[2021/05/27 13:50:46] Input: 304 play b A8 
+[2021/05/27 13:50:46] Status: Success  Output: 304 
+[2021/05/27 13:50:46] Input: 305 genmove w 
+[2021/05/27 13:50:46] Status: Success  Output: 305 B8
+[2021/05/27 13:50:46] Input: 306 play b C8 
+[2021/05/27 13:50:46] Status: Success  Output: 306 
+[2021/05/27 13:50:46] Input: 307 genmove w 
+[2021/05/27 13:50:46] Status: Success  Output: 307 D8
+[2021/05/27 13:50:46] Input: 308 play b E8 
+[2021/05/27 13:50:46] Status: Success  Output: 308 
+[2021/05/27 13:50:46] Input: 309 genmove w 
+[2021/05/27 13:50:46] Status: Success  Output: 309 G8
+[2021/05/27 13:50:46] Input: 310 clear_board 
+[2021/05/27 13:50:46] Status: Success  Output: 310 
+[2021/05/27 13:50:46] Input: 311 genmove b 
+[2021/05/27 13:50:47] Status: Success  Output: 311 E6
+[2021/05/27 13:50:47] Input: 312 play w F6 
+[2021/05/27 13:50:47] Status: Success  Output: 312 
+[2021/05/27 13:50:47] Input: 313 genmove b 
+[2021/05/27 13:50:47] Status: Success  Output: 313 F5
+[2021/05/27 13:50:47] Input: 314 play w D6 
+[2021/05/27 13:50:47] Status: Success  Output: 314 
+[2021/05/27 13:50:47] Input: 315 genmove b 
+[2021/05/27 13:50:48] Status: Success  Output: 315 C3
+[2021/05/27 13:50:48] Input: 316 play w F3 
+[2021/05/27 13:50:48] Status: Success  Output: 316 
+[2021/05/27 13:50:48] Input: 317 genmove b 
+[2021/05/27 13:50:48] Status: Success  Output: 317 F4
+[2021/05/27 13:50:48] Input: 318 play w D3 
+[2021/05/27 13:50:48] Status: Success  Output: 318 
+[2021/05/27 13:50:48] Input: 319 genmove b 
+[2021/05/27 13:50:49] Status: Success  Output: 319 C2
+[2021/05/27 13:50:49] Input: 320 play w G3 
+[2021/05/27 13:50:49] Status: Success  Output: 320 
+[2021/05/27 13:50:49] Input: 321 genmove b 
+[2021/05/27 13:50:49] Status: Success  Output: 321 F2
+[2021/05/27 13:50:49] Input: 322 play w B2 
+[2021/05/27 13:50:49] Status: Success  Output: 322 
+[2021/05/27 13:50:49] Input: 323 genmove b 
+[2021/05/27 13:50:50] Status: Success  Output: 323 C4
+[2021/05/27 13:50:50] Input: 324 play w F1 
+[2021/05/27 13:50:50] Status: Success  Output: 324 
+[2021/05/27 13:50:50] Input: 325 genmove b 
+[2021/05/27 13:50:50] Status: Success  Output: 325 A1
+[2021/05/27 13:50:51] Input: 326 play w E3 
+[2021/05/27 13:50:51] Status: Success  Output: 326 
+[2021/05/27 13:50:51] Input: 327 genmove b 
+[2021/05/27 13:50:51] Status: Success  Output: 327 H3
+[2021/05/27 13:50:51] Input: 328 play w H4 
+[2021/05/27 13:50:51] Status: Success  Output: 328 
+[2021/05/27 13:50:51] Input: 329 genmove b 
+[2021/05/27 13:50:52] Status: Success  Output: 329 H5
+[2021/05/27 13:50:52] Input: 330 play w G2 
+[2021/05/27 13:50:52] Status: Success  Output: 330 
+[2021/05/27 13:50:52] Input: 331 genmove b 
+[2021/05/27 13:50:52] Status: Success  Output: 331 G4
+[2021/05/27 13:50:52] Input: 332 play w E2 
+[2021/05/27 13:50:52] Status: Success  Output: 332 
+[2021/05/27 13:50:52] Input: 333 genmove b 
+[2021/05/27 13:50:52] Status: Success  Output: 333 D1
+[2021/05/27 13:50:53] Input: 334 play w D2 
+[2021/05/27 13:50:53] Status: Success  Output: 334 
+[2021/05/27 13:50:53] Input: 335 genmove b 
+[2021/05/27 13:50:53] Status: Success  Output: 335 H1
+[2021/05/27 13:50:53] Input: 336 play w G5 
+[2021/05/27 13:50:53] Status: Success  Output: 336 
+[2021/05/27 13:50:53] Input: 337 genmove b 
+[2021/05/27 13:50:53] Status: Success  Output: 337 G7
+[2021/05/27 13:50:54] Input: 338 play w G6 
+[2021/05/27 13:50:54] Status: Success  Output: 338 
+[2021/05/27 13:50:54] Input: 339 genmove b 
+[2021/05/27 13:50:54] Status: Success  Output: 339 H2
+[2021/05/27 13:50:54] Input: 340 play w H8 
+[2021/05/27 13:50:54] Status: Success  Output: 340 
+[2021/05/27 13:50:54] Input: 341 genmove b 
+[2021/05/27 13:50:54] Status: Success  Output: 341 G1
+[2021/05/27 13:50:54] Input: 342 play w A2 
+[2021/05/27 13:50:54] Status: Success  Output: 342 
+[2021/05/27 13:50:54] Input: 343 genmove b 
+[2021/05/27 13:50:55] Status: Success  Output: 343 E1
+[2021/05/27 13:50:55] Input: 344 play w C5 
+[2021/05/27 13:50:55] Status: Success  Output: 344 
+[2021/05/27 13:50:55] Input: 345 genmove b 
+[2021/05/27 13:50:55] Status: Success  Output: 345 H6
+[2021/05/27 13:50:55] Input: 346 play w PASS 
+[2021/05/27 13:50:55] Status: Success  Output: 346 
+[2021/05/27 13:50:55] Input: 347 genmove b 
+[2021/05/27 13:50:55] Status: Success  Output: 347 D7
+[2021/05/27 13:50:55] Input: 348 play w C6 
+[2021/05/27 13:50:55] Status: Success  Output: 348 
+[2021/05/27 13:50:55] Input: 349 genmove b 
+[2021/05/27 13:50:56] Status: Success  Output: 349 H7
+[2021/05/27 13:50:56] Input: 350 play w D8 
+[2021/05/27 13:50:56] Status: Success  Output: 350 
+[2021/05/27 13:50:56] Input: 351 genmove b 
+[2021/05/27 13:50:56] Status: Success  Output: 351 B1
+[2021/05/27 13:50:56] Input: 352 play w C1 
+[2021/05/27 13:50:56] Status: Success  Output: 352 
+[2021/05/27 13:50:56] Input: 353 genmove b 
+[2021/05/27 13:50:56] Status: Success  Output: 353 A3
+[2021/05/27 13:50:56] Input: 354 play w PASS 
+[2021/05/27 13:50:56] Status: Success  Output: 354 
+[2021/05/27 13:50:56] Input: 355 genmove b 
+[2021/05/27 13:50:56] Status: Success  Output: 355 B3
+[2021/05/27 13:50:56] Input: 356 play w PASS 
+[2021/05/27 13:50:56] Status: Success  Output: 356 
+[2021/05/27 13:50:56] Input: 357 genmove b 
+[2021/05/27 13:50:57] Status: Success  Output: 357 B4
+[2021/05/27 13:50:57] Input: 358 play w PASS 
+[2021/05/27 13:50:57] Status: Success  Output: 358 
+[2021/05/27 13:50:57] Input: 359 genmove b 
+[2021/05/27 13:50:57] Status: Success  Output: 359 B5
+[2021/05/27 13:50:57] Input: 360 play w A4 
+[2021/05/27 13:50:57] Status: Success  Output: 360 
+[2021/05/27 13:50:57] Input: 361 genmove b 
+[2021/05/27 13:50:57] Status: Success  Output: 361 A5
+[2021/05/27 13:50:57] Input: 362 play w PASS 
+[2021/05/27 13:50:57] Status: Success  Output: 362 
+[2021/05/27 13:50:57] Input: 363 genmove b 
+[2021/05/27 13:50:57] Status: Success  Output: 363 B6
+[2021/05/27 13:50:57] Input: 364 play w C7 
+[2021/05/27 13:50:57] Status: Success  Output: 364 
+[2021/05/27 13:50:57] Input: 365 genmove b 
+[2021/05/27 13:50:57] Status: Success  Output: 365 B7
+[2021/05/27 13:50:57] Input: 366 play w A6 
+[2021/05/27 13:50:57] Status: Success  Output: 366 
+[2021/05/27 13:50:57] Input: 367 genmove b 
+[2021/05/27 13:50:58] Status: Success  Output: 367 A7
+[2021/05/27 13:50:58] Input: 368 play w E7 
+[2021/05/27 13:50:58] Status: Success  Output: 368 
+[2021/05/27 13:50:58] Input: 369 genmove b 
+[2021/05/27 13:50:58] Status: Success  Output: 369 F7
+[2021/05/27 13:50:58] Input: 370 play w B8 
+[2021/05/27 13:50:58] Status: Success  Output: 370 
+[2021/05/27 13:50:58] Input: 371 genmove b 
+[2021/05/27 13:50:58] Status: Success  Output: 371 A8
+[2021/05/27 13:50:58] Input: 372 play w E8 
+[2021/05/27 13:50:58] Status: Success  Output: 372 
+[2021/05/27 13:50:58] Input: 373 genmove b 
+[2021/05/27 13:50:58] Status: Success  Output: 373 C8
+[2021/05/27 13:50:58] Input: 374 play w F8 
+[2021/05/27 13:50:58] Status: Success  Output: 374 
+[2021/05/27 13:50:58] Input: 375 genmove b 
+[2021/05/27 13:50:58] Status: Success  Output: 375 G8
+[2021/05/27 13:50:58] Input: 376 clear_board 
+[2021/05/27 13:50:58] Status: Success  Output: 376 
+[2021/05/27 13:50:59] Input: 377 play b F5 
+[2021/05/27 13:50:59] Status: Success  Output: 377 
+[2021/05/27 13:50:59] Input: 378 genmove w 
+[2021/05/27 13:50:59] Status: Success  Output: 378 D6
+[2021/05/27 13:50:59] Input: 379 play b C3 
+[2021/05/27 13:50:59] Status: Success  Output: 379 
+[2021/05/27 13:50:59] Input: 380 genmove w 
+[2021/05/27 13:51:00] Status: Success  Output: 380 F3
+[2021/05/27 13:51:00] Input: 381 play b F4 
+[2021/05/27 13:51:00] Status: Success  Output: 381 
+[2021/05/27 13:51:00] Input: 382 genmove w 
+[2021/05/27 13:51:00] Status: Success  Output: 382 G3
+[2021/05/27 13:51:01] Input: 383 play b F6 
+[2021/05/27 13:51:01] Status: Success  Output: 383 
+[2021/05/27 13:51:01] Input: 384 genmove w 
+[2021/05/27 13:51:01] Status: Success  Output: 384 C4
+[2021/05/27 13:51:01] Input: 385 play b E3 
+[2021/05/27 13:51:01] Status: Success  Output: 385 
+[2021/05/27 13:51:01] Input: 386 genmove w 
+[2021/05/27 13:51:02] Status: Success  Output: 386 C2
+[2021/05/27 13:51:02] Input: 387 play b H3 
+[2021/05/27 13:51:02] Status: Success  Output: 387 
+[2021/05/27 13:51:02] Input: 388 genmove w 
+[2021/05/27 13:51:03] Status: Success  Output: 388 G7
+[2021/05/27 13:51:03] Input: 389 play b C6 
+[2021/05/27 13:51:03] Status: Success  Output: 389 
+[2021/05/27 13:51:03] Input: 390 genmove w 
+[2021/05/27 13:51:03] Status: Success  Output: 390 B6
+[2021/05/27 13:51:03] Input: 391 play b B3 
+[2021/05/27 13:51:03] Status: Success  Output: 391 
+[2021/05/27 13:51:03] Input: 392 genmove w 
+[2021/05/27 13:51:04] Status: Success  Output: 392 A3
+[2021/05/27 13:51:04] Input: 393 play b C1 
+[2021/05/27 13:51:04] Status: Success  Output: 393 
+[2021/05/27 13:51:04] Input: 394 genmove w 
+[2021/05/27 13:51:04] Status: Success  Output: 394 D1
+[2021/05/27 13:51:05] Input: 395 play b F7 
+[2021/05/27 13:51:05] Status: Success  Output: 395 
+[2021/05/27 13:51:05] Input: 396 genmove w 
+[2021/05/27 13:51:05] Status: Success  Output: 396 D3
+[2021/05/27 13:51:05] Input: 397 play b H8 
+[2021/05/27 13:51:05] Status: Success  Output: 397 
+[2021/05/27 13:51:05] Input: 398 genmove w 
+[2021/05/27 13:51:06] Status: Success  Output: 398 F2
+[2021/05/27 13:51:06] Input: 399 play b B2 
+[2021/05/27 13:51:06] Status: Success  Output: 399 
+[2021/05/27 13:51:06] Input: 400 genmove w 
+[2021/05/27 13:51:07] Status: Success  Output: 400 F8
+[2021/05/27 13:51:07] Input: 401 play b E1 
+[2021/05/27 13:51:07] Status: Success  Output: 401 
+[2021/05/27 13:51:07] Input: 402 genmove w 
+[2021/05/27 13:51:07] Status: Success  Output: 402 A1
+[2021/05/27 13:51:08] Input: 403 play b C7 
+[2021/05/27 13:51:08] Status: Success  Output: 403 
+[2021/05/27 13:51:08] Input: 404 genmove w 
+[2021/05/27 13:51:08] Status: Success  Output: 404 H6
+[2021/05/27 13:51:08] Input: 405 play b G6 
+[2021/05/27 13:51:08] Status: Success  Output: 405 
+[2021/05/27 13:51:08] Input: 406 genmove w 
+[2021/05/27 13:51:09] Status: Success  Output: 406 F1
+[2021/05/27 13:51:09] Input: 407 play b G8 
+[2021/05/27 13:51:09] Status: Success  Output: 407 
+[2021/05/27 13:51:09] Input: 408 genmove w 
+[2021/05/27 13:51:09] Status: Success  Output: 408 B1
+[2021/05/27 13:51:09] Input: 409 play b E8 
+[2021/05/27 13:51:09] Status: Success  Output: 409 
+[2021/05/27 13:51:09] Input: 410 genmove w 
+[2021/05/27 13:51:10] Status: Success  Output: 410 H4
+[2021/05/27 13:51:10] Input: 411 play b G2 
+[2021/05/27 13:51:10] Status: Success  Output: 411 
+[2021/05/27 13:51:10] Input: 412 genmove w 
+[2021/05/27 13:51:10] Status: Success  Output: 412 E6
+[2021/05/27 13:51:10] Input: 413 play b A5 
+[2021/05/27 13:51:10] Status: Success  Output: 413 
+[2021/05/27 13:51:10] Input: 414 genmove w 
+[2021/05/27 13:51:11] Status: Success  Output: 414 A6
+[2021/05/27 13:51:11] Input: 415 play b B7 
+[2021/05/27 13:51:11] Status: Success  Output: 415 
+[2021/05/27 13:51:11] Input: 416 genmove w 
+[2021/05/27 13:51:11] Status: Success  Output: 416 G5
+[2021/05/27 13:51:11] Input: 417 play b B5 
+[2021/05/27 13:51:11] Status: Success  Output: 417 
+[2021/05/27 13:51:11] Input: 418 genmove w 
+[2021/05/27 13:51:12] Status: Success  Output: 418 C5
+[2021/05/27 13:51:12] Input: 419 play b A2 
+[2021/05/27 13:51:12] Status: Success  Output: 419 
+[2021/05/27 13:51:12] Input: 420 genmove w 
+[2021/05/27 13:51:12] Status: Success  Output: 420 A4
+[2021/05/27 13:51:12] Input: 421 play b D2 
+[2021/05/27 13:51:12] Status: Success  Output: 421 
+[2021/05/27 13:51:12] Input: 422 genmove w 
+[2021/05/27 13:51:12] Status: Success  Output: 422 B4
+[2021/05/27 13:51:12] Input: 423 play b D7 
+[2021/05/27 13:51:12] Status: Success  Output: 423 
+[2021/05/27 13:51:12] Input: 424 genmove w 
+[2021/05/27 13:51:13] Status: Success  Output: 424 B8
+[2021/05/27 13:51:13] Input: 425 play b A8 
+[2021/05/27 13:51:13] Status: Success  Output: 425 
+[2021/05/27 13:51:13] Input: 426 genmove w 
+[2021/05/27 13:51:13] Status: Success  Output: 426 A7
+[2021/05/27 13:51:13] Input: 427 play b C8 
+[2021/05/27 13:51:13] Status: Success  Output: 427 
+[2021/05/27 13:51:13] Input: 428 genmove w 
+[2021/05/27 13:51:13] Status: Success  Output: 428 D8
+[2021/05/27 13:51:13] Input: 429 play b E2 
+[2021/05/27 13:51:13] Status: Success  Output: 429 
+[2021/05/27 13:51:13] Input: 430 genmove w 
+[2021/05/27 13:51:13] Status: Success  Output: 430 E7
+[2021/05/27 13:51:13] Input: 431 play b H2 
+[2021/05/27 13:51:13] Status: Success  Output: 431 
+[2021/05/27 13:51:13] Input: 432 genmove w 
+[2021/05/27 13:51:14] Status: Success  Output: 432 G1
+[2021/05/27 13:51:14] Input: 433 play b G4 
+[2021/05/27 13:51:14] Status: Success  Output: 433 
+[2021/05/27 13:51:14] Input: 434 genmove w 
+[2021/05/27 13:51:14] Status: Success  Output: 434 H1
+[2021/05/27 13:51:14] Input: 435 play b PASS 
+[2021/05/27 13:51:14] Status: Success  Output: 435 
+[2021/05/27 13:51:14] Input: 436 genmove w 
+[2021/05/27 13:51:14] Status: Success  Output: 436 H5
+[2021/05/27 13:51:14] Input: 437 play b PASS 
+[2021/05/27 13:51:14] Status: Success  Output: 437 
+[2021/05/27 13:51:14] Input: 438 genmove w 
+[2021/05/27 13:51:14] Status: Success  Output: 438 H7
+[2021/05/27 13:51:14] Input: 439 clear_board 
+[2021/05/27 13:51:14] Status: Success  Output: 439 
+[2021/05/27 13:51:14] Input: 440 genmove b 
+[2021/05/27 13:51:15] Status: Success  Output: 440 F5
+[2021/05/27 13:51:15] Input: 441 play w F6 
+[2021/05/27 13:51:15] Status: Success  Output: 441 
+[2021/05/27 13:51:15] Input: 442 genmove b 
+[2021/05/27 13:51:15] Status: Success  Output: 442 E6
+[2021/05/27 13:51:15] Input: 443 play w F4 
+[2021/05/27 13:51:15] Status: Success  Output: 443 
+[2021/05/27 13:51:15] Input: 444 genmove b 
+[2021/05/27 13:51:16] Status: Success  Output: 444 C3
+[2021/05/27 13:51:16] Input: 445 play w C6 
+[2021/05/27 13:51:16] Status: Success  Output: 445 
+[2021/05/27 13:51:16] Input: 446 genmove b 
+[2021/05/27 13:51:17] Status: Success  Output: 446 G3
+[2021/05/27 13:51:17] Input: 447 play w F3 
+[2021/05/27 13:51:17] Status: Success  Output: 447 
+[2021/05/27 13:51:17] Input: 448 genmove b 
+[2021/05/27 13:51:17] Status: Success  Output: 448 E3
+[2021/05/27 13:51:17] Input: 449 play w F2 
+[2021/05/27 13:51:17] Status: Success  Output: 449 
+[2021/05/27 13:51:17] Input: 450 genmove b 
+[2021/05/27 13:51:18] Status: Success  Output: 450 G7
+[2021/05/27 13:51:18] Input: 451 play w H3 
+[2021/05/27 13:51:18] Status: Success  Output: 451 
+[2021/05/27 13:51:18] Input: 452 genmove b 
+[2021/05/27 13:51:19] Status: Success  Output: 452 F1
+[2021/05/27 13:51:19] Input: 453 play w E1 
+[2021/05/27 13:51:19] Status: Success  Output: 453 
+[2021/05/27 13:51:19] Input: 454 genmove b 
+[2021/05/27 13:51:19] Status: Success  Output: 454 D1
+[2021/05/27 13:51:19] Input: 455 play w G5 
+[2021/05/27 13:51:19] Status: Success  Output: 455 
+[2021/05/27 13:51:19] Input: 456 genmove b 
+[2021/05/27 13:51:20] Status: Success  Output: 456 H4
+[2021/05/27 13:51:20] Input: 457 play w G2 
+[2021/05/27 13:51:20] Status: Success  Output: 457 
+[2021/05/27 13:51:20] Input: 458 genmove b 
+[2021/05/27 13:51:20] Status: Success  Output: 458 C5
+[2021/05/27 13:51:21] Input: 459 play w G6 
+[2021/05/27 13:51:21] Status: Success  Output: 459 
+[2021/05/27 13:51:21] Input: 460 genmove b 
+[2021/05/27 13:51:21] Status: Success  Output: 460 H1
+[2021/05/27 13:51:21] Input: 461 play w D3 
+[2021/05/27 13:51:21] Status: Success  Output: 461 
+[2021/05/27 13:51:21] Input: 462 genmove b 
+[2021/05/27 13:51:22] Status: Success  Output: 462 E2
+[2021/05/27 13:51:22] Input: 463 play w B3 
+[2021/05/27 13:51:22] Status: Success  Output: 463 
+[2021/05/27 13:51:22] Input: 464 genmove b 
+[2021/05/27 13:51:22] Status: Success  Output: 464 A3
+[2021/05/27 13:51:22] Input: 465 play w C2 
+[2021/05/27 13:51:22] Status: Success  Output: 465 
+[2021/05/27 13:51:22] Input: 466 genmove b 
+[2021/05/27 13:51:23] Status: Success  Output: 466 C1
+[2021/05/27 13:51:23] Input: 467 play w D6 
+[2021/05/27 13:51:23] Status: Success  Output: 467 
+[2021/05/27 13:51:23] Input: 468 genmove b 
+[2021/05/27 13:51:23] Status: Success  Output: 468 F7
+[2021/05/27 13:51:24] Input: 469 play w B2 
+[2021/05/27 13:51:24] Status: Success  Output: 469 
+[2021/05/27 13:51:24] Input: 470 genmove b 
+[2021/05/27 13:51:24] Status: Success  Output: 470 C7
+[2021/05/27 13:51:24] Input: 471 play w H8 
+[2021/05/27 13:51:24] Status: Success  Output: 471 
+[2021/05/27 13:51:24] Input: 472 genmove b 
+[2021/05/27 13:51:24] Status: Success  Output: 472 D2
+[2021/05/27 13:51:25] Input: 473 play w G8 
+[2021/05/27 13:51:25] Status: Success  Output: 473 
+[2021/05/27 13:51:25] Input: 474 genmove b 
+[2021/05/27 13:51:25] Status: Success  Output: 474 G4
+[2021/05/27 13:51:25] Input: 475 play w B6 
+[2021/05/27 13:51:25] Status: Success  Output: 475 
+[2021/05/27 13:51:25] Input: 476 genmove b 
+[2021/05/27 13:51:25] Status: Success  Output: 476 C4
+[2021/05/27 13:51:26] Input: 477 play w C8 
+[2021/05/27 13:51:26] Status: Success  Output: 477 
+[2021/05/27 13:51:26] Input: 478 genmove b 
+[2021/05/27 13:51:26] Status: Success  Output: 478 D7
+[2021/05/27 13:51:26] Input: 479 play w B5 
+[2021/05/27 13:51:26] Status: Success  Output: 479 
+[2021/05/27 13:51:26] Input: 480 genmove b 
+[2021/05/27 13:51:26] Status: Success  Output: 480 A4
+[2021/05/27 13:51:26] Input: 481 play w A5 
+[2021/05/27 13:51:26] Status: Success  Output: 481 
+[2021/05/27 13:51:26] Input: 482 genmove b 
+[2021/05/27 13:51:27] Status: Success  Output: 482 B4
+[2021/05/27 13:51:27] Input: 483 play w E7 
+[2021/05/27 13:51:27] Status: Success  Output: 483 
+[2021/05/27 13:51:27] Input: 484 genmove b 
+[2021/05/27 13:51:27] Status: Success  Output: 484 H2
+[2021/05/27 13:51:27] Input: 485 play w H5 
+[2021/05/27 13:51:27] Status: Success  Output: 485 
+[2021/05/27 13:51:27] Input: 486 genmove b 
+[2021/05/27 13:51:27] Status: Success  Output: 486 E8
+[2021/05/27 13:51:27] Input: 487 play w G1 
+[2021/05/27 13:51:27] Status: Success  Output: 487 
+[2021/05/27 13:51:27] Input: 488 genmove b 
+[2021/05/27 13:51:28] Status: Success  Output: 488 A2
+[2021/05/27 13:51:28] Input: 489 play w A1 
+[2021/05/27 13:51:28] Status: Success  Output: 489 
+[2021/05/27 13:51:28] Input: 490 genmove b 
+[2021/05/27 13:51:28] Status: Success  Output: 490 B1
+[2021/05/27 13:51:28] Input: 491 play w F8 
+[2021/05/27 13:51:28] Status: Success  Output: 491 
+[2021/05/27 13:51:28] Input: 492 genmove b 
+[2021/05/27 13:51:28] Status: Success  Output: 492 D8
+[2021/05/27 13:51:28] Input: 493 play w B7 
+[2021/05/27 13:51:28] Status: Success  Output: 493 
+[2021/05/27 13:51:28] Input: 494 genmove b 
+[2021/05/27 13:51:28] Status: Success  Output: 494 H6
+[2021/05/27 13:51:28] Input: 495 play w H7 
+[2021/05/27 13:51:28] Status: Success  Output: 495 
+[2021/05/27 13:51:28] Input: 496 genmove b 
+[2021/05/27 13:51:29] Status: Success  Output: 496 A8
+[2021/05/27 13:51:29] Input: 497 play w A6 
+[2021/05/27 13:51:29] Status: Success  Output: 497 
+[2021/05/27 13:51:29] Input: 498 genmove b 
+[2021/05/27 13:51:29] Status: Success  Output: 498 A7
+[2021/05/27 13:51:29] Input: 499 play w B8 
+[2021/05/27 13:51:29] Status: Success  Output: 499 
+[2021/05/27 13:51:29] Input: 500 clear_board 
+[2021/05/27 13:51:29] Status: Success  Output: 500 
+[2021/05/27 13:51:29] Input: 501 play b F5 
+[2021/05/27 13:51:29] Status: Success  Output: 501 
+[2021/05/27 13:51:29] Input: 502 genmove w 
+[2021/05/27 13:51:29] Status: Success  Output: 502 D6
+[2021/05/27 13:51:30] Input: 503 play b C3 
+[2021/05/27 13:51:30] Status: Success  Output: 503 
+[2021/05/27 13:51:30] Input: 504 genmove w 
+[2021/05/27 13:51:30] Status: Success  Output: 504 F3
+[2021/05/27 13:51:30] Input: 505 play b F4 
+[2021/05/27 13:51:30] Status: Success  Output: 505 
+[2021/05/27 13:51:30] Input: 506 genmove w 
+[2021/05/27 13:51:31] Status: Success  Output: 506 G5
+[2021/05/27 13:51:31] Input: 507 play b H6 
+[2021/05/27 13:51:31] Status: Success  Output: 507 
+[2021/05/27 13:51:31] Input: 508 genmove w 
+[2021/05/27 13:51:32] Status: Success  Output: 508 D3
+[2021/05/27 13:51:32] Input: 509 play b C7 
+[2021/05/27 13:51:32] Status: Success  Output: 509 
+[2021/05/27 13:51:32] Input: 510 genmove w 
+[2021/05/27 13:51:32] Status: Success  Output: 510 B3
+[2021/05/27 13:51:33] Input: 511 play b B2 
+[2021/05/27 13:51:33] Status: Success  Output: 511 
+[2021/05/27 13:51:33] Input: 512 genmove w 
+[2021/05/27 13:51:33] Status: Success  Output: 512 E6
+[2021/05/27 13:51:33] Input: 513 play b C5 
+[2021/05/27 13:51:33] Status: Success  Output: 513 
+[2021/05/27 13:51:33] Input: 514 genmove w 
+[2021/05/27 13:51:34] Status: Success  Output: 514 F6
+[2021/05/27 13:51:34] Input: 515 play b G7 
+[2021/05/27 13:51:34] Status: Success  Output: 515 
+[2021/05/27 13:51:34] Input: 516 genmove w 
+[2021/05/27 13:51:34] Status: Success  Output: 516 G6
+[2021/05/27 13:51:35] Input: 517 play b E7 
+[2021/05/27 13:51:35] Status: Success  Output: 517 
+[2021/05/27 13:51:35] Input: 518 genmove w 
+[2021/05/27 13:51:35] Status: Success  Output: 518 F7
+[2021/05/27 13:51:35] Input: 519 play b G3 
+[2021/05/27 13:51:35] Status: Success  Output: 519 
+[2021/05/27 13:51:35] Input: 520 genmove w 
+[2021/05/27 13:51:36] Status: Success  Output: 520 H8
+[2021/05/27 13:51:36] Input: 521 play b F2 
+[2021/05/27 13:51:36] Status: Success  Output: 521 
+[2021/05/27 13:51:36] Input: 522 genmove w 
+[2021/05/27 13:51:36] Status: Success  Output: 522 A1
+[2021/05/27 13:51:36] Input: 523 play b F8 
+[2021/05/27 13:51:36] Status: Success  Output: 523 
+[2021/05/27 13:51:36] Input: 524 genmove w 
+[2021/05/27 13:51:37] Status: Success  Output: 524 G8
+[2021/05/27 13:51:37] Input: 525 play b D2 
+[2021/05/27 13:51:37] Status: Success  Output: 525 
+[2021/05/27 13:51:37] Input: 526 genmove w 
+[2021/05/27 13:51:37] Status: Success  Output: 526 C2
+[2021/05/27 13:51:37] Input: 527 play b B4 
+[2021/05/27 13:51:37] Status: Success  Output: 527 
+[2021/05/27 13:51:37] Input: 528 genmove w 
+[2021/05/27 13:51:38] Status: Success  Output: 528 D1
+[2021/05/27 13:51:38] Input: 529 play b E3 
+[2021/05/27 13:51:38] Status: Success  Output: 529 
+[2021/05/27 13:51:38] Input: 530 genmove w 
+[2021/05/27 13:51:38] Status: Success  Output: 530 A5
+[2021/05/27 13:51:38] Input: 531 play b H5 
+[2021/05/27 13:51:38] Status: Success  Output: 531 
+[2021/05/27 13:51:38] Input: 532 genmove w 
+[2021/05/27 13:51:39] Status: Success  Output: 532 H7
+[2021/05/27 13:51:39] Input: 533 play b A3 
+[2021/05/27 13:51:39] Status: Success  Output: 533 
+[2021/05/27 13:51:39] Input: 534 genmove w 
+[2021/05/27 13:51:39] Status: Success  Output: 534 H4
+[2021/05/27 13:51:39] Input: 535 play b C1 
+[2021/05/27 13:51:39] Status: Success  Output: 535 
+[2021/05/27 13:51:39] Input: 536 genmove w 
+[2021/05/27 13:51:39] Status: Success  Output: 536 B1
+[2021/05/27 13:51:39] Input: 537 play b G4 
+[2021/05/27 13:51:39] Status: Success  Output: 537 
+[2021/05/27 13:51:39] Input: 538 genmove w 
+[2021/05/27 13:51:40] Status: Success  Output: 538 A2
+[2021/05/27 13:51:40] Input: 539 play b PASS 
+[2021/05/27 13:51:40] Status: Success  Output: 539 
+[2021/05/27 13:51:40] Input: 540 genmove w 
+[2021/05/27 13:51:40] Status: Success  Output: 540 A4
+[2021/05/27 13:51:40] Input: 541 play b PASS 
+[2021/05/27 13:51:40] Status: Success  Output: 541 
+[2021/05/27 13:51:40] Input: 542 genmove w 
+[2021/05/27 13:51:40] Status: Success  Output: 542 E1
+[2021/05/27 13:51:40] Input: 543 play b H2 
+[2021/05/27 13:51:40] Status: Success  Output: 543 
+[2021/05/27 13:51:40] Input: 544 genmove w 
+[2021/05/27 13:51:40] Status: Success  Output: 544 H3
+[2021/05/27 13:51:41] Input: 545 play b E2 
+[2021/05/27 13:51:41] Status: Success  Output: 545 
+[2021/05/27 13:51:41] Input: 546 genmove w 
+[2021/05/27 13:51:41] Status: Success  Output: 546 F1
+[2021/05/27 13:51:41] Input: 547 play b G1 
+[2021/05/27 13:51:41] Status: Success  Output: 547 
+[2021/05/27 13:51:41] Input: 548 genmove w 
+[2021/05/27 13:51:41] Status: Success  Output: 548 H1
+[2021/05/27 13:51:41] Input: 549 play b G2 
+[2021/05/27 13:51:41] Status: Success  Output: 549 
+[2021/05/27 13:51:41] Input: 550 genmove w 
+[2021/05/27 13:51:41] Status: Success  Output: 550 C4
+[2021/05/27 13:51:41] Input: 551 play b C6 
+[2021/05/27 13:51:41] Status: Success  Output: 551 
+[2021/05/27 13:51:41] Input: 552 genmove w 
+[2021/05/27 13:51:41] Status: Success  Output: 552 B5
+[2021/05/27 13:51:41] Input: 553 play b B6 
+[2021/05/27 13:51:41] Status: Success  Output: 553 
+[2021/05/27 13:51:41] Input: 554 genmove w 
+[2021/05/27 13:51:42] Status: Success  Output: 554 A6
+[2021/05/27 13:51:42] Input: 555 play b A7 
+[2021/05/27 13:51:42] Status: Success  Output: 555 
+[2021/05/27 13:51:42] Input: 556 genmove w 
+[2021/05/27 13:51:42] Status: Success  Output: 556 B7
+[2021/05/27 13:51:42] Input: 557 play b D7 
+[2021/05/27 13:51:42] Status: Success  Output: 557 
+[2021/05/27 13:51:42] Input: 558 genmove w 
+[2021/05/27 13:51:42] Status: Success  Output: 558 A8
+[2021/05/27 13:51:42] Input: 559 play b PASS 
+[2021/05/27 13:51:42] Status: Success  Output: 559 
+[2021/05/27 13:51:42] Input: 560 genmove w 
+[2021/05/27 13:51:42] Status: Success  Output: 560 B8
+[2021/05/27 13:51:42] Input: 561 play b C8 
+[2021/05/27 13:51:42] Status: Success  Output: 561 
+[2021/05/27 13:51:42] Input: 562 genmove w 
+[2021/05/27 13:51:42] Status: Success  Output: 562 D8
+[2021/05/27 13:51:42] Input: 563 play b E8 
+[2021/05/27 13:51:42] Status: Success  Output: 563 
+[2021/05/27 13:51:42] Input: 564 clear_board 
+[2021/05/27 13:51:42] Status: Success  Output: 564 
+[2021/05/27 13:51:42] Input: 565 genmove b 
+[2021/05/27 13:51:43] Status: Success  Output: 565 E6
+[2021/05/27 13:51:43] Input: 566 play w F6 
+[2021/05/27 13:51:43] Status: Success  Output: 566 
+[2021/05/27 13:51:43] Input: 567 genmove b 
+[2021/05/27 13:51:44] Status: Success  Output: 567 F5
+[2021/05/27 13:51:44] Input: 568 play w D6 
+[2021/05/27 13:51:44] Status: Success  Output: 568 
+[2021/05/27 13:51:44] Input: 569 genmove b 
+[2021/05/27 13:51:44] Status: Success  Output: 569 C3
+[2021/05/27 13:51:44] Input: 570 play w F3 
+[2021/05/27 13:51:44] Status: Success  Output: 570 
+[2021/05/27 13:51:44] Input: 571 genmove b 
+[2021/05/27 13:51:45] Status: Success  Output: 571 C7
+[2021/05/27 13:51:45] Input: 572 play w C6 
+[2021/05/27 13:51:45] Status: Success  Output: 572 
+[2021/05/27 13:51:45] Input: 573 genmove b 
+[2021/05/27 13:51:46] Status: Success  Output: 573 E3
+[2021/05/27 13:51:46] Input: 574 play w C8 
+[2021/05/27 13:51:46] Status: Success  Output: 574 
+[2021/05/27 13:51:46] Input: 575 genmove b 
+[2021/05/27 13:51:46] Status: Success  Output: 575 G3
+[2021/05/27 13:51:47] Input: 576 play w G2 
+[2021/05/27 13:51:47] Status: Success  Output: 576 
+[2021/05/27 13:51:47] Input: 577 genmove b 
+[2021/05/27 13:51:47] Status: Success  Output: 577 D7
+[2021/05/27 13:51:47] Input: 578 play w C4 
+[2021/05/27 13:51:47] Status: Success  Output: 578 
+[2021/05/27 13:51:47] Input: 579 genmove b 
+[2021/05/27 13:51:48] Status: Success  Output: 579 H1
+[2021/05/27 13:51:48] Input: 580 play w C2 
+[2021/05/27 13:51:48] Status: Success  Output: 580 
+[2021/05/27 13:51:48] Input: 581 genmove b 
+[2021/05/27 13:51:48] Status: Success  Output: 581 C5
+[2021/05/27 13:51:49] Input: 582 play w E8 
+[2021/05/27 13:51:49] Status: Success  Output: 582 
+[2021/05/27 13:51:49] Input: 583 genmove b 
+[2021/05/27 13:51:49] Status: Success  Output: 583 D8
+[2021/05/27 13:51:49] Input: 584 play w E7 
+[2021/05/27 13:51:49] Status: Success  Output: 584 
+[2021/05/27 13:51:49] Input: 585 genmove b 
+[2021/05/27 13:51:49] Status: Success  Output: 585 F8
+[2021/05/27 13:51:50] Input: 586 play w D3 
+[2021/05/27 13:51:50] Status: Success  Output: 586 
+[2021/05/27 13:51:50] Input: 587 genmove b 
+[2021/05/27 13:51:50] Status: Success  Output: 587 C1
+[2021/05/27 13:51:50] Input: 588 play w B3 
+[2021/05/27 13:51:50] Status: Success  Output: 588 
+[2021/05/27 13:51:50] Input: 589 genmove b 
+[2021/05/27 13:51:51] Status: Success  Output: 589 A3
+[2021/05/27 13:51:51] Input: 590 play w B2 
+[2021/05/27 13:51:51] Status: Success  Output: 590 
+[2021/05/27 13:51:51] Input: 591 genmove b 
+[2021/05/27 13:51:51] Status: Success  Output: 591 A1
+[2021/05/27 13:51:51] Input: 592 play w E2 
+[2021/05/27 13:51:51] Status: Success  Output: 592 
+[2021/05/27 13:51:52] Input: 593 genmove b 
+[2021/05/27 13:51:52] Status: Success  Output: 593 B8
+[2021/05/27 13:51:52] Input: 594 play w B7 
+[2021/05/27 13:51:52] Status: Success  Output: 594 
+[2021/05/27 13:51:52] Input: 595 genmove b 
+[2021/05/27 13:51:52] Status: Success  Output: 595 A8
+[2021/05/27 13:51:53] Input: 596 play w G4 
+[2021/05/27 13:51:53] Status: Success  Output: 596 
+[2021/05/27 13:51:53] Input: 597 genmove b 
+[2021/05/27 13:51:53] Status: Success  Output: 597 D2
+[2021/05/27 13:51:53] Input: 598 play w B5 
+[2021/05/27 13:51:53] Status: Success  Output: 598 
+[2021/05/27 13:51:53] Input: 599 genmove b 
+[2021/05/27 13:51:53] Status: Success  Output: 599 B4
+[2021/05/27 13:51:53] Input: 600 play w G1 
+[2021/05/27 13:51:53] Status: Success  Output: 600 
+[2021/05/27 13:51:53] Input: 601 genmove b 
+[2021/05/27 13:51:54] Status: Success  Output: 601 F2
+[2021/05/27 13:51:54] Input: 602 play w E1 
+[2021/05/27 13:51:54] Status: Success  Output: 602 
+[2021/05/27 13:51:54] Input: 603 genmove b 
+[2021/05/27 13:51:54] Status: Success  Output: 603 H3
+[2021/05/27 13:51:54] Input: 604 play w A5 
+[2021/05/27 13:51:54] Status: Success  Output: 604 
+[2021/05/27 13:51:54] Input: 605 genmove b 
+[2021/05/27 13:51:55] Status: Success  Output: 605 H2
+[2021/05/27 13:51:55] Input: 606 play w A2 
+[2021/05/27 13:51:55] Status: Success  Output: 606 
+[2021/05/27 13:51:55] Input: 607 genmove b 
+[2021/05/27 13:51:55] Status: Success  Output: 607 B6
+[2021/05/27 13:51:55] Input: 608 play w A4 
+[2021/05/27 13:51:55] Status: Success  Output: 608 
+[2021/05/27 13:51:55] Input: 609 genmove b 
+[2021/05/27 13:51:55] Status: Success  Output: 609 A6
+[2021/05/27 13:51:56] Input: 610 play w F1 
+[2021/05/27 13:51:56] Status: Success  Output: 610 
+[2021/05/27 13:51:56] Input: 611 genmove b 
+[2021/05/27 13:51:56] Status: Success  Output: 611 D1
+[2021/05/27 13:51:56] Input: 612 play w G5 
+[2021/05/27 13:51:56] Status: Success  Output: 612 
+[2021/05/27 13:51:56] Input: 613 genmove b 
+[2021/05/27 13:51:56] Status: Success  Output: 613 H4
+[2021/05/27 13:51:56] Input: 614 play w B1 
+[2021/05/27 13:51:56] Status: Success  Output: 614 
+[2021/05/27 13:51:56] Input: 615 genmove b 
+[2021/05/27 13:51:56] Status: Success  Output: 615 F4
+[2021/05/27 13:51:56] Input: 616 play w H5 
+[2021/05/27 13:51:56] Status: Success  Output: 616 
+[2021/05/27 13:51:56] Input: 617 genmove b 
+[2021/05/27 13:51:56] Status: Success  Output: 617 G6
+[2021/05/27 13:51:56] Input: 618 play w F7 
+[2021/05/27 13:51:56] Status: Success  Output: 618 
+[2021/05/27 13:51:56] Input: 619 genmove b 
+[2021/05/27 13:51:57] Status: Success  Output: 619 H6
+[2021/05/27 13:51:57] Input: 620 play w A7 
+[2021/05/27 13:51:57] Status: Success  Output: 620 
+[2021/05/27 13:51:57] Input: 621 genmove b 
+[2021/05/27 13:51:57] Status: Success  Output: 621 G8
+[2021/05/27 13:51:57] Input: 622 play w G7 
+[2021/05/27 13:51:57] Status: Success  Output: 622 
+[2021/05/27 13:51:57] Input: 623 genmove b 
+[2021/05/27 13:51:57] Status: Success  Output: 623 H8
+[2021/05/27 13:51:57] Input: 624 play w H7 
+[2021/05/27 13:51:57] Status: Success  Output: 624 
+[2021/05/27 13:51:57] Input: 625 quit 
+[2021/05/27 13:51:57] Status: Success  Output: 625 

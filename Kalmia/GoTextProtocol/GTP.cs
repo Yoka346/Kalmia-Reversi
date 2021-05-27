@@ -38,7 +38,7 @@ namespace Kalmia.GoTextProtocol
         const GTPCoordinateRule DEFAULT_COORDINATE_RULE = GTPCoordinateRule.Chess;
 
         static GTPCoordinateRule CoordinateRule;
-        static IGTPEngine Engine;
+        static GTPEngine Engine;
         static readonly ReadOnlyDictionary<string, Action<int, string[]>> COMMANDS;
         static bool Quit = false;
         static FileStream LogFileStream;
@@ -89,22 +89,22 @@ namespace Kalmia.GoTextProtocol
             return commands;
         }
 
-        public static void Mainloop(IGTPEngine engine)
+        public static void Mainloop(GTPEngine engine)
         {
             Mainloop(engine, null);
         }
 
-        public static void Mainloop(IGTPEngine engine, GTPCoordinateRule coordRule)
+        public static void Mainloop(GTPEngine engine, GTPCoordinateRule coordRule)
         {
             Mainloop(engine, coordRule, null);
         }
 
-        public static void Mainloop(IGTPEngine engine, string logFilePath)
+        public static void Mainloop(GTPEngine engine, string logFilePath)
         {
             Mainloop(engine, DEFAULT_COORDINATE_RULE, logFilePath);
         }
 
-        public static void Mainloop(IGTPEngine engine, GTPCoordinateRule coordRule, string logFilePath)
+        public static void Mainloop(GTPEngine engine, GTPCoordinateRule coordRule, string logFilePath)
         {
             CoordinateRule = coordRule;
             Engine = engine;
@@ -505,7 +505,7 @@ namespace Kalmia.GoTextProtocol
                 return str;
             var sb = new StringBuilder(str);
             sb.Remove(1, 1);
-            sb.Append((Board.BOARD_SIZE - 1) - move.PosY);
+            sb.Append((Board.BOARD_SIZE - 1) - move.PosY + 1);
             return sb.ToString();
         }
 

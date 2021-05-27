@@ -10,20 +10,21 @@ using Kalmia.GoTextProtocol;
 
 namespace Kalmia.Engines
 {
-    public class MonteCarloEngine : IGTPEngine
+    public class MonteCarloEngine : GTPEngine
     {
-        public int PlayoutNum { get; }
-        Board currrentBoard;
+        const string NAME = "MonteCarloEngine";
+        const string VERSION = "0.0";
+
+        readonly int PLAYOUT_NUM;
         readonly int THREAD_NUM;
         readonly Random[] RAND;
         ParallelOptions parallelOptions;
 
         public MonteCarloEngine(int playoutNum) :this(playoutNum, Environment.ProcessorCount){ }
 
-        public MonteCarloEngine(int playoutNum, int threadNum)
+        public MonteCarloEngine(int playoutNum, int threadNum) : base(NAME, VERSION)
         {
-            this.currrentBoard = new Board(Color.Black, InitialBoardState.Cross);
-            this.PlayoutNum = playoutNum;
+            this.PLAYOUT_NUM = playoutNum;
             this.THREAD_NUM = threadNum;
             this.parallelOptions = new ParallelOptions();
             this.RAND = new Random[this.THREAD_NUM];
@@ -34,91 +35,43 @@ namespace Kalmia.Engines
                 this.RAND[i] = new Random(rand.Next());
         }
 
-        public void ClearBoard()
-        {
-            this.currrentBoard = new Board(Color.Black, InitialBoardState.Cross);
-        }
-
-        public Move GenerateMove(Color color)
+        public override Move GenerateMove(Color color)
         {
             var move = RegGenerateMove(color);
-            this.currrentBoard.Update(move);
+            this.board.Update(move);
             return move;
         }
 
-        public int GetBoardSize()
+        public override string LoadSGF(string path)
         {
             throw new NotImplementedException();
         }
 
-        public Color GetColor(int posX, int posY)
+        public override string LoadSGF(string path, int posX, int posY)
         {
             throw new NotImplementedException();
         }
 
-        public string GetFinalResult()
+        public override string LoadSGF(string path, int moveNum)
         {
             throw new NotImplementedException();
         }
 
-        public Move[] GetLegalMoves()
+        public override void Quit()
         {
-            throw new NotImplementedException();
+
         }
 
-        public string GetName()
+        public override Move RegGenerateMove(Color color)
         {
-            throw new NotImplementedException();
-        }
-
-        public Color GetSideToMove()
-        {
-            throw new NotImplementedException();
-        }
-
-        public string GetVersion()
-        {
-            throw new NotImplementedException();
-        }
-
-        public string LoadSGF(string path)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string LoadSGF(string path, int posX, int posY)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string LoadSGF(string path, int moveNum)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Play(Move move)
-        {
-            if (!this.currrentBoard.IsLegalMove(move))
-                return false;
-            this.currrentBoard.Update(move);
-            return true;
-        }
-
-        public void Quit()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Move RegGenerateMove(Color color)
-        {
-            var moves = this.currrentBoard.GetNextMoves();
+            var moves = this.board.GetNextMoves().ToArray();
             if (moves.Length == 1)
                 return moves[0];
 
             var moveValues = new double[moves.Length];
             for (var i = 0; i < moves.Length; i++)
             {
-                var board = new Board(this.currrentBoard);
+                var board = new Board(this.board);
                 board.Update(moves[i]);
                 moveValues[i] = Playout(board, color);
             }
@@ -130,29 +83,24 @@ namespace Kalmia.Engines
             return moves[maxIdx];
         }
 
-        public void SendTimeLeft(int timeLeft, int byoYomiStonesLeft)
+        public override void SendTimeLeft(int timeLeft, int byoYomiStonesLeft)
         {
             throw new NotImplementedException();
         }
 
-        public bool SetBoardSize(int size)
+        public override bool SetBoardSize(int size)
+        {
+            return Board.BOARD_SIZE == size;
+        }
+
+        public override void SetTime(int mainTime, int byoYomiTime, int byoYomiStones)
         {
             throw new NotImplementedException();
         }
 
-        public void SetTime(int mainTime, int byoYomiTime, int byoYomiStones)
+        public override string ExecuteOriginalCommand(string command, string[] args)
         {
             throw new NotImplementedException();
-        }
-
-        public string ShowBoard()
-        {
-            return this.currrentBoard.ToString();
-        }
-
-        public bool Undo()
-        {
-            return this.currrentBoard.Undo();
         }
 
         double Playout(Board board, Color color)
@@ -165,7 +113,7 @@ namespace Kalmia.Engines
             Parallel.For(0, this.THREAD_NUM, (threadID) =>
             {
                 var b = boards[threadID];
-                for (var i = 0; i < this.PlayoutNum / this.THREAD_NUM; i++)
+                for (var i = 0; i < this.PLAYOUT_NUM / this.THREAD_NUM; i++)
                 {
                     board.CopyTo(b);
                     sum[threadID] += Simulate(b, color, threadID);
@@ -173,12 +121,12 @@ namespace Kalmia.Engines
             });
 
             var b = boards[0];
-            for (var i = 0; i < this.PlayoutNum % this.THREAD_NUM; i++)
+            for (var i = 0; i < this.PLAYOUT_NUM % this.THREAD_NUM; i++)
             {
                 board.CopyTo(b);
                 sum[0] += Simulate(b, color, 0);
             }
-            return sum.Sum() / this.PlayoutNum;
+            return sum.Sum() / this.PLAYOUT_NUM;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

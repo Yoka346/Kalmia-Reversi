@@ -11,7 +11,10 @@ namespace Kalmia
     {
         static void Main(string[] args)
         {
-            GTP.Mainloop(new MonteCarloEngine(1000, 8), GTPCoordinateRule.Othello);
+            var coordRule = (args.Length > 0 && args[0].ToLower() == "othello") ? GTPCoordinateRule.Othello : GTPCoordinateRule.Chess;
+            //GTP.Mainloop(new RandomMoveEngine(), coordRule, $"gtplog{Environment.TickCount}.txt");
+            //GTP.Mainloop(new MonteCarloEngine(10000), coordRule, $"gtplog{Environment.TickCount}.txt");
+            GTP.Mainloop(new MCTSEngine(320000, 8, $"mcts_log{Environment.TickCount}.txt"), coordRule, $"gtplog{Environment.TickCount}.txt");
         }
     }
 }
