@@ -58,7 +58,7 @@ namespace Kalmia.Engines
             var sw = new Stopwatch();
             sw.Start();
             this.tree.SetRoot(this.lastMove);
-            var move = this.tree.Search(this.board, this.lastMove, this.PLAYOUT_NUM);
+            var move = this.tree.Search(this.board, this.PLAYOUT_NUM);
             sw.Stop();
             this.logger.WriteLine($"Ellapsed: {sw.ElapsedMilliseconds}ms");
             this.logger.WriteLine($"[ROOT_EVAL]\n{MoveEvalToString(this.tree.GetRootNodeEvaluation())}\n");

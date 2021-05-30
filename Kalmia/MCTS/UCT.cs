@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Kalmia.Reversi;
 
-namespace Kalmia.MCTS           
+namespace Kalmia.MCTS
 {
     public struct MoveEval
     {
@@ -32,23 +32,23 @@ namespace Kalmia.MCTS
         readonly Xorshift[] RAND;
         int expansionThreshold = 40;
         int virtualLoss = 3;
-        Move lastMove;
+        Move? lastMove;
+        Node root;
+        EdgeMarker rootMark;
 
-        public int ExpansionThreshold 
+        public int ExpansionThreshold
         {
             get { return this.expansionThreshold; }
             set { if (value > 0) this.expansionThreshold = value; else throw new ArgumentOutOfRangeException(); }
         }
 
-        public int VirtualLoss 
-        { 
-            get { return this.virtualLoss; } 
-            set{ if (value >= 0) this.virtualLoss = value; else throw new ArgumentOutOfRangeException(); } 
+        public int VirtualLoss
+        {
+            get { return this.virtualLoss; }
+            set { if (value >= 0) this.virtualLoss = value; else throw new ArgumentOutOfRangeException(); }
         }
 
-        Node root;
-
-        public UCT():this(Environment.ProcessorCount) { }
+        public UCT() : this(Environment.ProcessorCount) { }
 
         public UCT(int threadNum)
         {
@@ -60,19 +60,24 @@ namespace Kalmia.MCTS
 
         public MoveEval GetRootNodeEvaluation()
         {
-            return new MoveEval(this.lastMove, float.NaN, this.root.WinCount / this.root.VisitCount, this.root.VisitCount);
+            var value = (this.rootMark == EdgeMarker.Unknown) ? this.root.WinCount / this.root.VisitCount : GetScoreFromEdgeMarker(this.rootMark);
+            return new MoveEval(this.lastMove.Value, float.NaN, value, this.root.VisitCount);
         }
 
         public IEnumerable<MoveEval> GetChildNodeEvaluations()
         {
             var visitCountSum = this.root.VisitCount;
-            foreach(var edge in this.root.Edges)
-                yield return new MoveEval(edge.Move, edge.VisitCount / visitCountSum, edge.WinCount / edge.VisitCount, edge.VisitCount);
+            foreach (var edge in this.root.Edges)
+            {
+                var value = (edge.Mark == EdgeMarker.Unknown) ? this.root.WinCount / this.root.VisitCount : GetScoreFromEdgeMarker(edge.Mark);
+                yield return new MoveEval(edge.Move, (float)edge.VisitCount / visitCountSum, value, edge.VisitCount);
+            }
         }
 
-        public Move Search(Board board, Move lastMove, int count)
+        public Move Search(Board board, int count)
         {
             var currentBoard = (from b in Enumerable.Repeat(board, this.THREAD_NUM) select new Board(Color.Black, InitialBoardState.Cross)).ToArray();
+            var dummyEdge = new Edge();
 
             Parallel.For(0, this.THREAD_NUM, (threadID) =>
             {
@@ -80,32 +85,36 @@ namespace Kalmia.MCTS
                 for (var i = 0; i < count / this.THREAD_NUM; i++)
                 {
                     board.CopyTo(b, false);
-                    SearchKernel(this.root, b, threadID);
+                    SearchKernel(this.root, ref dummyEdge, b, threadID);
                 }
             });
 
             for (var i = 0; i < count % this.THREAD_NUM; i++)
             {
                 board.CopyTo(board, false);
-                SearchKernel(this.root, currentBoard[0], 0);
+                SearchKernel(this.root, ref dummyEdge, currentBoard[0], 0);
             }
             return SelectBestMove();
         }
 
         public void SetRoot(Move move)      // Looks one move ahead, and if a child node which has same move as specified one is found, sets it to root,
-                                            // otherwise, sets new Node object to root.
+                                            // otherwise sets new Node object to root.
         {
+            if (this.lastMove.HasValue && this.lastMove == move)
+                return;
+
             this.lastMove = move;
             if (this.root != null && this.root.Edges != null)
                 for (var i = 0; i < this.root.Edges.Length; i++)
                 {
                     if (move == this.root.Edges[i].Move && this.root.ChildNodes != null && this.root.ChildNodes[i] != null)
                     {
-                        this.root.CreateChildNode(i);
+                        this.rootMark = this.root.Edges[i].Mark;
                         this.root = this.root.ChildNodes[i];
                         return;
                     }
                 }
+            this.rootMark = EdgeMarker.Unknown;
             this.root = new Node();
         }
 
@@ -113,16 +122,41 @@ namespace Kalmia.MCTS
         {
             var edges = this.root.Edges;
             var bestEdge = edges[0];
-            for(var i = 1; i < edges.Length; i++)
+            var lossCount = 0;
+            var drawCount = 0;
+            var drawIdx = 0;
+            for (var i = 1; i < edges.Length; i++)
             {
                 var edge = edges[i];
+                if (!edge.IsUnknown)
+                    if (edge.IsWin)
+                    {
+                        this.rootMark = EdgeMarker.Win;
+                        return edge.Move;
+                    }
+                    else if (edge.IsLoss)
+                    {
+                        lossCount++;
+                        continue;
+                    }
+                    else
+                    {
+                        drawCount++;
+                        drawIdx = i;
+                    }
+
                 if (edge.VisitCount > bestEdge.VisitCount)
                     bestEdge = edge;
             }
+
+            if(lossCount == this.root.ChildNum)
+                this.rootMark = EdgeMarker.Loss;
+            else if(lossCount + drawCount == this.root.ChildNum)
+                this.rootMark = EdgeMarker.Draw;
             return bestEdge.Move;
         }
 
-        float SearchKernel(Node currentNode, Board currentBoard, int threadID)     // go down to leaf node and back up to root node with updating score
+        float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, Board currentBoard, int threadID)     // goes down to leaf node and back up to root node with updating score
         {
             var moves = this.MOVES[threadID];
             int childNodeIdx;
@@ -139,28 +173,41 @@ namespace Kalmia.MCTS
                     currentNode.Expand(moves, moveNum);
                 }
 
-                childNodeIdx = SelectChildNode(currentNode);
-                AddVirtualLoss(currentNode, childNodeIdx);
-                var edge = currentNode.Edges[childNodeIdx];
+                childNodeIdx = SelectChildNode(currentNode, ref edgeToCurrentNode);
+                AddVirtualLoss(currentNode, childNodeIdx); 
+                var edges = currentNode.Edges;
+                var edge = edges[childNodeIdx];
                 currentBoard.Update(edge.Move);
 
-                if (edge.VisitCount >= this.expansionThreshold && !edge.IsTerminal)     // current node is not a leaf node or terminal.
+                if (!edge.IsMarked) 
                 {
-                    if (currentNode.ChildNodes == null)
-                        currentNode.InitChildNodes();
-                    if (currentNode.ChildNodes[childNodeIdx] == null)
-                        currentNode.CreateChildNode(childNodeIdx);
-                    Monitor.Exit(currentNode);
-                    lockTaken = false;
-                    score = SearchKernel(currentNode.ChildNodes[childNodeIdx], currentBoard, threadID);
+                    MarkEdge(ref edges[childNodeIdx], currentBoard, currentNodeTurn);
+                    edge = edges[childNodeIdx];
                 }
-                else    // current node is a leaf node
+                
+                if (edge.IsUnknown)
+                {
+                    if (edge.VisitCount >= this.expansionThreshold)     // current node is not a leaf node 
+                    {
+                        if (currentNode.ChildNodes == null)
+                            currentNode.InitChildNodes();
+                        if (currentNode.ChildNodes[childNodeIdx] == null)
+                            currentNode.CreateChildNode(childNodeIdx);
+                        Monitor.Exit(currentNode);
+                        lockTaken = false;
+                        score = SearchKernel(currentNode.ChildNodes[childNodeIdx], ref edges[childNodeIdx], currentBoard, threadID);
+                    }
+                    else    // current node is a leaf node
+                    {
+                        Monitor.Exit(currentNode);
+                        lockTaken = false;
+                        score = Rollout(currentBoard, currentNodeTurn, out int count, threadID);
+                    }
+                }
+                else
                 {
                     Monitor.Exit(currentNode);
-                    lockTaken = false;
-                    score = Rollout(currentBoard, currentNodeTurn, out int count, threadID);
-                    if (count == 0 && !edge.IsTerminal)
-                        currentNode.Edges[childNodeIdx].IsTerminal = true;
+                    score = GetScoreFromEdgeMarker(currentNode.Edges[childNodeIdx].Mark);
                 }
             }
             catch
@@ -176,32 +223,78 @@ namespace Kalmia.MCTS
 
         void AddVirtualLoss(Node node, int childNodeIdx)
         {
-            // I think it does not need to use Interlocked.Add method because node has been already locked before entered this method,
-            // however value mismatch occured in node.VisitCount and node.Edges[childNodeIdx].VisitCount,
-            // so I use Interlocked.Add method and then value mismatch was disappered. I do not know why.
             Interlocked.Add(ref node.VisitCount, this.virtualLoss);
             Interlocked.Add(ref node.Edges[childNodeIdx].VisitCount, this.virtualLoss);
-            //node.VisitCount += this.virtualLoss;
-            //node.Edges[childNodeIdx].VisitCount += this.virtualLoss;
         }
 
-        int SelectChildNode(Node parentNode)        // Selects child node by UCB score. 
+        void MarkEdge(ref Edge edge, Board currentBoard, Color color)
         {
+            switch (currentBoard.GetGameResult(color))
+            {
+                case GameResult.NotOver:
+                    edge.SetUnknown();
+                    return;
+
+                case GameResult.Win:
+                    edge.SetWin();
+                    return;
+
+                case GameResult.Loss:
+                    edge.SetLoss();
+                    return;
+
+                case GameResult.Draw:
+                    edge.SetDraw();
+                    return;
+            }
+        }
+
+        int SelectChildNode(Node parentNode, ref Edge edgeToParentNode)        // Selects child node by UCB score. 
+        {
+            var childNum = parentNode.ChildNum;
             var maxIdx = 0;
             var maxUCB = float.NegativeInfinity;
-            var sum = parentNode.VisitCount + parentNode.Edges.Length;        
+            var sum = parentNode.VisitCount + parentNode.Edges.Length;
             var twoLogSum = 2.0f * FastMath.Log(sum);
-            for (var i = 0; i < parentNode.Edges.Length; i++)
+
+            var lossCount = 0;
+            var drawCount = 0;
+            var drawEdgeIdx = 0;
+            for (var i = 0; i < childNum; i++)
             {
+                if (parentNode.Edges[i].IsWin)
+                {
+                    edgeToParentNode.SetLoss();
+                    return i;       // definitely select win
+                }
+                else if (parentNode.Edges[i].IsLoss)
+                {
+                    lossCount++;        // do not select lose
+                    continue;
+                }
+                else if (parentNode.Edges[i].IsDraw)
+                {
+                    drawCount++;
+                    drawEdgeIdx = i;
+                }
+
                 // To avoid zero division or log(0), calculates UCB score assuming lost the game at least one time. 
                 var edge = parentNode.Edges[i];
                 var n = edge.VisitCount + 1;
-                var ucb = parentNode.Edges[i].WinCount / n + MathF.Sqrt(twoLogSum / n);    
-                if(ucb > maxUCB)
+                var ucb = parentNode.Edges[i].WinCount / n + MathF.Sqrt(twoLogSum / n);
+                if (ucb > maxUCB)
                 {
                     maxUCB = ucb;
                     maxIdx = i;
                 }
+            }
+
+            if (lossCount == childNum)
+                edgeToParentNode.SetWin();
+            else if (lossCount + drawCount == childNum)
+            {
+                edgeToParentNode.SetDraw();
+                return drawEdgeIdx;     // when other nodes are lose, it is better to select draw.
             }
             return maxIdx;
         }
@@ -232,7 +325,7 @@ namespace Kalmia.MCTS
                 case GameResult.Win:
                     return 1.0f;
 
-                case GameResult.Lose:
+                case GameResult.Loss:
                     return 0.0f;
 
                 default:
@@ -240,12 +333,30 @@ namespace Kalmia.MCTS
             }
         }
 
-        static void AtomicFloatAdd(ref float value, float arg) 
+        float GetScoreFromEdgeMarker(EdgeMarker mark)
+        {
+            switch (mark)
+            {
+                case EdgeMarker.Win:
+                    return 1.0f;
+
+                case EdgeMarker.Loss:
+                    return 0.0f;
+
+                case EdgeMarker.Draw:
+                    return 0.5f;
+
+                default:        // if there are no error in this code, this line is unreachable.
+                    return float.NaN;
+            }
+        }
+
+        static void AtomicFloatAdd(ref float value, float arg)
         {
             float expected;
             do
                 expected = value;
-            while(expected != Interlocked.CompareExchange(ref value, expected + arg, expected));
+            while (expected != Interlocked.CompareExchange(ref value, expected + arg, expected));
         }
     }
 }

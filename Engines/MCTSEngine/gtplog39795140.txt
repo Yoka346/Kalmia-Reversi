@@ -1,0 +1,131 @@
+[2021/05/29 22:17:33] Input: list_commands
+[2021/05/29 22:17:33] Status: Success  Output:  protocol_version
+name
+version
+known_command
+list_commands
+quit
+boardsize
+clear_board
+komi
+play
+genmove
+undo
+time_settings
+time_left
+set_game
+list_games
+loadsgf
+color
+reg_genmove
+showboard
+black
+playwhite
+genmove_black
+genmove_white
+gogui-rules_game_id
+gogui-rules_board
+gogui-rules_board_size
+gogui-rules_legal_moves
+gogui-rules_side_to_move
+gogui-rules_final_result
+[2021/05/29 22:17:33] Input: gogui-rules_game_id
+[2021/05/29 22:17:33] Status: Success  Output:  Othello
+[2021/05/29 22:17:33] Input: gogui-rules_board_size
+[2021/05/29 22:17:33] Status: Success  Output:  8
+[2021/05/29 22:17:33] Input: clear_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+[2021/05/29 22:17:33] Input: gogui-rules_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+  A B C D E F G H 
+1 . . . . . . . . 
+2 . . . . . . . . 
+3 . . . . . . . . 
+4 . . . O X . . . 
+5 . . . X O . . . 
+6 . . . . . . . . 
+7 . . . . . . . . 
+8 . . . . . . . . 
+[2021/05/29 22:17:33] Input: gogui-rules_board_size
+[2021/05/29 22:17:33] Status: Success  Output:  8
+[2021/05/29 22:17:33] Input: gogui-rules_game_id
+[2021/05/29 22:17:33] Status: Success  Output:  Othello
+[2021/05/29 22:17:33] Input: clear_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+[2021/05/29 22:17:33] Input: gogui-rules_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+  A B C D E F G H 
+1 . . . . . . . . 
+2 . . . . . . . . 
+3 . . . . . . . . 
+4 . . . O X . . . 
+5 . . . X O . . . 
+6 . . . . . . . . 
+7 . . . . . . . . 
+8 . . . . . . . . 
+[2021/05/29 22:17:33] Input: gogui-rules_board_size
+[2021/05/29 22:17:33] Status: Success  Output:  8
+[2021/05/29 22:17:33] Input: gogui-rules_side_to_move
+[2021/05/29 22:17:33] Status: Success  Output:  black
+[2021/05/29 22:17:33] Input: clear_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+[2021/05/29 22:17:33] Input: gogui-rules_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+  A B C D E F G H 
+1 . . . . . . . . 
+2 . . . . . . . . 
+3 . . . . . . . . 
+4 . . . O X . . . 
+5 . . . X O . . . 
+6 . . . . . . . . 
+7 . . . . . . . . 
+8 . . . . . . . . 
+[2021/05/29 22:17:33] Input: gogui-rules_board_size
+[2021/05/29 22:17:33] Status: Success  Output:  8
+[2021/05/29 22:17:33] Input: gogui-rules_side_to_move
+[2021/05/29 22:17:33] Status: Success  Output:  black
+[2021/05/29 22:17:33] Input: gogui-rules_legal_moves
+[2021/05/29 22:17:33] Status: Success  Output:  D3 C4 F5 E6 
+[2021/05/29 22:17:33] Input: gogui-rules_game_id
+[2021/05/29 22:17:33] Status: Success  Output:  Othello
+[2021/05/29 22:17:33] Input: clear_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+[2021/05/29 22:17:33] Input: gogui-rules_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+  A B C D E F G H 
+1 . . . . . . . . 
+2 . . . . . . . . 
+3 . . . . . . . . 
+4 . . . O X . . . 
+5 . . . X O . . . 
+6 . . . . . . . . 
+7 . . . . . . . . 
+8 . . . . . . . . 
+[2021/05/29 22:17:33] Input: gogui-rules_board_size
+[2021/05/29 22:17:33] Status: Success  Output:  8
+[2021/05/29 22:17:33] Input: gogui-rules_side_to_move
+[2021/05/29 22:17:33] Status: Success  Output:  black
+[2021/05/29 22:17:33] Input: clear_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+[2021/05/29 22:17:33] Input: gogui-rules_board
+[2021/05/29 22:17:33] Status: Success  Output:  
+  A B C D E F G H 
+1 . . . . . . . . 
+2 . . . . . . . . 
+3 . . . . . . . . 
+4 . . . O X . . . 
+5 . . . X O . . . 
+6 . . . . . . . . 
+7 . . . . . . . . 
+8 . . . . . . . . 
+[2021/05/29 22:17:33] Input: gogui-rules_board_size
+[2021/05/29 22:17:33] Status: Success  Output:  8
+[2021/05/29 22:17:34] Input: gogui-rules_side_to_move
+[2021/05/29 22:17:34] Status: Success  Output:  black
+[2021/05/29 22:17:34] Input: gogui-rules_legal_moves
+[2021/05/29 22:17:34] Status: Success  Output:  D3 C4 F5 E6 
+[2021/05/29 22:17:40] Input: gogui-rules_game_id
+[2021/05/29 22:17:40] Status: Success  Output:  Othello
+[2021/05/29 22:17:40] Input: gogui-rules_board_size
+[2021/05/29 22:17:40] Status: Success  Output:  8
+[2021/05/29 23:32:31] Input: 

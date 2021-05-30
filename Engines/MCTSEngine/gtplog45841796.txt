@@ -1,0 +1,2 @@
+[2021/05/27 21:36:51] Input: genmove b
+[2021/05/27 21:36:51] Status: Success  Output:  E3

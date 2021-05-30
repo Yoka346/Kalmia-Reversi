@@ -3,7 +3,6 @@
 
 using System;
 using System.Text;
-using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -21,7 +20,7 @@ namespace Kalmia.Reversi
     {
         Win,
         Draw,
-        Lose,
+        Loss,
         NotOver
     }
 
@@ -170,6 +169,11 @@ namespace Kalmia.Reversi
             return board.Turn == this.Turn && board.currentPlayerBoard == this.currentPlayerBoard && board.opponentPlayerBoard == this.opponentPlayerBoard;
         }
 
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
+        }
+
         public void CopyTo(Board destBoard, bool copyHistory = true)
         {
             destBoard.Turn = this.Turn;
@@ -314,9 +318,9 @@ namespace Kalmia.Reversi
             var currentPlayerCount = GetCurrentPlayerDiscCount();
             var opponentPlayerCount = GetOpponentPlayerDiscCount();
             if (currentPlayerCount > opponentPlayerCount)
-                return (color == this.Turn) ? GameResult.Win : GameResult.Lose;
+                return (color == this.Turn) ? GameResult.Win : GameResult.Loss;
             if (currentPlayerCount < opponentPlayerCount)
-                return (color == this.Turn) ? GameResult.Lose : GameResult.Win;
+                return (color == this.Turn) ? GameResult.Loss : GameResult.Win;
             return GameResult.Draw;
         }
 

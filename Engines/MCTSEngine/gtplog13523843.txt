@@ -1,0 +1,555 @@
+[2021/05/28 20:57:34] Input: name
+[2021/05/28 20:57:34] Status: Success  Output:  MCTS Engine
+[2021/05/28 20:57:34] Input: protocol_version
+[2021/05/28 20:57:34] Status: Success  Output:  2.0
+[2021/05/28 20:57:34] Input: version
+[2021/05/28 20:57:34] Status: Success  Output:  0.0
+[2021/05/28 20:57:34] Input: list_commands
+[2021/05/28 20:57:34] Status: Success  Output:  protocol_version
+name
+version
+known_command
+list_commands
+quit
+boardsize
+clear_board
+komi
+play
+genmove
+undo
+time_settings
+time_left
+set_game
+list_games
+loadsgf
+color
+reg_genmove
+showboard
+black
+playwhite
+genmove_black
+genmove_white
+gogui-rules_game_id
+gogui-rules_board
+gogui-rules_board_size
+gogui-rules_legal_moves
+gogui-rules_side_to_move
+gogui-rules_final_result
+[2021/05/28 20:57:34] Input: gogui-rules_board_size
+[2021/05/28 20:57:34] Status: Success  Output:  8
+[2021/05/28 20:57:34] Input: gogui-rules_game_id
+[2021/05/28 20:57:34] Status: Success  Output:  Othello
+[2021/05/28 20:57:34] Input: name
+[2021/05/28 20:57:34] Status: Success  Output:  MCTS Engine
+[2021/05/28 20:57:34] Input: protocol_version
+[2021/05/28 20:57:34] Status: Success  Output:  2.0
+[2021/05/28 20:57:34] Input: boardsize 8
+[2021/05/28 20:57:34] Status: Success  Output:  
+[2021/05/28 20:57:34] Input: clear_board
+[2021/05/28 20:57:34] Status: Success  Output:  
+[2021/05/28 20:57:34] Input: komi 6.5
+[2021/05/28 20:57:34] Status: Success  Output:  
+[2021/05/28 20:57:34] Input: gogui-rules_board_size
+[2021/05/28 20:57:34] Status: Success  Output:  8
+[2021/05/28 20:57:34] Input: gogui-rules_game_id
+[2021/05/28 20:57:34] Status: Success  Output:  Othello
+[2021/05/28 20:57:38] Input: genmove b
+[2021/05/28 20:57:39] Status: Success  Output:  E3
+[2021/05/28 20:57:39] Input: genmove w
+[2021/05/28 20:57:39] Status: Success  Output:  D3
+[2021/05/28 20:57:39] Input: genmove b
+[2021/05/28 20:57:39] Status: Success  Output:  C6
+[2021/05/28 20:57:39] Input: genmove w
+[2021/05/28 20:57:40] Status: Success  Output:  F6
+[2021/05/28 20:57:40] Input: genmove b
+[2021/05/28 20:57:40] Status: Success  Output:  F5
+[2021/05/28 20:57:40] Input: genmove w
+[2021/05/28 20:57:41] Status: Success  Output:  G6
+[2021/05/28 20:57:41] Input: genmove b
+[2021/05/28 20:57:41] Status: Success  Output:  F3
+[2021/05/28 20:57:41] Input: genmove w
+[2021/05/28 20:57:42] Status: Success  Output:  C5
+[2021/05/28 20:57:42] Input: genmove b
+[2021/05/28 20:57:42] Status: Success  Output:  B6
+[2021/05/28 20:57:42] Input: genmove w
+[2021/05/28 20:57:42] Status: Success  Output:  B5
+[2021/05/28 20:57:42] Input: genmove b
+[2021/05/28 20:57:43] Status: Success  Output:  C2
+[2021/05/28 20:57:43] Input: genmove w
+[2021/05/28 20:57:43] Status: Success  Output:  C7
+[2021/05/28 20:57:43] Input: genmove b
+[2021/05/28 20:57:44] Status: Success  Output:  D6
+[2021/05/28 20:57:44] Input: genmove w
+[2021/05/28 20:57:44] Status: Success  Output:  D7
+[2021/05/28 20:57:44] Input: genmove b
+[2021/05/28 20:57:44] Status: Success  Output:  A5
+[2021/05/28 20:57:44] Input: genmove w
+[2021/05/28 20:57:45] Status: Success  Output:  A6
+[2021/05/28 20:57:45] Input: genmove b
+[2021/05/28 20:57:45] Status: Success  Output:  C8
+[2021/05/28 20:57:45] Input: genmove w
+[2021/05/28 20:57:45] Status: Success  Output:  A4
+[2021/05/28 20:57:45] Input: genmove b
+[2021/05/28 20:57:46] Status: Success  Output:  D8
+[2021/05/28 20:57:46] Input: genmove w
+[2021/05/28 20:57:46] Status: Success  Output:  C3
+[2021/05/28 20:57:46] Input: genmove b
+[2021/05/28 20:57:46] Status: Success  Output:  E6
+[2021/05/28 20:57:46] Input: genmove w
+[2021/05/28 20:57:47] Status: Success  Output:  C1
+[2021/05/28 20:57:47] Input: genmove b
+[2021/05/28 20:57:47] Status: Success  Output:  H6
+[2021/05/28 20:57:47] Input: genmove w
+[2021/05/28 20:57:47] Status: Success  Output:  F7
+[2021/05/28 20:57:47] Input: genmove b
+[2021/05/28 20:57:48] Status: Success  Output:  G5
+[2021/05/28 20:57:48] Input: genmove w
+[2021/05/28 20:57:48] Status: Success  Output:  H5
+[2021/05/28 20:57:48] Input: genmove b
+[2021/05/28 20:57:48] Status: Success  Output:  H4
+[2021/05/28 20:57:48] Input: genmove w
+[2021/05/28 20:57:49] Status: Success  Output:  G2
+[2021/05/28 20:57:49] Input: genmove b
+[2021/05/28 20:57:49] Status: Success  Output:  E8
+[2021/05/28 20:57:49] Input: genmove w
+[2021/05/28 20:57:49] Status: Success  Output:  F2
+[2021/05/28 20:57:49] Input: genmove b
+[2021/05/28 20:57:49] Status: Success  Output:  C4
+[2021/05/28 20:57:49] Input: genmove w
+[2021/05/28 20:57:50] Status: Success  Output:  F8
+[2021/05/28 20:57:50] Input: genmove b
+[2021/05/28 20:57:50] Status: Success  Output:  G8
+[2021/05/28 20:57:50] Input: genmove w
+[2021/05/28 20:57:50] Status: Success  Output:  B7
+[2021/05/28 20:57:50] Input: genmove b
+[2021/05/28 20:57:50] Status: Success  Output:  F4
+[2021/05/28 20:57:50] Input: genmove w
+[2021/05/28 20:57:51] Status: Success  Output:  E7
+[2021/05/28 20:57:51] Input: genmove b
+[2021/05/28 20:57:51] Status: Success  Output:  E2
+[2021/05/28 20:57:51] Input: genmove w
+[2021/05/28 20:57:51] Status: Success  Output:  G4
+[2021/05/28 20:57:51] Input: genmove b
+[2021/05/28 20:57:51] Status: Success  Output:  H1
+[2021/05/28 20:57:51] Input: genmove w
+[2021/05/28 20:57:52] Status: Success  Output:  G7
+[2021/05/28 20:57:52] Input: genmove b
+[2021/05/28 20:57:52] Status: Success  Output:  B8
+[2021/05/28 20:57:52] Input: genmove w
+[2021/05/28 20:57:52] Status: Success  Output:  B4
+[2021/05/28 20:57:52] Input: genmove b
+[2021/05/28 20:57:52] Status: Success  Output:  A8
+[2021/05/28 20:57:52] Input: genmove w
+[2021/05/28 20:57:52] Status: Success  Output:  E1
+[2021/05/28 20:57:52] Input: genmove b
+[2021/05/28 20:57:53] Status: Success  Output:  F1
+[2021/05/28 20:57:53] Input: genmove w
+[2021/05/28 20:57:53] Status: Success  Output:  A7
+[2021/05/28 20:57:53] Input: genmove b
+[2021/05/28 20:57:53] Status: Success  Output:  D1
+[2021/05/28 20:57:53] Input: genmove w
+[2021/05/28 20:57:53] Status: Success  Output:  D2
+[2021/05/28 20:57:53] Input: genmove b
+[2021/05/28 20:57:53] Status: Success  Output:  H3
+[2021/05/28 20:57:53] Input: genmove w
+[2021/05/28 20:57:53] Status: Success  Output:  G1
+[2021/05/28 20:57:53] Input: genmove b
+[2021/05/28 20:57:53] Status: Success  Output:  A3
+[2021/05/28 20:57:53] Input: genmove w
+[2021/05/28 20:57:54] Status: Success  Output:  G3
+[2021/05/28 20:57:54] Input: genmove b
+[2021/05/28 20:57:54] Status: Success  Output:  H2
+[2021/05/28 20:57:54] Input: genmove w
+[2021/05/28 20:57:54] Status: Success  Output:  B3
+[2021/05/28 20:57:54] Input: genmove b
+[2021/05/28 20:57:54] Status: Success  Output:  H8
+[2021/05/28 20:57:54] Input: genmove w
+[2021/05/28 20:57:54] Status: Success  Output:  H7
+[2021/05/28 20:57:54] Input: genmove b
+[2021/05/28 20:57:54] Status: Success  Output:  A2
+[2021/05/28 20:57:54] Input: genmove w
+[2021/05/28 20:57:54] Status: Success  Output:  B2
+[2021/05/28 20:57:54] Input: genmove b
+[2021/05/28 20:57:55] Status: Success  Output:  A1
+[2021/05/28 20:57:55] Input: genmove w
+[2021/05/28 20:57:55] Status: Success  Output:  B1
+[2021/05/28 20:58:16] Input: boardsize 8
+[2021/05/28 20:58:16] Status: Success  Output:  
+[2021/05/28 20:58:16] Input: clear_board
+[2021/05/28 20:58:16] Status: Success  Output:  
+[2021/05/28 20:58:22] Input: genmove b
+[2021/05/28 20:58:23] Status: Success  Output:  E3
+[2021/05/28 20:58:23] Input: genmove w
+[2021/05/28 20:58:23] Status: Success  Output:  D3
+[2021/05/28 20:58:23] Input: genmove b
+[2021/05/28 20:58:24] Status: Success  Output:  C6
+[2021/05/28 20:58:24] Input: genmove w
+[2021/05/28 20:58:24] Status: Success  Output:  F6
+[2021/05/28 20:58:24] Input: genmove b
+[2021/05/28 20:58:25] Status: Success  Output:  E6
+[2021/05/28 20:58:25] Input: genmove w
+[2021/05/28 20:58:25] Status: Success  Output:  F5
+[2021/05/28 20:58:25] Input: genmove b
+[2021/05/28 20:58:25] Status: Success  Output:  G5
+[2021/05/28 20:58:25] Input: genmove w
+[2021/05/28 20:58:26] Status: Success  Output:  F4
+[2021/05/28 20:58:26] Input: genmove b
+[2021/05/28 20:58:26] Status: Success  Output:  G6
+[2021/05/28 20:58:26] Input: genmove w
+[2021/05/28 20:58:27] Status: Success  Output:  F7
+[2021/05/28 20:58:27] Input: genmove b
+[2021/05/28 20:58:27] Status: Success  Output:  E7
+[2021/05/28 20:58:27] Input: genmove w
+[2021/05/28 20:58:27] Status: Success  Output:  H5
+[2021/05/28 20:58:27] Input: genmove b
+[2021/05/28 20:58:28] Status: Success  Output:  H6
+[2021/05/28 20:58:28] Input: genmove w
+[2021/05/28 20:58:28] Status: Success  Output:  C5
+[2021/05/28 20:58:28] Input: genmove b
+[2021/05/28 20:58:28] Status: Success  Output:  H4
+[2021/05/28 20:58:28] Input: genmove w
+[2021/05/28 20:58:29] Status: Success  Output:  C7
+[2021/05/28 20:58:29] Input: genmove b
+[2021/05/28 20:58:29] Status: Success  Output:  F8
+[2021/05/28 20:58:29] Input: genmove w
+[2021/05/28 20:58:30] Status: Success  Output:  G7
+[2021/05/28 20:58:30] Input: genmove b
+[2021/05/28 20:58:30] Status: Success  Output:  C3
+[2021/05/28 20:58:30] Input: genmove w
+[2021/05/28 20:58:30] Status: Success  Output:  D6
+[2021/05/28 20:58:30] Input: genmove b
+[2021/05/28 20:58:30] Status: Success  Output:  H8
+[2021/05/28 20:58:30] Input: genmove w
+[2021/05/28 20:58:31] Status: Success  Output:  C2
+[2021/05/28 20:58:31] Input: genmove b
+[2021/05/28 20:58:31] Status: Success  Output:  C1
+[2021/05/28 20:58:31] Input: genmove w
+[2021/05/28 20:58:31] Status: Success  Output:  H7
+[2021/05/28 20:58:31] Input: genmove b
+[2021/05/28 20:58:32] Status: Success  Output:  C4
+[2021/05/28 20:58:32] Input: genmove w
+[2021/05/28 20:58:32] Status: Success  Output:  G8
+[2021/05/28 20:58:32] Input: genmove b
+[2021/05/28 20:58:32] Status: Success  Output:  C8
+[2021/05/28 20:58:32] Input: genmove w
+[2021/05/28 20:58:33] Status: Success  Output:  B7
+[2021/05/28 20:58:33] Input: genmove b
+[2021/05/28 20:58:33] Status: Success  Output:  D7
+[2021/05/28 20:58:33] Input: genmove w
+[2021/05/28 20:58:33] Status: Success  Output:  D8
+[2021/05/28 20:58:33] Input: genmove b
+[2021/05/28 20:58:33] Status: Success  Output:  E8
+[2021/05/28 20:58:33] Input: genmove w
+[2021/05/28 20:58:34] Status: Success  Output:  G3
+[2021/05/28 20:58:34] Input: genmove b
+[2021/05/28 20:58:34] Status: Success  Output:  G4
+[2021/05/28 20:58:34] Input: genmove w
+[2021/05/28 20:58:34] Status: Success  Output:  F3
+[2021/05/28 20:58:34] Input: genmove b
+[2021/05/28 20:58:34] Status: Success  Output:  B5
+[2021/05/28 20:58:34] Input: genmove w
+[2021/05/28 20:58:34] Status: Success  Output:  B3
+[2021/05/28 20:58:34] Input: genmove b
+[2021/05/28 20:58:35] Status: Success  Output:  D2
+[2021/05/28 20:58:35] Input: genmove w
+[2021/05/28 20:58:35] Status: Success  Output:  D1
+[2021/05/28 20:58:35] Input: genmove b
+[2021/05/28 20:58:35] Status: Success  Output:  E1
+[2021/05/28 20:58:35] Input: genmove w
+[2021/05/28 20:58:35] Status: Success  Output:  B4
+[2021/05/28 20:58:35] Input: genmove b
+[2021/05/28 20:58:35] Status: Success  Output:  B1
+[2021/05/28 20:58:36] Input: genmove w
+[2021/05/28 20:58:36] Status: Success  Output:  A5
+[2021/05/28 20:58:36] Input: genmove b
+[2021/05/28 20:58:36] Status: Success  Output:  E2
+[2021/05/28 20:58:36] Input: genmove w
+[2021/05/28 20:58:36] Status: Success  Output:  G2
+[2021/05/28 20:58:36] Input: genmove b
+[2021/05/28 20:58:36] Status: Success  Output:  H1
+[2021/05/28 20:58:36] Input: genmove w
+[2021/05/28 20:58:36] Status: Success  Output:  F2
+[2021/05/28 20:58:36] Input: genmove b
+[2021/05/28 20:58:37] Status: Success  Output:  A3
+[2021/05/28 20:58:37] Input: genmove w
+[2021/05/28 20:58:37] Status: Success  Output:  B6
+[2021/05/28 20:58:37] Input: genmove b
+[2021/05/28 20:58:37] Status: Success  Output:  A8
+[2021/05/28 20:58:37] Input: genmove w
+[2021/05/28 20:58:37] Status: Success  Output:  B8
+[2021/05/28 20:58:37] Input: genmove b
+[2021/05/28 20:58:37] Status: Success  Output:  A7
+[2021/05/28 20:58:37] Input: genmove w
+[2021/05/28 20:58:37] Status: Success  Output:  A2
+[2021/05/28 20:58:37] Input: genmove b
+[2021/05/28 20:58:38] Status: Success  Output:  A1
+[2021/05/28 20:58:38] Input: genmove w
+[2021/05/28 20:58:38] Status: Success  Output:  F1
+[2021/05/28 20:58:38] Input: genmove b
+[2021/05/28 20:58:38] Status: Success  Output:  H3
+[2021/05/28 20:58:38] Input: genmove w
+[2021/05/28 20:58:38] Status: Success  Output:  B2
+[2021/05/28 20:58:38] Input: genmove b
+[2021/05/28 20:58:38] Status: Success  Output:  A4
+[2021/05/28 20:58:38] Input: genmove w
+[2021/05/28 20:58:38] Status: Success  Output:  A6
+[2021/05/28 20:58:38] Input: genmove b
+[2021/05/28 20:58:38] Status: Success  Output:  G1
+[2021/05/28 20:58:39] Input: genmove w
+[2021/05/28 20:58:39] Status: Success  Output:  H2
+[2021/05/28 20:58:54] Input: boardsize 8
+[2021/05/28 20:58:54] Status: Success  Output:  
+[2021/05/28 20:58:54] Input: clear_board
+[2021/05/28 20:58:54] Status: Success  Output:  
+[2021/05/28 20:58:58] Input: genmove b
+[2021/05/28 20:58:59] Status: Success  Output:  E3
+[2021/05/28 20:58:59] Input: genmove w
+[2021/05/28 20:58:59] Status: Success  Output:  D3
+[2021/05/28 20:58:59] Input: genmove b
+[2021/05/28 20:59:00] Status: Success  Output:  C6
+[2021/05/28 20:59:00] Input: genmove w
+[2021/05/28 20:59:00] Status: Success  Output:  F6
+[2021/05/28 20:59:00] Input: genmove b
+[2021/05/28 20:59:01] Status: Success  Output:  E6
+[2021/05/28 20:59:01] Input: genmove w
+[2021/05/28 20:59:01] Status: Success  Output:  F2
+[2021/05/28 20:59:01] Input: genmove b
+[2021/05/28 20:59:01] Status: Success  Output:  G6
+[2021/05/28 20:59:01] Input: genmove w
+[2021/05/28 20:59:02] Status: Success  Output:  E7
+[2021/05/28 20:59:02] Input: genmove b
+[2021/05/28 20:59:02] Status: Success  Output:  F3
+[2021/05/28 20:59:02] Input: genmove w
+[2021/05/28 20:59:03] Status: Success  Output:  H6
+[2021/05/28 20:59:03] Input: genmove b
+[2021/05/28 20:59:03] Status: Success  Output:  C3
+[2021/05/28 20:59:03] Input: genmove w
+[2021/05/28 20:59:03] Status: Success  Output:  D6
+[2021/05/28 20:59:03] Input: genmove b
+[2021/05/28 20:59:04] Status: Success  Output:  F1
+[2021/05/28 20:59:04] Input: genmove w
+[2021/05/28 20:59:04] Status: Success  Output:  B6
+[2021/05/28 20:59:04] Input: genmove b
+[2021/05/28 20:59:04] Status: Success  Output:  C5
+[2021/05/28 20:59:04] Input: genmove w
+[2021/05/28 20:59:05] Status: Success  Output:  B4
+[2021/05/28 20:59:05] Input: genmove b
+[2021/05/28 20:59:05] Status: Success  Output:  A5
+[2021/05/28 20:59:05] Input: genmove w
+[2021/05/28 20:59:05] Status: Success  Output:  E2
+[2021/05/28 20:59:05] Input: genmove b
+[2021/05/28 20:59:06] Status: Success  Output:  F8
+[2021/05/28 20:59:06] Input: genmove w
+[2021/05/28 20:59:06] Status: Success  Output:  B3
+[2021/05/28 20:59:06] Input: genmove b
+[2021/05/28 20:59:06] Status: Success  Output:  A6
+[2021/05/28 20:59:06] Input: genmove w
+[2021/05/28 20:59:07] Status: Success  Output:  D7
+[2021/05/28 20:59:07] Input: genmove b
+[2021/05/28 20:59:07] Status: Success  Output:  A3
+[2021/05/28 20:59:07] Input: genmove w
+[2021/05/28 20:59:07] Status: Success  Output:  B2
+[2021/05/28 20:59:07] Input: genmove b
+[2021/05/28 20:59:07] Status: Success  Output:  D2
+[2021/05/28 20:59:07] Input: genmove w
+[2021/05/28 20:59:08] Status: Success  Output:  B7
+[2021/05/28 20:59:08] Input: genmove b
+[2021/05/28 20:59:08] Status: Success  Output:  A8
+[2021/05/28 20:59:08] Input: genmove w
+[2021/05/28 20:59:08] Status: Success  Output:  A7
+[2021/05/28 20:59:08] Input: genmove b
+[2021/05/28 20:59:08] Status: Success  Output:  A1
+[2021/05/28 20:59:08] Input: genmove w
+[2021/05/28 20:59:09] Status: Success  Output:  A4
+[2021/05/28 20:59:09] Input: genmove b
+[2021/05/28 20:59:09] Status: Success  Output:  F7
+[2021/05/28 20:59:09] Input: genmove w
+[2021/05/28 20:59:09] Status: Success  Output:  A2
+[2021/05/28 20:59:09] Input: genmove b
+[2021/05/28 20:59:09] Status: Success  Output:  H5
+[2021/05/28 20:59:09] Input: genmove w
+[2021/05/28 20:59:10] Status: Success  Output:  B5
+[2021/05/28 20:59:10] Input: genmove b
+[2021/05/28 20:59:10] Status: Success  Output:  H7
+[2021/05/28 20:59:10] Input: genmove w
+[2021/05/28 20:59:10] Status: Success  Output:  B1
+[2021/05/28 20:59:10] Input: genmove b
+[2021/05/28 20:59:10] Status: Success  Output:  C1
+[2021/05/28 20:59:10] Input: genmove w
+[2021/05/28 20:59:10] Status: Success  Output:  G3
+[2021/05/28 20:59:10] Input: genmove b
+[2021/05/28 20:59:11] Status: Success  Output:  C4
+[2021/05/28 20:59:11] Input: genmove w
+[2021/05/28 20:59:11] Status: Success  Output:  B8
+[2021/05/28 20:59:11] Input: genmove b
+[2021/05/28 20:59:11] Status: Success  Output:  C8
+[2021/05/28 20:59:11] Input: genmove w
+[2021/05/28 20:59:11] Status: Success  Output:  E8
+[2021/05/28 20:59:11] Input: genmove b
+[2021/05/28 20:59:11] Status: Success  Output:  D8
+[2021/05/28 20:59:11] Input: genmove w
+[2021/05/28 20:59:12] Status: Success  Output:  C7
+[2021/05/28 20:59:12] Input: genmove b
+[2021/05/28 20:59:12] Status: Success  Output:  F4
+[2021/05/28 20:59:12] Input: genmove w
+[2021/05/28 20:59:12] Status: Success  Output:  F5
+[2021/05/28 20:59:12] Input: genmove b
+[2021/05/28 20:59:12] Status: Success  Output:  G4
+[2021/05/28 20:59:12] Input: genmove w
+[2021/05/28 20:59:12] Status: Success  Output:  G5
+[2021/05/28 20:59:12] Input: genmove b
+[2021/05/28 20:59:13] Status: Success  Output:  C2
+[2021/05/28 20:59:13] Input: genmove w
+[2021/05/28 20:59:13] Status: Success  Output:  G2
+[2021/05/28 20:59:13] Input: genmove b
+[2021/05/28 20:59:13] Status: Success  Output:  H1
+[2021/05/28 20:59:13] Input: genmove w
+[2021/05/28 20:59:13] Status: Success  Output:  G1
+[2021/05/28 20:59:13] Input: genmove b
+[2021/05/28 20:59:13] Status: Success  Output:  H2
+[2021/05/28 20:59:13] Input: genmove w
+[2021/05/28 20:59:13] Status: Success  Output:  G8
+[2021/05/28 20:59:14] Input: genmove b
+[2021/05/28 20:59:14] Status: Success  Output:  H8
+[2021/05/28 20:59:14] Input: genmove w
+[2021/05/28 20:59:14] Status: Success  Output:  G7
+[2021/05/28 20:59:14] Input: genmove b
+[2021/05/28 20:59:14] Status: Success  Output:  H4
+[2021/05/28 20:59:14] Input: genmove w
+[2021/05/28 20:59:14] Status: Success  Output:  H3
+[2021/05/28 20:59:14] Input: genmove b
+[2021/05/28 20:59:14] Status: Success  Output:  D1
+[2021/05/28 20:59:14] Input: genmove w
+[2021/05/28 20:59:14] Status: Success  Output:  E1
+[2021/05/28 20:59:29] Input: boardsize 8
+[2021/05/28 20:59:29] Status: Success  Output:  
+[2021/05/28 20:59:29] Input: clear_board
+[2021/05/28 20:59:29] Status: Success  Output:  
+[2021/05/28 20:59:36] Input: genmove b
+[2021/05/28 20:59:37] Status: Success  Output:  E3
+[2021/05/28 20:59:37] Input: genmove w
+[2021/05/28 20:59:37] Status: Success  Output:  D3
+[2021/05/28 20:59:37] Input: genmove b
+[2021/05/28 20:59:38] Status: Success  Output:  C6
+[2021/05/28 20:59:38] Input: genmove w
+[2021/05/28 20:59:38] Status: Success  Output:  F6
+[2021/05/28 20:59:38] Input: genmove b
+[2021/05/28 20:59:39] Status: Success  Output:  E6
+[2021/05/28 20:59:39] Input: genmove w
+[2021/05/28 20:59:39] Status: Success  Output:  F5
+[2021/05/28 20:59:39] Input: genmove b
+[2021/05/28 20:59:39] Status: Success  Output:  G5
+[2021/05/28 20:59:39] Input: genmove w
+[2021/05/28 20:59:40] Status: Success  Output:  D6
+[2021/05/28 20:59:40] Input: genmove b
+[2021/05/28 20:59:40] Status: Success  Output:  G6
+[2021/05/28 20:59:40] Input: genmove w
+[2021/05/28 20:59:40] Status: Success  Output:  D7
+[2021/05/28 20:59:40] Input: genmove b
+[2021/05/28 20:59:41] Status: Success  Output:  C7
+[2021/05/28 20:59:41] Input: genmove w
+[2021/05/28 20:59:41] Status: Success  Output:  G4
+[2021/05/28 20:59:41] Input: genmove b
+[2021/05/28 20:59:42] Status: Success  Output:  C2
+[2021/05/28 20:59:42] Input: genmove w
+[2021/05/28 20:59:42] Status: Success  Output:  H6
+[2021/05/28 20:59:42] Input: genmove b
+[2021/05/28 20:59:42] Status: Success  Output:  C8
+[2021/05/28 20:59:42] Input: genmove w
+[2021/05/28 20:59:43] Status: Success  Output:  B6
+[2021/05/28 20:59:43] Input: genmove b
+[2021/05/28 20:59:43] Status: Success  Output:  F7
+[2021/05/28 20:59:43] Input: genmove w
+[2021/05/28 20:59:43] Status: Success  Output:  D8
+[2021/05/28 20:59:43] Input: genmove b
+[2021/05/28 20:59:44] Status: Success  Output:  C5
+[2021/05/28 20:59:44] Input: genmove w
+[2021/05/28 20:59:44] Status: Success  Output:  B1
+[2021/05/28 20:59:44] Input: genmove b
+[2021/05/28 20:59:44] Status: Success  Output:  H5
+[2021/05/28 20:59:44] Input: genmove w
+[2021/05/28 20:59:44] Status: Success  Output:  F8
+[2021/05/28 20:59:44] Input: genmove b
+[2021/05/28 20:59:45] Status: Success  Output:  C3
+[2021/05/28 20:59:45] Input: genmove w
+[2021/05/28 20:59:45] Status: Success  Output:  H4
+[2021/05/28 20:59:45] Input: genmove b
+[2021/05/28 20:59:45] Status: Success  Output:  C1
+[2021/05/28 20:59:45] Input: genmove w
+[2021/05/28 20:59:46] Status: Success  Output:  D1
+[2021/05/28 20:59:46] Input: genmove b
+[2021/05/28 20:59:46] Status: Success  Output:  F3
+[2021/05/28 20:59:46] Input: genmove w
+[2021/05/28 20:59:46] Status: Success  Output:  B3
+[2021/05/28 20:59:46] Input: genmove b
+[2021/05/28 20:59:46] Status: Success  Output:  A3
+[2021/05/28 20:59:46] Input: genmove w
+[2021/05/28 20:59:47] Status: Success  Output:  C4
+[2021/05/28 20:59:47] Input: genmove b
+[2021/05/28 20:59:47] Status: Success  Output:  B4
+[2021/05/28 20:59:47] Input: genmove w
+[2021/05/28 20:59:47] Status: Success  Output:  A4
+[2021/05/28 20:59:47] Input: genmove b
+[2021/05/28 20:59:47] Status: Success  Output:  D2
+[2021/05/28 20:59:47] Input: genmove w
+[2021/05/28 20:59:48] Status: Success  Output:  B5
+[2021/05/28 20:59:48] Input: genmove b
+[2021/05/28 20:59:48] Status: Success  Output:  A5
+[2021/05/28 20:59:48] Input: genmove w
+[2021/05/28 20:59:48] Status: Success  Output:  G2
+[2021/05/28 20:59:48] Input: genmove b
+[2021/05/28 20:59:48] Status: Success  Output:  F4
+[2021/05/28 20:59:48] Input: genmove w
+[2021/05/28 20:59:48] Status: Success  Output:  E2
+[2021/05/28 20:59:48] Input: genmove b
+[2021/05/28 20:59:49] Status: Success  Output:  E8
+[2021/05/28 20:59:49] Input: genmove w
+[2021/05/28 20:59:49] Status: Success  Output:  B8
+[2021/05/28 20:59:49] Input: genmove b
+[2021/05/28 20:59:49] Status: Success  Output:  H1
+[2021/05/28 20:59:49] Input: genmove w
+[2021/05/28 20:59:49] Status: Success  Output:  E7
+[2021/05/28 20:59:49] Input: genmove b
+[2021/05/28 20:59:49] Status: Success  Output:  F1
+[2021/05/28 20:59:49] Input: genmove w
+[2021/05/28 20:59:50] Status: Success  Output:  B2
+[2021/05/28 20:59:50] Input: genmove b
+[2021/05/28 20:59:50] Status: Success  Output:  G3
+[2021/05/28 20:59:50] Input: genmove w
+[2021/05/28 20:59:50] Status: Success  Output:  G8
+[2021/05/28 20:59:50] Input: genmove b
+[2021/05/28 20:59:50] Status: Success  Output:  F2
+[2021/05/28 20:59:50] Input: genmove w
+[2021/05/28 20:59:50] Status: Success  Output:  H3
+[2021/05/28 20:59:50] Input: genmove b
+[2021/05/28 20:59:50] Status: Success  Output:  E1
+[2021/05/28 20:59:50] Input: genmove w
+[2021/05/28 20:59:51] Status: Success  Output:  A7
+[2021/05/28 20:59:51] Input: genmove b
+[2021/05/28 20:59:51] Status: Success  Output:  A1
+[2021/05/28 20:59:51] Input: genmove w
+[2021/05/28 20:59:51] Status: Success  Output:  A2
+[2021/05/28 20:59:51] Input: genmove b
+[2021/05/28 20:59:51] Status: Success  Output:  A6
+[2021/05/28 20:59:51] Input: genmove w
+[2021/05/28 20:59:51] Status: Success  Output:  G1
+[2021/05/28 20:59:51] Input: genmove b
+[2021/05/28 20:59:51] Status: Success  Output:  H2
+[2021/05/28 20:59:51] Input: genmove w
+[2021/05/28 20:59:51] Status: Success  Output:  G7
+[2021/05/28 20:59:51] Input: genmove b
+[2021/05/28 20:59:52] Status: Success  Output:  H7
+[2021/05/28 20:59:52] Input: genmove w
+[2021/05/28 20:59:52] Status: Success  Output:  B7
+[2021/05/28 20:59:52] Input: genmove b
+[2021/05/28 20:59:52] Status: Success  Output:  A8
+[2021/05/28 20:59:52] Input: genmove w
+[2021/05/28 20:59:52] Status: Success  Output:  PASS
+[2021/05/28 20:59:52] Input: genmove b
+[2021/05/28 20:59:52] Status: Success  Output:  H8
+[2021/05/28 21:00:34] Input: boardsize 8
+[2021/05/28 21:00:34] Status: Success  Output:  
+[2021/05/28 21:00:34] Input: clear_board
+[2021/05/28 21:00:34] Status: Success  Output:  
+[2021/05/28 21:00:37] Input: quit
+[2021/05/28 21:00:37] Status: Success  Output:  

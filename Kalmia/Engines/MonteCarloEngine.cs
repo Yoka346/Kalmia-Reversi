@@ -142,7 +142,7 @@ namespace Kalmia.Engines
                 case GameResult.Win:
                     return 1.0;
 
-                case GameResult.Lose:
+                case GameResult.Loss:
                     return 0.0;
 
                 default:

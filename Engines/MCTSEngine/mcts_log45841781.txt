@@ -1,0 +1,29 @@
+Ellapsed: 631ms
+[ROOT_EVAL]
+Move: A1
+Rate: NaN%
+WinRate: 49.493126%
+SimulationCount: 320000
+
+[NEXT_MOVES_EVAL]
+
+Move: D3
+Rate: 0%
+WinRate: 46.410625%
+SimulationCount: 11743
+
+Move: C4
+Rate: 0%
+WinRate: 46.77606%
+SimulationCount: 13834
+
+Move: F5
+Rate: 0%
+WinRate: 49.70723%
+SimulationCount: 139872
+
+Move: E6
+Rate: 0%
+WinRate: 49.77677%
+SimulationCount: 154551
+
