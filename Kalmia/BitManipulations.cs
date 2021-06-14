@@ -68,6 +68,24 @@ namespace Kalmia
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong ParallelBitExtract(ulong bits, ulong mask)
+        { 
+            if(Bmi2.X64.IsSupported)
+                return Bmi2.X64.ParallelBitExtract(bits, mask);     // On ZEN2 architecture, this is slower than software emulation code...
+            else
+            {
+                var res = 0UL;
+                for (var bb = 1UL; mask != 0UL; bb += bb)
+                {
+                    if ((bits & mask & (~mask + 1)) != 0UL)
+                        res |= bb;
+                    mask &= mask - 1;
+                }
+                return res;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte BitSwap(byte bits)
         {
             int n = bits;

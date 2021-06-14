@@ -16,13 +16,11 @@ namespace KalmiaTest
         {
             var board = new Board(Color.Black, InitialBoardState.Cross);
             var boardTest = new BoardForTest(Color.Black, InitialBoardState.Cross);
-            var moves = new Move[GRID_NUM];
-            var movesTest = new Move[GRID_NUM];
-            bool passed = false;
-            bool gameover = false;
+            var moves = new Move[SQUARE_NUM];
+            var movesTest = new Move[SQUARE_NUM];
             var rand = new Random();
 
-            while (!gameover)
+            while (!boardTest.IsGameover())
             {
                 var moveNum = board.GetNextMoves(moves);
                 var moveNumTest = boardTest.GetNextMoves(movesTest);
@@ -32,13 +30,6 @@ namespace KalmiaTest
                 board.Update(nextMove);
                 boardTest.Update(nextMove);
                 AssertDiscsAreEqual(boardTest.GetDiscsArray(), board.GetDiscsArray());
-                if (nextMove.Pos == Move.PASS)
-                    if (!passed)
-                        passed = true;
-                    else
-                        gameover = true;
-                else if (passed)
-                    passed = false;
             }
         }
 
@@ -85,11 +76,11 @@ namespace KalmiaTest
                 for (var x = 0; x < discs.GetLength(0); x++)
                 {
                     if (discs[x, y] == Color.Black)
-                        sb.Append(" O");
-                    else if (discs[x, y] == Color.White)
                         sb.Append(" X");
+                    else if (discs[x, y] == Color.White)
+                        sb.Append(" O");
                     else
-                        sb.Append(" *");
+                        sb.Append(" .");
                 }
                 sb.Append("\n");
             }

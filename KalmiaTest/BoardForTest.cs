@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Linq;
 using Kalmia.Reversi;
 using static Kalmia.Reversi.Move;
 using static KalmiaTest.BoardForTest;
@@ -8,7 +9,7 @@ namespace KalmiaTest
     class BoardForTest  // Low speed implementation of board. This is only used for test.
     {
         public const int LINE_LENGTH = 8;
-        public const int GRID_NUM = LINE_LENGTH * LINE_LENGTH;
+        public const int SQUARE_NUM = LINE_LENGTH * LINE_LENGTH;
 
         readonly Color[,] DISCS = new Color[LINE_LENGTH, LINE_LENGTH];
 
@@ -16,7 +17,11 @@ namespace KalmiaTest
 
         public BoardForTest(Color firstPlayer, InitialBoardState initState)
         {
-            var secondPlayer = (Color)(-(int)firstPlayer);
+            for (var i = 0; i < this.DISCS.GetLength(0); i++)
+                for (var j = 0; j < this.DISCS.GetLength(1); j++)
+                    this.DISCS[i, j] = Color.Empty;
+
+            var secondPlayer = firstPlayer ^ Color.White;
             if (initState == InitialBoardState.Cross)
             {
                 Put(firstPlayer, "E4");
@@ -36,12 +41,12 @@ namespace KalmiaTest
 
         public Color[,] GetDiscsArray()
         {
-            return (Color[,])DISCS.Clone();
+            return (Color[,])this.DISCS.Clone();
         }
 
         public void SwitchTurn()
         {
-            this.Turn = (Color)(-(int)this.Turn);
+            this.Turn ^= Color.White;
         }
 
         public void Put(Color color, string pos)
@@ -61,10 +66,10 @@ namespace KalmiaTest
 
         public void Update(Move move)
         {
-            var posX = move.Pos % LINE_LENGTH;
-            var posY = move.Pos / LINE_LENGTH;
+            var posX = (int)move.Pos % LINE_LENGTH;
+            var posY = (int)move.Pos / LINE_LENGTH;
 
-            if(move.Pos != PASS)
+            if(move.Pos != BoardPosition.Pass)
             {
                 var flip = CalculateFlippedDiscs(posX, posY);
                 this.DISCS[posX, posY] = this.Turn;
@@ -76,25 +81,47 @@ namespace KalmiaTest
             SwitchTurn();
         }
 
+        public bool IsGameover()
+        {
+            return CalculateMobility(Color.Black).Cast<bool>().Where(x => x).Count() == 0 && CalculateMobility(Color.White).Cast<bool>().Where(x => x).Count() == 0;
+        }
+
+        public int GetDiscCount(Color color)
+        {
+            var count = 0;
+            foreach (var disc in this.DISCS)
+                if (disc == color)
+                    count++;
+            return count;
+        }   
+
         public int GetNextMoves(Move[] moves)
         {
-            var mobility = CalculateMobility();
+            var mobility = CalculateMobility(this.Turn);
             var moveNum = 0;
             for (var x = 0; x < mobility.GetLength(0); x++)
                 for (var y = 0; y < mobility.GetLength(1); y++)
                     if (mobility[x, y])
-                        moves[moveNum++] = new Move(this.Turn, x + y * LINE_LENGTH);
+                        moves[moveNum++] = new Move(this.Turn, (BoardPosition)(x + y * LINE_LENGTH));
 
             if (moveNum == 0)
-                moves[moveNum++] = new Move(this.Turn, PASS);
+            {
+                var opponentMobility = CalculateMobility(this.Turn ^ Color.White);
+                for (var x = 0; x < opponentMobility.GetLength(0); x++)
+                    for (var y = 0; y < opponentMobility.GetLength(1); y++)
+                        if (opponentMobility[x, y])
+                        {
+                            moves[0] = new Move(this.Turn, BoardPosition.Pass);
+                            return 1;
+                        }
+            }
 
             return moveNum;
         }
 
-        bool[,] CalculateMobility()
+        bool[,] CalculateMobility(Color currentColor)
         {
-            var currentColor = this.Turn;
-            var opponentColor = (Color)(-(int)this.Turn);
+            var opponentColor = currentColor ^ Color.White;
             var mobility = new bool[LINE_LENGTH, LINE_LENGTH];
             for (var posX = 0; posX < mobility.GetLength(0); posX++)
                 for (var posY = 0; posY < mobility.GetLength(1); posY++)
@@ -218,18 +245,13 @@ namespace KalmiaTest
         bool[,] CalculateFlippedDiscs(int posX, int posY)
         {
             var currentColor = this.Turn;
-            var opponentColor = (Color)(-(int)this.Turn);
+            var opponentColor = this.Turn ^ Color.White;
             var flipped = new bool[LINE_LENGTH, LINE_LENGTH];
-
-            if (posY < 0 || posY >= 8)
-                Debugger.Break();
 
             // right 
             if (posX != LINE_LENGTH - 1 && this.DISCS[posX + 1, posY] == opponentColor)
                 for (var x = posX + 2; x < LINE_LENGTH; x++)
                 {
-                    if (x == 8)
-                        Debugger.Break();
                     if (this.DISCS[x, posY] == currentColor)
                     {
                         for (var xx = x - 1; xx > posX; xx--)

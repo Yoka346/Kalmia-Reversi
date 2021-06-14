@@ -1,11 +1,10 @@
-﻿using System;
-using System.Linq;
+﻿using Kalmia.Reversi;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
 using System.IO;
-
-using Kalmia.Reversi;
+using System.Linq;
+using System.Text;
 
 namespace Kalmia.IO
 {
@@ -43,7 +42,7 @@ namespace Kalmia.IO
         }
     }
 
-    public class WTHORGameInfo
+    public class WTHORGameRecord
     {
         public string TornamentName { get; }
         public string BlackPlayerName { get; }
@@ -52,7 +51,7 @@ namespace Kalmia.IO
         public int BestBlackDiscCount { get; }
         public ReadOnlyCollection<Move> MoveRecord { get; }
 
-        public WTHORGameInfo(string tornamentName, string blackPlayerName, string whitePlayerName, int blackDiscCount, int bestBlackDiscCount, IList<Move> moveRecord)
+        public WTHORGameRecord(string tornamentName, string blackPlayerName, string whitePlayerName, int blackDiscCount, int bestBlackDiscCount, IList<Move> moveRecord)
         {
             this.TornamentName = tornamentName;
             this.BlackPlayerName = blackPlayerName;
@@ -71,7 +70,7 @@ namespace Kalmia.IO
 
         public ReadOnlyCollection<string> Players { get; }
         public ReadOnlyCollection<string> Tornaments { get; }
-        public ReadOnlyCollection<WTHORGameInfo> GameRecords { get; }
+        public ReadOnlyCollection<WTHORGameRecord> GameRecords { get; }
 
         public WTHORFile(string jouPath, string trnPath, string wtbPath)
         {
@@ -81,7 +80,7 @@ namespace Kalmia.IO
             LoadPlayersAndTornaments(jouPath, trnPath, out string[] players, out string[] tornaments);
             this.Players = new ReadOnlyCollection<string>(players);
             this.Tornaments = new ReadOnlyCollection<string>(tornaments);
-            this.GameRecords = new ReadOnlyCollection<WTHORGameInfo>(LoadGameInformations(wtbPath));
+            this.GameRecords = new ReadOnlyCollection<WTHORGameRecord>(LoadGameRecords(wtbPath));
         }
 
         void LoadPlayersAndTornaments(string jouPath, string trnPath, out string[] players, out string[] tornaments)
@@ -108,23 +107,23 @@ namespace Kalmia.IO
             }
         }
 
-        WTHORGameInfo[] LoadGameInformations(string wtbPath)
+        WTHORGameRecord[] LoadGameRecords(string wtbPath)
         {
             const int GAME_INFO_SIZE = 68;
 
-            var gameInfos = new WTHORGameInfo[this.WtbHeader.NumberOfGames];
+            var gameRecords = new WTHORGameRecord[this.WtbHeader.NumberOfGames];
             var buffer = new byte[GAME_INFO_SIZE];
             using var wtbFs = new FileStream(wtbPath, FileMode.Open, FileAccess.Read);
             wtbFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
-            for(var i = 0; i < gameInfos.Length; i++)
+            for(var i = 0; i < gameRecords.Length; i++)
             {
                 wtbFs.Read(buffer, 0, buffer.Length);
-                gameInfos[i] = new WTHORGameInfo(this.Tornaments[BitConverter.ToUInt16(buffer.AsSpan(0, sizeof(ushort)))],
+                gameRecords[i] = new WTHORGameRecord(this.Tornaments[BitConverter.ToUInt16(buffer.AsSpan(0, sizeof(ushort)))],
                                                  this.Players[BitConverter.ToUInt16(buffer.AsSpan(2, sizeof(ushort)))],
                                                  this.Players[BitConverter.ToUInt16(buffer.AsSpan(4, sizeof(ushort)))],
                                                  buffer[6], buffer[7], createMoveRecord(buffer.AsSpan(8, 60)));
             }
-            return gameInfos;
+            return gameRecords;
 
             List<Move> createMoveRecord(Span<byte> data)
             {
@@ -136,7 +135,7 @@ namespace Kalmia.IO
                     board.Update(move);
                     moveRecord.Add(move);
                     if(board.GetNextMovesNum() == 1)
-                        if (board.GetNextMoves().First().Pos == Move.PASS)
+                        if (board.GetNextMoves().First().Pos == BoardPosition.Pass)
                             moveRecord.Add(move);
                 }
                 return moveRecord;

@@ -29,7 +29,7 @@ namespace Kalmia.Reversi
     public class Board
     {
         public const int BOARD_SIZE = 8;
-        public const int GRID_NUM = BOARD_SIZE * BOARD_SIZE;
+        public const int SQUARE_NUM = BOARD_SIZE * BOARD_SIZE;
         public const int MAX_MOVES_NUM = 46;
 
         const int BOARD_HISTORY_STACK_SIZE = 96;
@@ -53,20 +53,20 @@ namespace Kalmia.Reversi
 
         public Board(Color firstPlayer, InitialBoardState initState) : this(firstPlayer, 0UL, 0UL)
         {
-            var secondPlayer = (Color)(-(int)firstPlayer);
+            var secondPlayer = firstPlayer ^ Color.White;
             if(initState == InitialBoardState.Cross)
             {
-                Put(firstPlayer, "E4");
-                Put(firstPlayer, "D5");
-                Put(secondPlayer, "D4");
-                Put(secondPlayer, "E5");
+                Put(firstPlayer, BoardPosition.E4);
+                Put(firstPlayer, BoardPosition.D5);
+                Put(secondPlayer, BoardPosition.D4);
+                Put(secondPlayer, BoardPosition.E5);
             }
             else
             {
-                Put(firstPlayer, "D5");
-                Put(firstPlayer, "E5");
-                Put(secondPlayer, "D4");
-                Put(secondPlayer, "E4");
+                Put(firstPlayer, BoardPosition.D5);
+                Put(firstPlayer, BoardPosition.E5);
+                Put(secondPlayer, BoardPosition.D4);
+                Put(secondPlayer, BoardPosition.E4);
             }
         }
 
@@ -90,6 +90,11 @@ namespace Kalmia.Reversi
                 return GetOpponentPlayerDiscCount();
         }
 
+        public int GetEmptyCount()
+        {
+            return (int)BitManipulations.PopCount(~(this.currentPlayerBoard | this.opponentPlayerBoard));
+        }
+
         public int GetCurrentPlayerDiscCount()
         {
             return (int)BitManipulations.PopCount(this.currentPlayerBoard);
@@ -102,19 +107,25 @@ namespace Kalmia.Reversi
 
         public Color GetColor(int posX, int posY)
         {
-            var pos = 1UL << posX + posY * BOARD_SIZE;
-            if ((this.currentPlayerBoard & pos) != 0UL)
-                return this.Turn;
-            if ((this.opponentPlayerBoard & pos) != 0UL)
-                return (Color)(-(int)this.Turn);
-            return Color.Empty;
+            return GetDiscColor((BoardPosition)(posX + posY * BOARD_SIZE));
+        }
+
+        public Color GetDiscColor(BoardPosition pos)
+        {
+            var x = (int)pos;
+            var turn = (ulong)this.Turn + 1UL;
+            var color = turn * ((this.currentPlayerBoard >> x) & 1) + (turn ^ 3) * ((this.opponentPlayerBoard >> x) & 1);
+            return (color != 0) ? (Color)(color - 1) : Color.Empty;
         }
 
         public Color[,] GetDiscsArray()
         {
             var discs = new Color[BOARD_SIZE, BOARD_SIZE];
+            for (var i = 0; i < discs.GetLength(0); i++)
+                for (var j = 0; j < discs.GetLength(1); j++)
+                    discs[i, j] = Color.Empty;
             var currentPlayer = this.Turn;
-            var opponentPlayer = (Color)(-(int)this.Turn);
+            var opponentPlayer = this.Turn ^ Color.White;
 
             var mask = 1UL;
             for(var y = 0; y < discs.GetLength(0); y++)
@@ -136,7 +147,7 @@ namespace Kalmia.Reversi
             this.currentPlayerBoard = this.opponentPlayerBoard;
             this.opponentPlayerBoard = tmp;
             this.currentPlayerMobilityWasCalculated = false;
-            this.Turn = (Color)(-(int)this.Turn);
+            this.Turn ^= Color.White;
         }
 
         public void Put(Color color, string pos)
@@ -146,12 +157,12 @@ namespace Kalmia.Reversi
 
         public void Put(Color color, int posX, int posY)
         {
-            Put(color, posX + posY * BOARD_SIZE);
+            Put(color, (BoardPosition)(posX + posY * BOARD_SIZE));
         }
 
-        public void Put(Color color, int pos)
+        public void Put(Color color, BoardPosition pos)
         {
-            var putPat = 1UL << pos;
+            var putPat = 1UL << (byte)pos;
             if (color == this.Turn)
                 this.currentPlayerBoard |= putPat;
             else
@@ -198,10 +209,10 @@ namespace Kalmia.Reversi
         {
             this.currentPlayerBoardHistory.Push(this.currentPlayerBoard);
             this.opponentPlayerBoardHistory.Push(this.opponentPlayerBoard);
-            if (move.Pos != Move.PASS)
+            if (move.Pos != BoardPosition.Pass)
             {
-                var x = 1UL << move.Pos;
-                var flipped = CalculateFlippedDiscs(move.Pos);
+                var x = 1UL << (byte)move.Pos;
+                var flipped = CalculateFlippedDiscs((byte)move.Pos);
                 this.opponentPlayerBoard ^= flipped;
                 this.currentPlayerBoard |= (flipped | x);
             }
@@ -224,9 +235,9 @@ namespace Kalmia.Reversi
         {
             if (move.Color != this.Turn)
                 return false;
-            if (move.Pos == Move.PASS)
+            if (move.Pos == BoardPosition.Pass)
                 return CalculateCurrentPlayerMobility() == 0UL && GetNextMovesNum() == 1;
-            return ((1UL << move.Pos) & CalculateCurrentPlayerMobility()) != 0UL;
+            return ((1UL << (byte)move.Pos) & CalculateCurrentPlayerMobility()) != 0UL;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -248,7 +259,7 @@ namespace Kalmia.Reversi
             if (moveNum == 0)
             {
                 if (BitManipulations.PopCount(CalculateMobility(this.opponentPlayerBoard, this.currentPlayerBoard)) != 0)
-                    yield return new Move(this.Turn, Move.PASS);
+                    yield return new Move(this.Turn, BoardPosition.Pass);
             }
             else
             {
@@ -258,7 +269,7 @@ namespace Kalmia.Reversi
                 {
                     if ((mobility & mask) != 0)
                     {
-                        yield return new Move(this.Turn, i);
+                        yield return new Move(this.Turn, (BoardPosition)i);
                         count++;
                     }
                     mask <<= 1;
@@ -275,7 +286,7 @@ namespace Kalmia.Reversi
             {
                 if (BitManipulations.PopCount(CalculateMobility(this.opponentPlayerBoard, this.currentPlayerBoard)) == 0)
                     return 0;
-                moves[0] = new Move(this.Turn, Move.PASS);
+                moves[0] = new Move(this.Turn, BoardPosition.Pass);
                 return 1;
             }
 
@@ -284,7 +295,7 @@ namespace Kalmia.Reversi
             for(var i = 0; idx < moveNum; i++)
             {
                 if ((mobility & mask) != 0)
-                    moves[idx++] = new Move(this.Turn, i);
+                    moves[idx++] = new Move(this.Turn, (BoardPosition)i);
                 mask <<= 1;
             }
             return moveNum;
@@ -295,19 +306,19 @@ namespace Kalmia.Reversi
         {
             var mobility = CalculateCurrentPlayerMobility();
             if (BitManipulations.PopCount(mobility) == 0)
-                return new Move(this.Turn, Move.PASS);
+                return new Move(this.Turn, BoardPosition.Pass);
 
             var mask = 1UL;
             var i = 0;
             int pos;
-            for(pos = 0; pos < GRID_NUM; pos++)
+            for(pos = 0; pos < SQUARE_NUM; pos++)
             {
                 if ((mobility & mask) != 0)
                     if (++i >= idx)
                         break;
                 mask <<= 1;
             }
-            return new Move(this.Turn, pos);
+            return new Move(this.Turn, (BoardPosition)pos);
         }
 
         public GameResult GetGameResult(Color color)
@@ -366,9 +377,6 @@ namespace Kalmia.Reversi
         public override string ToString()
         {
             var sb = new StringBuilder();
-            var currentPlayer = this.Turn;
-            var opponentPlayer = (Color)(-(int)this.Turn);
-
             sb.Append(" ");
             for (var i = 0; i < BOARD_SIZE; i++)
                 sb.Append($"{(char)('A' + i)} ");
@@ -583,11 +591,11 @@ namespace Kalmia.Reversi
             return flippedDiscs;
         }
 
-        static int StringToPos(string pos)
+        static BoardPosition StringToPos(string pos)
         {
             var posX = char.ToLower(pos[0]) - 'a';
             var posY = int.Parse(pos[1].ToString()) - 1;
-            return posX + posY * BOARD_SIZE;
+            return (BoardPosition)(posX + posY * BOARD_SIZE);
         }
     }
 }

@@ -514,7 +514,7 @@ namespace Kalmia.GoTextProtocol
             str = str.ToLower();
             if (str == "pass")
             {
-                coord = (Move.PASS, 0);
+                coord = ((int)BoardPosition.Pass, 0);
                 return true;
             }
             coord.posX = str[0] - 'a';

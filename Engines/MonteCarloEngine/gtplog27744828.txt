@@ -1,5 +1,0 @@
-[2021/05/27 16:35:08] Input: 0 clear_board 
-[2021/05/27 16:35:08] Status: Success  Output: 0 
-[2021/05/27 16:35:08] Input: 1 genmove b 
-[2021/05/27 16:35:08] Status: Success  Output: 1 F5
-[2021/05/27 16:35:19] Input: 

@@ -1,3 +1,0 @@
-[2021/05/30 13:38:51] Input: 0 clear_board 
-[2021/05/30 13:38:51] Status: Success  Output: 0 
-[2021/05/30 13:38:56] Input: 
