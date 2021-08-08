@@ -71,5 +71,10 @@ namespace Kalmia
         {
             return 1.0f / (1.0f + Exp(-x));
         }
+
+        public static float BinaryCrossEntropy(float y, float t)
+        {
+            return -(t * Log(y) + (1.0f - t) * Log(1.0f - y));
+        }
     }
 }

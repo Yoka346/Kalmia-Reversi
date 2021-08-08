@@ -115,7 +115,7 @@ namespace Kalmia.IO
             var buffer = new byte[GAME_INFO_SIZE];
             using var wtbFs = new FileStream(wtbPath, FileMode.Open, FileAccess.Read);
             wtbFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
-            for(var i = 0; i < gameRecords.Length; i++)
+            for (var i = 0; i < gameRecords.Length; i++)
             {
                 wtbFs.Read(buffer, 0, buffer.Length);
                 gameRecords[i] = new WTHORGameRecord(this.Tornaments[BitConverter.ToUInt16(buffer.AsSpan(0, sizeof(ushort)))],
@@ -123,20 +123,30 @@ namespace Kalmia.IO
                                                  this.Players[BitConverter.ToUInt16(buffer.AsSpan(4, sizeof(ushort)))],
                                                  buffer[6], buffer[7], createMoveRecord(buffer.AsSpan(8, 60)));
             }
+            
             return gameRecords;
 
             List<Move> createMoveRecord(Span<byte> data)
             {
                 var moveRecord = new List<Move>();
-                var board = new Board(Color.Black, InitialBoardState.Cross);
+                var board = new Board(Color.Black, InitialBoardState.Cross); 
                 foreach (var d in data)
                 {
+                    if (d == 0)
+                        break;
+                    if (board.GetNextMoves().Where(m => m.Pos == BoardPosition.Pass).Count() == 1)     // because pass is not described in WTHOR file, check if current board can be passed
+                                                                                                        // and if so add pass to move record.
+                    {
+                        var pass = new Move(board.Turn, BoardPosition.Pass);
+                        board.Update(pass);
+                        moveRecord.Add(pass);
+                    }
+
                     var move = new Move(board.Turn, d % 10 - 1, d / 10 - 1);
+                    if (!board.IsLegalMove(move))
+                        throw new InvalidMoveRecordException();
                     board.Update(move);
                     moveRecord.Add(move);
-                    if(board.GetNextMovesNum() == 1)
-                        if (board.GetNextMoves().First().Pos == BoardPosition.Pass)
-                            moveRecord.Add(move);
                 }
                 return moveRecord;
             }

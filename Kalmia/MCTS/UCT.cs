@@ -35,6 +35,16 @@ namespace Kalmia.MCTS
         Move? lastMove;
         Node root;
         EdgeMarker rootMark;
+        int npsCounter = 0;
+        int searchStartTime;
+        int searchiEndTime;
+
+        public float Nps { get { return (float)this.npsCounter / this.SearchEllapsedTime; } }
+
+        public int Depth { get; private set; } = 0;
+        public int NodeCount { get; private set; } = 0;
+        public bool IsSearching { get; private set; }
+        public int SearchEllapsedTime { get { return (this.IsSearching) ? Environment.TickCount - this.searchStartTime : this.searchiEndTime - this.searchStartTime; } }
 
         public int ExpansionThreshold
         {
@@ -60,12 +70,18 @@ namespace Kalmia.MCTS
 
         public MoveEval GetRootNodeEvaluation()
         {
+            if (this.root == null)
+                return new MoveEval();
+
             var value = (this.rootMark == EdgeMarker.Unknown) ? this.root.WinCount / this.root.VisitCount : GetScoreFromEdgeMarker(this.rootMark);
             return new MoveEval(this.lastMove.Value, float.NaN, value, this.root.VisitCount);
         }
 
         public IEnumerable<MoveEval> GetChildNodeEvaluations()
         {
+            if (this.root == null)
+                yield break;
+
             var visitCountSum = this.root.VisitCount;
             foreach (var edge in this.root.Edges)
             {
@@ -74,28 +90,33 @@ namespace Kalmia.MCTS
             }
         }
 
-        public Move Search(Board board, int count)
+        public IEnumerable<MoveEval> GetBestPath()
         {
-            var currentBoard = (from b in Enumerable.Repeat(board, this.THREAD_NUM) select new Board(Color.Black, InitialBoardState.Cross)).ToArray();
-            var dummyEdge = new Edge();
+            if (this.root == null)
+                yield break;
 
-            Parallel.For(0, this.THREAD_NUM, (threadID) =>
+            var node = this.root;
+            while (node != null && node.Edges != null)
             {
-                var b = currentBoard[threadID];
-                for (var i = 0; i < count / this.THREAD_NUM; i++)
-                {
-                    board.CopyTo(b, false);
-                    SearchKernel(this.root, ref dummyEdge, b, threadID);
-                }
-            });
+                var idx = SelectBestChildNode(node);
+                var edge = node.Edges[idx];
+                float value;
+                if (!edge.IsMarked || edge.IsUnknown)
+                    value = edge.WinCount / edge.VisitCount;
+                else if (edge.IsWin)
+                    value = 1.0f;
+                else if (edge.IsLoss)
+                    value = 0.0f;
+                else
+                    value = 0.5f;
+                yield return new MoveEval(edge.Move, 0.0f, value, edge.VisitCount);
 
-            for (var i = 0; i < count % this.THREAD_NUM; i++)
-            {
-                board.CopyTo(board, false);
-                SearchKernel(this.root, ref dummyEdge, currentBoard[0], 0);
+                if (node.ChildNodes != null && node.ChildNodes[idx] != null)
+                    node = node.ChildNodes[idx];
+                else
+                    break;
             }
-            return SelectBestMove();
-        }
+        } 
 
         public void SetRoot(Move move)      // Looks one move ahead, and if a child node which has same move as specified one is found, sets it to root,
                                             // otherwise sets new Node object to root.
@@ -109,6 +130,8 @@ namespace Kalmia.MCTS
                 {
                     if (move == this.root.Edges[i].Move && this.root.ChildNodes != null && this.root.ChildNodes[i] != null)
                     {
+                        this.NodeCount -= this.root.ChildNum - 1;
+                        DecrementNodeCount(this.root.ChildNodes[i]);
                         this.rootMark = this.root.Edges[i].Mark;
                         this.root = this.root.ChildNodes[i];
                         return;
@@ -116,15 +139,77 @@ namespace Kalmia.MCTS
                 }
             this.rootMark = EdgeMarker.Unknown;
             this.root = new Node();
+            this.NodeCount = 0;
         }
 
-        Move SelectBestMove()       // selects one node which has the biggest visit count.
+        public void Clear()
+        {
+            this.lastMove = null;
+            this.root = null;
+        }
+
+        public async Task<Move> SearchAsync(Board board, int count, int timeLimit, CancellationToken ct)
+        {
+            return await Task.Run(() => Search(board, count, timeLimit, ct));
+        }
+
+        public Move Search(Board board, int count, int timeLimit = int.MaxValue) 
+        {
+            return Search(board, count, timeLimit, new CancellationToken(false));
+        }
+
+        public Move Search(Board board, int count, int timeLimit, CancellationToken ct)
+        {
+            var currentBoard = (from b in Enumerable.Repeat(board, this.THREAD_NUM) select new Board(Color.Black, InitialBoardState.Cross)).ToArray();
+            var dummyEdge = new Edge();
+
+            this.searchStartTime = Environment.TickCount;
+            this.IsSearching = true;
+            this.npsCounter = 0;
+            this.Depth = 0;
+            Parallel.For(0, this.THREAD_NUM, (threadID) =>
+            {
+                var b = currentBoard[threadID];
+                for (var i = 0; !stop() && i < count / this.THREAD_NUM; i++)
+                {
+                    board.CopyTo(b, false);
+                    SearchKernel(this.root, ref dummyEdge, b, 0, threadID);
+                }
+            });
+
+            for (var i = 0; !stop() && i < count % this.THREAD_NUM; i++)
+            {
+                board.CopyTo(board, false);
+                SearchKernel(this.root, ref dummyEdge, currentBoard[0], 0, 0);
+            }
+            this.IsSearching = false;
+            this.searchiEndTime = Environment.TickCount;
+            return SelectBestMove();
+
+            bool stop()
+            {
+                return ct.IsCancellationRequested || Environment.TickCount - this.searchStartTime >= timeLimit;
+            }
+        }
+
+        void DecrementNodeCount(Node node)
+        {
+            if (node.ChildNodes == null)
+                return;
+            foreach (var childNode in node.ChildNodes)
+                if (childNode != null)
+                {
+                    this.NodeCount--;
+                    DecrementNodeCount(childNode);
+                }
+        }
+
+        Move SelectBestMove()       // selects one node which has the largest visit count.
         {
             var edges = this.root.Edges;
             var bestEdge = edges[0];
             var lossCount = 0;
             var drawCount = 0;
-            var drawIdx = 0;
             for (var i = 1; i < edges.Length; i++)
             {
                 var edge = edges[i];
@@ -140,10 +225,7 @@ namespace Kalmia.MCTS
                         continue;
                     }
                     else
-                    {
                         drawCount++;
-                        drawIdx = i;
-                    }
 
                 if (edge.VisitCount > bestEdge.VisitCount)
                     bestEdge = edge;
@@ -156,14 +238,17 @@ namespace Kalmia.MCTS
             return bestEdge.Move;
         }
 
-        float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, Board currentBoard, int threadID)     // goes down to leaf node and back up to root node with updating score
+        float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, Board currentBoard, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score
         {
             var moves = this.MOVES[threadID];
             int childNodeIdx;
             var currentNodeTurn = currentBoard.Turn;
             float score;
 
-            bool lockTaken = false;
+            if (depth > this.Depth)
+                this.Depth++;
+
+            var lockTaken = false;
             try
             {
                 Monitor.Enter(currentNode, ref lockTaken);
@@ -192,10 +277,14 @@ namespace Kalmia.MCTS
                         if (currentNode.ChildNodes == null)
                             currentNode.InitChildNodes();
                         if (currentNode.ChildNodes[childNodeIdx] == null)
+                        {
                             currentNode.CreateChildNode(childNodeIdx);
+                            this.NodeCount++;
+                            this.npsCounter++;
+                        }
                         Monitor.Exit(currentNode);
                         lockTaken = false;
-                        score = SearchKernel(currentNode.ChildNodes[childNodeIdx], ref edges[childNodeIdx], currentBoard, threadID);
+                        score = SearchKernel(currentNode.ChildNodes[childNodeIdx], ref edges[childNodeIdx], currentBoard, ++depth, threadID);
                     }
                     else    // current node is a leaf node
                     {
@@ -223,8 +312,8 @@ namespace Kalmia.MCTS
 
         void AddVirtualLoss(Node node, int childNodeIdx)
         {
-            Interlocked.Add(ref node.VisitCount, this.virtualLoss);
-            Interlocked.Add(ref node.Edges[childNodeIdx].VisitCount, this.virtualLoss);
+            AtomicOperations.Add(ref node.VisitCount, this.virtualLoss);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, this.virtualLoss);
         }
 
         void MarkEdge(ref Edge edge, Board currentBoard, Color color)
@@ -269,7 +358,7 @@ namespace Kalmia.MCTS
                 }
                 else if (parentNode.Edges[i].IsLoss)
                 {
-                    lossCount++;        // do not select lose
+                    lossCount++;        // do not select loss
                     continue;
                 }
                 else if (parentNode.Edges[i].IsDraw)
@@ -301,10 +390,10 @@ namespace Kalmia.MCTS
 
         void UpdateResult(Node node, int childNodeIdx, float score)
         {
-            Interlocked.Add(ref node.Edges[childNodeIdx].VisitCount, 1 - this.virtualLoss);
-            AtomicFloatAdd(ref node.Edges[childNodeIdx].WinCount, score);
-            Interlocked.Add(ref node.VisitCount, 1 - this.virtualLoss);
-            AtomicFloatAdd(ref node.WinCount, score);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, 1 - this.virtualLoss);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].WinCount, score);
+            AtomicOperations.Add(ref node.VisitCount, 1 - this.virtualLoss);
+            AtomicOperations.Add(ref node.WinCount, score);
         }
 
         float Rollout(Board currentBoard, Color color, out int count, int threadID)
@@ -346,17 +435,35 @@ namespace Kalmia.MCTS
                 case EdgeMarker.Draw:
                     return 0.5f;
 
-                default:        // if there are no error in this code, this line is unreachable.
+                default:        // unreachable.
                     return float.NaN;
             }
         }
 
-        static void AtomicFloatAdd(ref float value, float arg)
+        static int SelectBestChildNode(Node node)   // best node means the node which has the largest visit count
         {
-            float expected;
-            do
-                expected = value;
-            while (expected != Interlocked.CompareExchange(ref value, expected + arg, expected));
+            var edges = node.Edges;
+            var bestEdgeIdx = 0;
+            var lossCount = 0;
+            var drawCount = 0;
+            for (var i = 1; i < edges.Length; i++)
+            {
+                var edge = edges[i];
+                if (!edge.IsUnknown)
+                    if (edge.IsWin)
+                        return i;
+                    else if (edge.IsLoss)
+                    {
+                        lossCount++;
+                        continue;
+                    }
+                    else
+                        drawCount++;
+
+                if (edge.VisitCount > edges[bestEdgeIdx].VisitCount)
+                    bestEdgeIdx = i;
+            }
+            return bestEdgeIdx;
         }
     }
 }
