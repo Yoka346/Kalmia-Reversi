@@ -8,14 +8,16 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 
 ## 2. 動作環境
 最低動作環境
-+ OS : Windows, Linux
++ OS : Windows, Linux, macOS
 + CPU : SSE2に対応したもの(ほとんどのCPUが対応しているため特に気にする必要はありません)
 + メモリ : 4GB
 
 推奨環境
-+ OS : Windows, Linux (いずれも64bit対応)
++ OS : Windows, Linux, macOS (いずれも64bit対応)
 + CPU : 64bit、4コア以上、AVX2に対応したもの(2013~2015年以降に購入したPCであれば概ね対応しています)
 + メモリ : 8GB以上
+
+このソフトウェアはmacOSに対応していますが、M1搭載のMacでは動作確認できていません。
 
 ## 3. GoGuiへの登録
 まず、ダウンロードしたKalmia本体とReversiRulerを適当な場所に配置し展開します。
