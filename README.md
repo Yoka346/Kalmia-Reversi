@@ -17,7 +17,7 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 + CPU : 64bit、4コア以上、AVX2に対応したもの(2013~2015年以降に購入したPCであれば概ね対応しています)
 + メモリ : 8GB以上
 
-このソフトウェアはmacOSに対応していますが、M1搭載のMacでは動作確認できていません。
+このソフトウェアはmacOSに対応していますが、M1搭載のMacでは動作確認ができていません。
 
 ## 3. GoGuiへの登録
 まず、ダウンロードしたKalmia本体とReversiRulerを適当な場所に配置し展開します。
