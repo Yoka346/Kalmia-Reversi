@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Runtime.Intrinsics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -84,32 +82,6 @@ namespace KalmiaTest
             var bitboard256 = Vector256.Create(Vector128.Create(0x4e3cd7be8f25cfb8UL, 0x2518a7d5e6c923a6UL), bitboard128);      // test data
             Assert.AreEqual(Rotate90AntiClockwise(bitboard256), BitManipulations.Rotate90AntiClockwise(bitboard256));
         }
-
-        /*[TestMethod]
-        public void PseudoRotate45Clockwise_Test()
-        {
-            var bitboard = 0xaf34b45dcf45e467UL;    // test data
-            Assert.AreEqual(PseudoRotate45Clockwise(bitboard), BitManipulations.PseudoRotate45Clockwise(bitboard));
-
-            var bitboard128 = Vector128.Create(0x656bb052e1cecef1UL, bitboard);     // test data
-            Assert.AreEqual(PseudoRotate45Clockwise(bitboard128), BitManipulations.PseudoRotate45Clockwise(bitboard128));
-
-            var bitboard256 = Vector256.Create(Vector128.Create(0x4e3cd7be8f25cfb8UL, 0x2518a7d5e6c923a6UL), bitboard128);      // test data
-            Assert.AreEqual(PseudoRotate45Clockwise(bitboard256), BitManipulations.PseudoRotate45Clockwise(bitboard256));
-        }
-
-        [TestMethod]
-        public void PseudoRotate45AntiClockwise_Test() 
-        {
-            var bitboard = 0xaf34b45dcf45e467UL;    // test data
-            Assert.AreEqual(PseudoRotate45AntiClockwise(bitboard), BitManipulations.PseudoRotate45AntiClockwise(bitboard));
-
-            var bitboard128 = Vector128.Create(0x656bb052e1cecef1UL, bitboard);     // test data
-            Assert.AreEqual(PseudoRotate45AntiClockwise(bitboard128), BitManipulations.PseudoRotate45AntiClockwise(bitboard128));
-
-            var bitboard256 = Vector256.Create(Vector128.Create(0x4e3cd7be8f25cfb8UL, 0x2518a7d5e6c923a6UL), bitboard128);      // test data
-            Assert.AreEqual(PseudoRotate45AntiClockwise(bitboard256), BitManipulations.PseudoRotate45AntiClockwise(bitboard256));
-        }*/
 
         ulong ByteSwap(ulong bits)
         {

@@ -1,66 +1,95 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 using Kalmia.Reversi;
 
 namespace Kalmia.MCTS
 {
-    public enum EdgeMarker : byte
+    public enum EdgeLabel : byte
     {
-        NotMarked = 0,
+        NotLabeled = 0,
         Win,
         Loss,
         Draw,
-        Unknown = 0
+        Unknown
     }
 
     public struct Edge     // This struct has some information about child node. It is based on idea that reducing direct access between parent node and child node. 
     {
         public int VisitCount;
+        public int VirtualLossSum;
+        public float MoveProbability;
+        public float Value;
         public float WinCount;
         public Move Move;
-        public EdgeMarker Mark;
-        public bool IsWin { get { return this.Mark == EdgeMarker.Win; } }
-        public bool IsLoss { get { return this.Mark == EdgeMarker.Loss; } }
-        public bool IsDraw { get { return this.Mark == EdgeMarker.Draw; } }
-        public bool IsUnknown { get { return this.Mark == EdgeMarker.Unknown; } }
-        public bool IsMarked { get { return this.Mark != EdgeMarker.NotMarked; } }
+        public EdgeLabel Label;
+        public float ActionValue { get { return (this.IsLabeled && !this.IsUnknown) ? ConvertEdgeLabelToActionValue(this.Label) : this.WinCount / this.VisitCount; } }
+        public bool IsWin { get { return this.Label == EdgeLabel.Win; } }
+        public bool IsLoss { get { return this.Label == EdgeLabel.Loss; } }
+        public bool IsDraw { get { return this.Label == EdgeLabel.Draw; } }
+        public bool IsUnknown { get { return this.Label == EdgeLabel.Unknown; } }
+        public bool IsLabeled { get { return this.Label != EdgeLabel.NotLabeled; } }
 
         public void SetWin()
         {
-            this.Mark = EdgeMarker.Win;
+            this.Label = EdgeLabel.Win;
         }
 
         public void SetLoss()
         {
-            this.Mark = EdgeMarker.Loss;
+            this.Label = EdgeLabel.Loss;
         }
 
         public void SetDraw()
         {
-            this.Mark = EdgeMarker.Draw;
+            this.Label = EdgeLabel.Draw;
         }
 
         public void SetUnknown()
         {
-            this.Mark = EdgeMarker.Unknown;
+            this.Label = EdgeLabel.Unknown;
+        }
+        
+        static float ConvertEdgeLabelToActionValue(EdgeLabel label)
+        {
+            switch (label)
+            {
+                case EdgeLabel.Win:
+                    return 1.0f;
+
+                case EdgeLabel.Loss:
+                    return 0.0f;
+
+                case EdgeLabel.Draw:
+                    return 0.5f;
+            }
+            throw new ArgumentException($"{label} cannnot be converted to action value.");
         }
     }
 
     public class Node
     {
         public int VisitCount = 0;
+        public int VirtualLossSum = 0;
         public float WinCount = 0.0f;
         public Node[] ChildNodes;
         public Edge[] Edges;
         public int ChildNum { get { return this.Edges.Length; } }
 
-        public void Expand(Move[] moves, int moveNum)
+        public void Expand(Move[] moves, int moveCount)
         {
-            this.Edges = new Edge[moveNum];
+            this.Edges = new Edge[moveCount];
             for (var i = 0; i < this.Edges.Length; i++)
                 this.Edges[i].Move = moves[i];
+        }
+
+        public void Expand(Move[] moves, float[] moveProb, int moveCount)
+        {
+            this.Edges = new Edge[moveCount];
+            for (var i = 0; i < this.Edges.Length; i++)
+            {
+                this.Edges[i].Move = moves[i];
+                this.Edges[i].MoveProbability = moveProb[i];
+            }
         }
 
         public void CreateChildNode(int idx)

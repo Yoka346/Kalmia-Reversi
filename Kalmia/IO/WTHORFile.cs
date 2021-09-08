@@ -1,24 +1,25 @@
-﻿using Kalmia.Reversi;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
 
+using Kalmia.Reversi;
+
 namespace Kalmia.IO
 {
-    public class WTHORHeader
+    public struct WTHORHeader
     {
         public const int SIZE = 16;
 
-        public DateTime FileCreationTime { get; }
-        public int NumberOfGames { get; }
-        public int NumberOfRecords { get; }
-        public int GameYear { get; }
-        public int BoardSize { get; }
-        public int GameType { get; }
-        public int Depth { get; }
+        public DateTime FileCreationTime { get; set; }
+        public int NumberOfGames { get; set; }
+        public int NumberOfRecords { get; set; }
+        public int GameYear { get; set; }
+        public int BoardSize { get; set; }
+        public int GameType { get; set; }
+        public int Depth { get; set; }
 
         public WTHORHeader(string path)
         {
@@ -40,16 +41,35 @@ namespace Kalmia.IO
             this.GameType = data[13];
             this.Depth = data[14];
         }
+
+        public void WriteToFile(string path)
+        {
+            using var fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
+            var data = new byte[SIZE];
+            data[0] = (byte)(this.FileCreationTime.Year / 100);
+            data[1] = (byte)(this.FileCreationTime.Year % 100);
+            data[2] = (byte)this.FileCreationTime.Month;
+            data[3] = (byte)this.FileCreationTime.Day;
+            Buffer.BlockCopy(BitConverter.GetBytes(this.NumberOfGames), 0, data, 4, sizeof(int));
+            Buffer.BlockCopy(BitConverter.GetBytes(this.NumberOfRecords), 0, data, 8, sizeof(ushort));
+            Buffer.BlockCopy(BitConverter.GetBytes(this.GameYear), 0, data, 10, sizeof(ushort));
+            data[12] = (byte)this.BoardSize;
+            data[13] = (byte)this.GameType;
+            data[14] = (byte)this.Depth;
+            fs.Write(data);
+        }
     }
 
-    public class WTHORGameRecord
+    public struct WTHORGameRecord
     {
-        public string TornamentName { get; }
-        public string BlackPlayerName { get; }
-        public string WhitePlayerName { get; }
-        public int BlackDiscCount { get; }
-        public int BestBlackDiscCount { get; }
-        public ReadOnlyCollection<Move> MoveRecord { get; }
+        const int SIZE = 68;
+
+        public string TornamentName { get; set; }
+        public string BlackPlayerName { get; set; }
+        public string WhitePlayerName { get; set; }
+        public int BlackDiscCount { get; set; }
+        public int BestBlackDiscCount { get; set; }
+        public ReadOnlyCollection<Move> MoveRecord { get; set; }
 
         public WTHORGameRecord(string tornamentName, string blackPlayerName, string whitePlayerName, int blackDiscCount, int bestBlackDiscCount, IList<Move> moveRecord)
         {
@@ -64,6 +84,11 @@ namespace Kalmia.IO
 
     public class WTHORFile
     {
+        const string CHAR_ENCODING = "ISO-8859-1";
+        const int PLAYER_NAME_SIZE = 20;
+        const int TORNAMENT_NAME_SIZE = 26;
+        const int GAME_INFO_SIZE = 68;
+
         public WTHORHeader JouHeader { get; }
         public WTHORHeader TrnHeader { get; }
         public WTHORHeader WtbHeader { get; }
@@ -83,17 +108,76 @@ namespace Kalmia.IO
             this.GameRecords = new ReadOnlyCollection<WTHORGameRecord>(LoadGameRecords(wtbPath));
         }
 
+        public WTHORFile(WTHORHeader jouHeader, WTHORHeader trnHeader, WTHORHeader wtbHeader, string[] players, string[] tornaments, WTHORGameRecord[] gameRecords)
+        {
+            this.JouHeader = jouHeader;
+            this.TrnHeader = trnHeader;
+            this.WtbHeader = wtbHeader;
+            this.Players = new ReadOnlyCollection<string>((string[])players.Clone());
+            this.Tornaments = new ReadOnlyCollection<string>((string[])tornaments.Clone());
+            this.GameRecords = new ReadOnlyCollection<WTHORGameRecord>((WTHORGameRecord[])gameRecords.Clone());
+        }
+
+        public void SaveToFiles(string jouFilePath, string trnFilePath, string wtbFilePath)
+        {
+            this.JouHeader.WriteToFile(jouFilePath);
+            this.TrnHeader.WriteToFile(trnFilePath);
+            this.WtbHeader.WriteToFile(wtbFilePath);
+
+            using var jouFs = new FileStream(jouFilePath, FileMode.OpenOrCreate, FileAccess.Write);
+            using var trnFs = new FileStream(trnFilePath, FileMode.OpenOrCreate, FileAccess.Write);
+            jouFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
+            trnFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
+            var encoding = Encoding.GetEncoding(CHAR_ENCODING);
+            for(var i = 0; i < this.JouHeader.NumberOfRecords; i++)
+            {
+                var buffer = encoding.GetBytes(this.Players[i]);
+                if (buffer.Length > PLAYER_NAME_SIZE)
+                    jouFs.Write(buffer.AsSpan(0, PLAYER_NAME_SIZE));
+                else
+                    jouFs.Write(buffer);
+            }
+
+            for(var i = 0; i < this.TrnHeader.NumberOfRecords; i++)
+            {
+                var buffer = encoding.GetBytes(this.Tornaments[i]);
+                if (buffer.Length > TORNAMENT_NAME_SIZE)
+                    trnFs.Write(buffer.AsSpan(0, TORNAMENT_NAME_SIZE));
+                else
+                    trnFs.Write(buffer);
+            }
+
+            using var wtbFs = new FileStream(wtbFilePath, FileMode.OpenOrCreate, FileAccess.Write);
+            wtbFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
+            foreach(var gameRecord in this.GameRecords)
+            {
+                var data = new byte[GAME_INFO_SIZE];
+                Buffer.BlockCopy(BitConverter.GetBytes(Players.IndexOf(gameRecord.TornamentName)), 0, data, 0, sizeof(ushort));
+                Buffer.BlockCopy(BitConverter.GetBytes(Players.IndexOf(gameRecord.BlackPlayerName)), 0, data, 2, sizeof(ushort));
+                Buffer.BlockCopy(BitConverter.GetBytes(Players.IndexOf(gameRecord.WhitePlayerName)), 0, data, 4, sizeof(ushort));
+                data[6] = (byte)gameRecord.BlackDiscCount;
+                data[7] = (byte)gameRecord.BestBlackDiscCount;
+                var i = 8;
+                foreach(var move in gameRecord.MoveRecord)
+                {
+                    if (move.Pos == BoardPosition.Pass)
+                        continue;
+                    var x = (byte)((int)move.Pos % Board.BOARD_SIZE + 1);
+                    var y = (byte)((int)move.Pos / Board.BOARD_SIZE + 1);
+                    data[i++] = (byte)(x * 10 + y);
+                }
+                wtbFs.Write(data);
+            }
+        }
+
         void LoadPlayersAndTornaments(string jouPath, string trnPath, out string[] players, out string[] tornaments)
         {
-            const int PLAYER_NAME_SIZE = 20;
-            const int TORNAMENT_NAME_SIZE = 26;
-
             var recordNum = this.JouHeader.NumberOfRecords;
             players = new string[recordNum];
             tornaments = new string[recordNum];
             var playerNameBytes = new byte[PLAYER_NAME_SIZE];
             var tornamentNameBytes = new byte[TORNAMENT_NAME_SIZE];
-            var encoding = Encoding.GetEncoding("ISO-8859-1");
+            var encoding = Encoding.GetEncoding(CHAR_ENCODING);
             using var jouFs = new FileStream(jouPath, FileMode.Open, FileAccess.Read);
             using var trnFs = new FileStream(trnPath, FileMode.Open, FileAccess.Read);
             jouFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
@@ -109,47 +193,47 @@ namespace Kalmia.IO
 
         WTHORGameRecord[] LoadGameRecords(string wtbPath)
         {
-            const int GAME_INFO_SIZE = 68;
-
             var gameRecords = new WTHORGameRecord[this.WtbHeader.NumberOfGames];
-            var buffer = new byte[GAME_INFO_SIZE];
+            var buffer = new byte[GAME_INFO_SIZE * this.WtbHeader.NumberOfGames];
             using var wtbFs = new FileStream(wtbPath, FileMode.Open, FileAccess.Read);
             wtbFs.Seek(WTHORHeader.SIZE, SeekOrigin.Begin);
-            for (var i = 0; i < gameRecords.Length; i++)
+            wtbFs.Read(buffer, 0, buffer.Length);
+            for (var i = 0; i < buffer.Length; i+=GAME_INFO_SIZE)
             {
-                wtbFs.Read(buffer, 0, buffer.Length);
-                gameRecords[i] = new WTHORGameRecord(this.Tornaments[BitConverter.ToUInt16(buffer.AsSpan(0, sizeof(ushort)))],
-                                                 this.Players[BitConverter.ToUInt16(buffer.AsSpan(2, sizeof(ushort)))],
-                                                 this.Players[BitConverter.ToUInt16(buffer.AsSpan(4, sizeof(ushort)))],
-                                                 buffer[6], buffer[7], createMoveRecord(buffer.AsSpan(8, 60)));
+                var buff = buffer.AsSpan(i, GAME_INFO_SIZE);
+                gameRecords[i / GAME_INFO_SIZE] = new WTHORGameRecord(this.Tornaments[BitConverter.ToUInt16(buff.Slice(0, sizeof(ushort)))],
+                                                 this.Players[BitConverter.ToUInt16(buff.Slice(2, sizeof(ushort)))],
+                                                 this.Players[BitConverter.ToUInt16(buff.Slice(4, sizeof(ushort)))],
+                                                 buff[6], buff[7], CreateMoveRecord(buff.Slice(8, 60)));
             }
             
             return gameRecords;
-
-            List<Move> createMoveRecord(Span<byte> data)
-            {
-                var moveRecord = new List<Move>();
-                var board = new Board(Color.Black, InitialBoardState.Cross); 
-                foreach (var d in data)
-                {
-                    if (d == 0)
-                        break;
-                    if (board.GetNextMoves().Where(m => m.Pos == BoardPosition.Pass).Count() == 1)     // because pass is not described in WTHOR file, check if current board can be passed
-                                                                                                        // and if so add pass to move record.
-                    {
-                        var pass = new Move(board.Turn, BoardPosition.Pass);
-                        board.Update(pass);
-                        moveRecord.Add(pass);
-                    }
-
-                    var move = new Move(board.Turn, d % 10 - 1, d / 10 - 1);
-                    if (!board.IsLegalMove(move))
-                        throw new InvalidMoveRecordException();
-                    board.Update(move);
-                    moveRecord.Add(move);
-                }
-                return moveRecord;
-            }
         }
+
+        List<Move> CreateMoveRecord(Span<byte> data)
+        {
+            var moveRecord = new List<Move>();
+            var board = new Board(Color.Black, InitialBoardState.Cross);
+            foreach (var d in data)
+            {
+                if (d == 0)
+                    break;
+                if (board.GetNextMoves().Where(m => m.Pos == BoardPosition.Pass).Count() == 1)     // because pass is not described in WTHOR file, check if current board can be passed
+                                                                                                   // and if so add pass to move record.
+                {
+                    var pass = new Move(board.SideToMove, BoardPosition.Pass);
+                    board.Update(pass);
+                    moveRecord.Add(pass);
+                }
+
+                var move = new Move(board.SideToMove, d % 10 - 1, d / 10 - 1);
+                if (!board.IsLegalMove(move))
+                    throw new InvalidMoveRecordException();
+                board.Update(move);
+                moveRecord.Add(move);
+            }
+            return moveRecord;
+        }
+
     }
 }

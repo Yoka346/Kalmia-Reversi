@@ -1,12 +1,9 @@
-﻿#define DEBUG_AVX2
-//#define DEBUG_SSE  
-
-using System;
-using System.Text;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Kalmia.Reversi
 {
@@ -16,16 +13,52 @@ namespace Kalmia.Reversi
         Parallel
     }
 
-    public enum GameResult
+    public enum GameResult : sbyte
     {
-        Win,
-        Draw,
-        Loss,
-        NotOver
+        Win = 1,
+        Draw = 0,
+        Loss = -1,
+        NotOver = -2
     }
 
-    // I reffered to the code below to implement mobility and flipped discs calculation. 
-    // get_moves(p, o) in https://github.com/okuhara/edax-reversi-AVX/blob/master/src/board_sse.c 
+    public struct Bitboard
+    {
+        public ulong CurrentPlayer { get; set; }
+        public ulong OpponentPlayer { get; set; }
+
+        public Bitboard(ulong currentPlayer, ulong opponentPlayer)
+        {
+            this.CurrentPlayer = currentPlayer;
+            this.OpponentPlayer = opponentPlayer;
+        }
+
+        public int GetEmptyCount()
+        {
+            return (int)BitManipulations.PopCount(~(this.CurrentPlayer | this.OpponentPlayer));
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Bitboard && (Bitboard)obj == this;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public static bool operator ==(Bitboard left, Bitboard right)
+        {
+            return left.CurrentPlayer == right.CurrentPlayer && left.OpponentPlayer == right.OpponentPlayer;
+        }
+
+        public static bool operator !=(Bitboard left, Bitboard right)
+        {
+            return !(left == right);
+        }
+    }
+ 
+    // see also get_moves(p, o) in https://github.com/okuhara/edax-reversi-AVX/blob/master/src/board_sse.c 
     public class Board
     {
         public const int BOARD_SIZE = 8;
@@ -40,16 +73,14 @@ namespace Kalmia.Reversi
         static readonly Vector128<ulong> ZEROS_128 = Vector128.Create(0UL, 0UL);
         static readonly Vector256<ulong> ZEROS_256 = Vector256.Create(0UL, 0UL, 0UL, 0UL);
 
-        ulong currentPlayerBoard;
-        ulong opponentPlayerBoard;
+        Bitboard bitboard;
 
-        ulong currentPlayerMobility;     // reuse the mobility in same turn.
+        ulong currentPlayerMobility;     
         bool currentPlayerMobilityWasCalculated = false;
 
-        Stack<ulong> currentPlayerBoardHistory = new Stack<ulong>(BOARD_HISTORY_STACK_SIZE);
-        Stack<ulong> opponentPlayerBoardHistory = new Stack<ulong>(BOARD_HISTORY_STACK_SIZE);
+        Stack<Bitboard> boardHistory = new Stack<Bitboard>(BOARD_HISTORY_STACK_SIZE);
 
-        public Color Turn { get; private set; }
+        public Color SideToMove { get; private set; }
 
         public Board(Color firstPlayer, InitialBoardState initState) : this(firstPlayer, 0UL, 0UL)
         {
@@ -70,11 +101,13 @@ namespace Kalmia.Reversi
             }
         }
 
-        public Board(Color firstPlayer, ulong firstPlayersBoard, ulong secondPlayersBoard)
+        public Board(Color sideToMove, Bitboard bitboard):this(sideToMove, bitboard.CurrentPlayer, bitboard.OpponentPlayer) { }
+
+        public Board(Color sideToMove, ulong currentPlayerBoard, ulong opponentPlayerBoard)
         {
-            this.Turn = firstPlayer;
-            this.currentPlayerBoard = firstPlayersBoard;
-            this.opponentPlayerBoard = secondPlayersBoard;
+            this.SideToMove = sideToMove;
+            this.bitboard.CurrentPlayer = currentPlayerBoard;
+            this.bitboard.OpponentPlayer = opponentPlayerBoard;
         }
 
         public Board(Board board)
@@ -82,9 +115,27 @@ namespace Kalmia.Reversi
             board.CopyTo(this);
         }
 
+        public void Init(Color sideToMove, Bitboard bitboard)
+        {
+            this.SideToMove = sideToMove;
+            this.bitboard = bitboard;
+            this.currentPlayerMobilityWasCalculated = false;
+            this.boardHistory.Clear();
+        }
+
+        public ulong GetBitboard(Color color)
+        {
+            return (this.SideToMove == color) ? this.bitboard.CurrentPlayer : this.bitboard.OpponentPlayer;
+        }
+
+        public Bitboard GetBitBoard()
+        {
+            return this.bitboard;
+        }
+
         public int GetDiscCount(Color color)
         {
-            if (color == this.Turn)
+            if (color == this.SideToMove)
                 return GetCurrentPlayerDiscCount();
             else
                 return GetOpponentPlayerDiscCount();
@@ -92,17 +143,17 @@ namespace Kalmia.Reversi
 
         public int GetEmptyCount()
         {
-            return (int)BitManipulations.PopCount(~(this.currentPlayerBoard | this.opponentPlayerBoard));
+            return this.bitboard.GetEmptyCount();
         }
 
         public int GetCurrentPlayerDiscCount()
         {
-            return (int)BitManipulations.PopCount(this.currentPlayerBoard);
+            return (int)BitManipulations.PopCount(this.bitboard.CurrentPlayer);
         }
 
         public int GetOpponentPlayerDiscCount()
         {
-            return (int)BitManipulations.PopCount(this.opponentPlayerBoard);
+            return (int)BitManipulations.PopCount(this.bitboard.OpponentPlayer);
         }
 
         public Color GetColor(int posX, int posY)
@@ -113,8 +164,8 @@ namespace Kalmia.Reversi
         public Color GetDiscColor(BoardPosition pos)
         {
             var x = (int)pos;
-            var turn = (ulong)this.Turn + 1UL;
-            var color = turn * ((this.currentPlayerBoard >> x) & 1) + (turn ^ 3) * ((this.opponentPlayerBoard >> x) & 1);
+            var sideToMove = (ulong)this.SideToMove + 1UL;
+            var color = sideToMove * ((this.bitboard.CurrentPlayer >> x) & 1) + (sideToMove ^ 3) * ((this.bitboard.OpponentPlayer >> x) & 1);
             return (color != 0) ? (Color)(color - 1) : Color.Empty;
         }
 
@@ -124,30 +175,30 @@ namespace Kalmia.Reversi
             for (var i = 0; i < discs.GetLength(0); i++)
                 for (var j = 0; j < discs.GetLength(1); j++)
                     discs[i, j] = Color.Empty;
-            var currentPlayer = this.Turn;
-            var opponentPlayer = this.Turn ^ Color.White;
+            var currentPlayer = this.SideToMove;
+            var opponentPlayer = this.SideToMove ^ Color.White;
 
             var mask = 1UL;
             for(var y = 0; y < discs.GetLength(0); y++)
                 for(var x = 0; x < discs.GetLength(1); x++)
                 {
-                    if ((this.currentPlayerBoard & mask) != 0)
+                    if ((this.bitboard.CurrentPlayer & mask) != 0)
                         discs[x, y] = currentPlayer;
-                    else if ((this.opponentPlayerBoard & mask) != 0)
+                    else if ((this.bitboard.OpponentPlayer & mask) != 0)
                         discs[x, y] = opponentPlayer;
                     mask <<= 1;
                 }
             return discs;
         }
 
-        public void SwitchTurn()
+        public void SwitchSideToMove()
         {
             // swap bitboard
-            var tmp = this.currentPlayerBoard;
-            this.currentPlayerBoard = this.opponentPlayerBoard;
-            this.opponentPlayerBoard = tmp;
+            var tmp = this.bitboard.CurrentPlayer;
+            this.bitboard.CurrentPlayer = this.bitboard.OpponentPlayer;
+            this.bitboard.OpponentPlayer = tmp;
             this.currentPlayerMobilityWasCalculated = false;
-            this.Turn ^= Color.White;
+            this.SideToMove ^= Color.White;
         }
 
         public void Put(Color color, string pos)
@@ -163,13 +214,12 @@ namespace Kalmia.Reversi
         public void Put(Color color, BoardPosition pos)
         {
             var putPat = 1UL << (byte)pos;
-            if (color == this.Turn)
-                this.currentPlayerBoard |= putPat;
+            if (color == this.SideToMove)
+                this.bitboard.CurrentPlayer |= putPat;
             else
-                this.opponentPlayerBoard |= putPat;
+                this.bitboard.OpponentPlayer |= putPat;
             this.currentPlayerMobilityWasCalculated = false;
-            this.currentPlayerBoardHistory.Clear();
-            this.opponentPlayerBoardHistory.Clear();
+            this.boardHistory.Clear();
         }
 
         public override bool Equals(object obj)
@@ -177,7 +227,7 @@ namespace Kalmia.Reversi
             if (!(obj is Board))
                 return false;
             var board = (Board)obj;
-            return board.Turn == this.Turn && board.currentPlayerBoard == this.currentPlayerBoard && board.opponentPlayerBoard == this.opponentPlayerBoard;
+            return board.SideToMove == this.SideToMove && board.bitboard == this.bitboard;
         }
 
         public override int GetHashCode()
@@ -185,68 +235,59 @@ namespace Kalmia.Reversi
             throw new NotImplementedException();
         }
 
-        public void CopyTo(Board destBoard, bool copyHistory = true)
+        public void CopyTo(Board destBoard, bool copyHistory = false)
         {
-            destBoard.Turn = this.Turn;
-            destBoard.currentPlayerBoard = this.currentPlayerBoard;
-            destBoard.opponentPlayerBoard = this.opponentPlayerBoard;
+            destBoard.SideToMove = this.SideToMove;
+            destBoard.bitboard = this.bitboard;
             destBoard.currentPlayerMobility = this.currentPlayerMobility;
             destBoard.currentPlayerMobilityWasCalculated = this.currentPlayerMobilityWasCalculated;
             if (copyHistory)
-            {
-                destBoard.currentPlayerBoardHistory = this.currentPlayerBoardHistory.Copy(BOARD_HISTORY_STACK_SIZE);
-                destBoard.opponentPlayerBoardHistory = this.opponentPlayerBoardHistory.Copy(BOARD_HISTORY_STACK_SIZE);
-            }
+                destBoard.boardHistory = this.boardHistory.Copy(BOARD_HISTORY_STACK_SIZE);
             else
-            {
-                destBoard.currentPlayerBoardHistory.Clear();
-                destBoard.opponentPlayerBoardHistory.Clear();
-            }
+                destBoard.boardHistory.Clear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update(Move move)
         {
-            this.currentPlayerBoardHistory.Push(this.currentPlayerBoard);
-            this.opponentPlayerBoardHistory.Push(this.opponentPlayerBoard);
+            this.boardHistory.Push(this.bitboard);
             if (move.Pos != BoardPosition.Pass)
             {
                 var x = 1UL << (byte)move.Pos;
                 var flipped = CalculateFlippedDiscs((byte)move.Pos);
-                this.opponentPlayerBoard ^= flipped;
-                this.currentPlayerBoard |= (flipped | x);
+                this.bitboard.OpponentPlayer ^= flipped;
+                this.bitboard.CurrentPlayer |= (flipped | x);
             }
-            SwitchTurn();
+            SwitchSideToMove();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Undo()
         {
-            if (this.currentPlayerBoardHistory.Count == 0)
+            if (this.boardHistory.Count == 0)
                 return false;
-            this.SwitchTurn();
-            this.currentPlayerBoard = this.currentPlayerBoardHistory.Pop();
-            this.opponentPlayerBoard = this.opponentPlayerBoardHistory.Pop();
+            this.SwitchSideToMove();
+            this.bitboard = this.boardHistory.Pop();
             this.currentPlayerMobilityWasCalculated = false;
             return true;
         }
 
         public bool IsLegalMove(Move move)
         {
-            if (move.Color != this.Turn)
+            if (move.Color != this.SideToMove)
                 return false;
             if (move.Pos == BoardPosition.Pass)
-                return CalculateCurrentPlayerMobility() == 0UL && GetNextMovesNum() == 1;
+                return CalculateCurrentPlayerMobility() == 0UL && GetNextMovesCount() == 1;
             return ((1UL << (byte)move.Pos) & CalculateCurrentPlayerMobility()) != 0UL;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetNextMovesNum()
+        public int GetNextMovesCount()
         {
-            var moveNum = (int)BitManipulations.PopCount(CalculateCurrentPlayerMobility());
-            if (moveNum != 0)
-                return moveNum;
-            if (BitManipulations.PopCount(CalculateMobility(this.opponentPlayerBoard, this.currentPlayerBoard)) == 0)
+            var moveCount = (int)BitManipulations.PopCount(CalculateCurrentPlayerMobility());
+            if (moveCount != 0)
+                return moveCount;
+            if (BitManipulations.PopCount(CalculateMobility(this.bitboard.OpponentPlayer, this.bitboard.CurrentPlayer)) == 0)
                 return 0;
             else
                 return 1;   // pass
@@ -255,21 +296,21 @@ namespace Kalmia.Reversi
         public IEnumerable<Move> GetNextMoves()
         {
             var mobility = CalculateCurrentPlayerMobility();
-            var moveNum = (int)BitManipulations.PopCount(mobility);
-            if (moveNum == 0)
+            var moveCount = (int)BitManipulations.PopCount(mobility);
+            if (moveCount == 0)
             {
-                if (BitManipulations.PopCount(CalculateMobility(this.opponentPlayerBoard, this.currentPlayerBoard)) != 0)
-                    yield return new Move(this.Turn, BoardPosition.Pass);
+                if (BitManipulations.PopCount(CalculateMobility(this.bitboard.OpponentPlayer, this.bitboard.CurrentPlayer)) != 0)
+                    yield return new Move(this.SideToMove, BoardPosition.Pass);
             }
             else
             {
                 var mask = 1UL;
                 var count = 0;
-                for (var i = 0; count < moveNum; i++)
+                for (var i = 0; count < moveCount; i++)
                 {
                     if ((mobility & mask) != 0)
                     {
-                        yield return new Move(this.Turn, (BoardPosition)i);
+                        yield return new Move(this.SideToMove, (BoardPosition)i);
                         count++;
                     }
                     mask <<= 1;
@@ -281,24 +322,24 @@ namespace Kalmia.Reversi
         public int GetNextMoves(Move[] moves)
         {
             var mobility = CalculateCurrentPlayerMobility();
-            var moveNum = (int)BitManipulations.PopCount(mobility);
-            if(moveNum == 0)
+            var moveCount = (int)BitManipulations.PopCount(mobility);
+            if(moveCount == 0)
             {
-                if (BitManipulations.PopCount(CalculateMobility(this.opponentPlayerBoard, this.currentPlayerBoard)) == 0)
+                if (BitManipulations.PopCount(CalculateMobility(this.bitboard.OpponentPlayer, this.bitboard.CurrentPlayer)) == 0)
                     return 0;
-                moves[0] = new Move(this.Turn, BoardPosition.Pass);
+                moves[0] = new Move(this.SideToMove, BoardPosition.Pass);
                 return 1;
             }
 
             var mask = 1UL;
             var idx = 0;
-            for(var i = 0; idx < moveNum; i++)
+            for(var i = 0; idx < moveCount; i++)
             {
                 if ((mobility & mask) != 0)
-                    moves[idx++] = new Move(this.Turn, (BoardPosition)i);
+                    moves[idx++] = new Move(this.SideToMove, (BoardPosition)i);
                 mask <<= 1;
             }
-            return moveNum;
+            return moveCount;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -306,7 +347,7 @@ namespace Kalmia.Reversi
         {
             var mobility = CalculateCurrentPlayerMobility();
             if (BitManipulations.PopCount(mobility) == 0)
-                return new Move(this.Turn, BoardPosition.Pass);
+                return new Move(this.SideToMove, BoardPosition.Pass);
 
             var mask = 1UL;
             var i = 0;
@@ -318,20 +359,20 @@ namespace Kalmia.Reversi
                         break;
                 mask <<= 1;
             }
-            return new Move(this.Turn, (BoardPosition)pos);
+            return new Move(this.SideToMove, (BoardPosition)pos);
         }
 
         public GameResult GetGameResult(Color color)
         {
-            if (GetNextMovesNum() != 0)
+            if (GetNextMovesCount() != 0)
                 return GameResult.NotOver;
 
             var currentPlayerCount = GetCurrentPlayerDiscCount();
             var opponentPlayerCount = GetOpponentPlayerDiscCount();
             if (currentPlayerCount > opponentPlayerCount)
-                return (color == this.Turn) ? GameResult.Win : GameResult.Loss;
+                return (color == this.SideToMove) ? GameResult.Win : GameResult.Loss;
             if (currentPlayerCount < opponentPlayerCount)
-                return (color == this.Turn) ? GameResult.Loss : GameResult.Win;
+                return (color == this.SideToMove) ? GameResult.Loss : GameResult.Win;
             return GameResult.Draw;
         }
 
@@ -341,43 +382,31 @@ namespace Kalmia.Reversi
             if (this.currentPlayerMobilityWasCalculated)
                 return this.currentPlayerMobility;
 
-            return CalculateMobility(this.currentPlayerBoard, this.opponentPlayerBoard);
+            return CalculateMobility(this.bitboard.CurrentPlayer, this.bitboard.OpponentPlayer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateMobility(ulong p, ulong o)
         {
-#if RELEASE
-            if (Avx2.IsSupported)
+            if (Sse2.X64.IsSupported && Avx2.IsSupported)
                 return CalculateMobility_AVX2(p, o);
             else
                 return CalculateMobility_SSE(p, o);
-#elif DEBUG_AVX2
-            return CalculateMobility_AVX2(p, o);
-#elif DEBUG_SSE
-            return CalculateMobility_SSE(p, o);
-#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ulong CalculateFlippedDiscs(int pos)
         {
-#if RELEASE
-            if (Avx2.IsSupported)
-                return CalculateFilippedDiscs_AVX2(this.currentPlayerBoard, this.opponentPlayerBoard, pos);
+            if (Sse2.X64.IsSupported && Avx2.IsSupported)
+                return CalculateFilippedDiscs_AVX2(this.bitboard.CurrentPlayer, this.bitboard.OpponentPlayer, pos);
             else
-                return CalculateFlippedDiscs_SSE(this.currentPlayerBoard, this.opponentPlayerBoard, pos);
-#elif DEBUG_AVX2
-            return CalculateFilippedDiscs_AVX2(this.currentPlayerBoard, this.opponentPlayerBoard, pos);
-#elif DEBUG_SSE
-            return CalculateFlippedDiscs_SSE(this.currentPlayersBoard, this.opponentPlayersBoard, pos);
-#endif
+                return CalculateFlippedDiscs_SSE(this.bitboard.CurrentPlayer, this.bitboard.OpponentPlayer, pos);
         }
 
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append(" ");
+            sb.Append("  ");
             for (var i = 0; i < BOARD_SIZE; i++)
                 sb.Append($"{(char)('A' + i)} ");
 
@@ -387,10 +416,10 @@ namespace Kalmia.Reversi
                 sb.Append($"\n{y + 1} ");
                 for (var x = 0; x < BOARD_SIZE; x++)
                 {
-                    if ((this.currentPlayerBoard & mask) != 0)
-                        sb.Append((this.Turn == Color.Black) ? "X " : "O ");
-                    else if ((this.opponentPlayerBoard & mask) != 0)
-                        sb.Append((this.Turn != Color.Black) ? "X " : "O ");    
+                    if ((this.bitboard.CurrentPlayer & mask) != 0)
+                        sb.Append((this.SideToMove == Color.Black) ? "X " : "O ");
+                    else if ((this.bitboard.OpponentPlayer & mask) != 0)
+                        sb.Append((this.SideToMove != Color.Black) ? "X " : "O ");    
                     else
                         sb.Append(". ");
                     mask <<= 1;

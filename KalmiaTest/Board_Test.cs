@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,32 +14,32 @@ namespace KalmiaTest
         public void CalculateMobilityAndFlipped_Test()
         {
             var board = new Board(Color.Black, InitialBoardState.Cross);
-            var boardTest = new BoardForTest(Color.Black, InitialBoardState.Cross);
+            var boardTest = new SlowBoard(Color.Black, InitialBoardState.Cross);
             var moves = new Move[SQUARE_NUM];
             var movesTest = new Move[SQUARE_NUM];
             var rand = new Random();
 
             while (!boardTest.IsGameover())
             {
-                var moveNum = board.GetNextMoves(moves);
-                var moveNumTest = boardTest.GetNextMoves(movesTest);
-                Assert.AreEqual(moveNumTest, moveNum);
-                AssertMovesAreEqual(boardTest, movesTest, moves, moveNum);
-                var nextMove = moves[rand.Next(moveNum)];
+                var moveCount = board.GetNextMoves(moves);
+                var moveCountTest = boardTest.GetNextMoves(movesTest);
+                Assert.AreEqual(moveCountTest, moveCount);
+                AssertMovesAreEqual(boardTest, movesTest, moves, moveCount);
+                var nextMove = moves[rand.Next(moveCount)];
                 board.Update(nextMove);
                 boardTest.Update(nextMove);
                 AssertDiscsAreEqual(boardTest.GetDiscsArray(), board.GetDiscsArray());
             }
         }
 
-        void AssertMovesAreEqual(BoardForTest board, Move[] expected, Move[] actual, int moveNum)
+        void AssertMovesAreEqual(SlowBoard board, Move[] expected, Move[] actual, int moveCount)
         {
-            for (var i = 0; i < moveNum; i++)
+            for (var i = 0; i < moveCount; i++)
             {
                 var idx = Array.IndexOf(actual, expected[i]);
-                if (idx == -1 || idx >= moveNum)
+                if (idx == -1 || idx >= moveCount)
                     Assert.Fail($"Expected to contain move {expected[i]}, but it was not found." +
-                                $"\nexpected = {MoveArrayToString(expected, moveNum)}\nactual = {MoveArrayToString(actual, moveNum)}" +
+                                $"\nexpected = {MoveArrayToString(expected, moveCount)}\nactual = {MoveArrayToString(actual, moveCount)}" +
                                 $"\n{DiscsToString(board.GetDiscsArray())}");
             }
         }
@@ -59,12 +58,12 @@ namespace KalmiaTest
                 Assert.Fail($"\nexpected = \n{DiscsToString(expected)}\nactual = \n{DiscsToString(actual)}");
         }
 
-        string MoveArrayToString(Move[] moves, int moveNum)
+        string MoveArrayToString(Move[] moves, int moveCount)
         {
             var sb = new StringBuilder("{ ");
-            for (var i = 0; i < moveNum - 1; i++)
+            for (var i = 0; i < moveCount - 1; i++)
                 sb.Append(moves[i].ToString() + ", ");
-            sb.Append(moves[moveNum - 1] + " }");
+            sb.Append(moves[moveCount - 1] + " }");
             return sb.ToString();
         }
 

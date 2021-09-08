@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Text;
+using System.Linq;
+
 using Kalmia.Reversi;
 
 namespace Kalmia.GoTextProtocol
@@ -109,7 +108,7 @@ namespace Kalmia.GoTextProtocol
 
         public Color GetSideToMove()
         {
-            return this.board.Turn;
+            return this.board.SideToMove;
         }
 
         public virtual string[] GetOriginalCommands()
@@ -120,7 +119,7 @@ namespace Kalmia.GoTextProtocol
         public abstract bool SetBoardSize(int size);
         public abstract string LoadSGF(string path);
         public abstract string LoadSGF(string path, int posX, int posY);
-        public abstract string LoadSGF(string path, int moveNum);
+        public abstract string LoadSGF(string path, int moveCount);
         public abstract Move GenerateMove(Color color);
         public abstract Move RegGenerateMove(Color color);
         public abstract void SetTime(int mainTime, int byoYomiTime, int byoYomiStones);

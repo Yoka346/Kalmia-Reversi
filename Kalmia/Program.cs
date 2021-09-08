@@ -1,33 +1,72 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Runtime;
-using System.Runtime.Intrinsics;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Reflection;
 
-using Kalmia.GoTextProtocol;
-using Kalmia.Reversi;
 using Kalmia.Engines;
-using Kalmia.Evaluation;
-using Kalmia.IO;
-using Kalmia.Learning;
+using Kalmia.GoTextProtocol;
 
 namespace Kalmia
 {
     class Program
     {
+        const string LOG_DIR_PATH = "log//";
+        const string GTP_LOG_FILE_NAME = "gtp{0}.txt";
+        const string THOUGHT_LOG_FILE_NAME = "thought_log{0}.txt";
+
         static void Main(string[] args)
         {
-            //var coordRule = (args.Length > 0 && args[0].ToLower() == "othello") ? GTPCoordinateRule.Othello : GTPCoordinateRule.Chess;
-            //GTP.Mainloop(new RandomMoveEngine(), coordRule, $"gtplog{Environment.TickCount}.txt");
-            //GTP.Mainloop(new MonteCarloEngine(10000), coordRule, $"gtplog{Environment.TickCount}.txt");
-            //GTP.Mainloop(new MCTSEngine(3200000, 8, $"mcts_log{Environment.TickCount}.txt"), coordRule, $"gtplog{Environment.TickCount}.txt");
+            SetCurrentDirectry();
+            if (args.Length == 0)
+                args = new string[] { "--level", "5" };
 
-            Console.WriteLine("loading");
-            var valueFunc = new ValueFunction(@"C:\Users\admin\source\repos\Kalmia\Params\edax_eval.dat");
-            //ValueFunction_Test.Mainloop(valueFunc);
-            Console.WriteLine("saving");
-            valueFunc.SaveToFile("edax", 2, "Edax.dat");
+            if (args.Length != 2 || args[0] != "--level")
+            {
+                Console.WriteLine("invalid option.");
+                return;
+            }
+
+            var config = SelectLevel(args[1]);
+            if (config == null)
+                return;
+            (var gtpLogPath, var thoughtLogPath) = CreateFiles();
+            var engine = new KalmiaEngine(config.Value, thoughtLogPath);
+            GTP.Mainloop(engine, GTPCoordinateRule.Chess, gtpLogPath);
+        }
+
+        static void SetCurrentDirectry()
+        {
+            var assembly = Assembly.GetEntryAssembly();
+            Directory.SetCurrentDirectory(Path.GetDirectoryName(assembly.Location));
+        }
+
+        static (string gtpLogPath, string thoughtLogPath) CreateFiles()
+        {
+            if (!Directory.Exists(LOG_DIR_PATH))
+                Directory.CreateDirectory(LOG_DIR_PATH);
+
+            var gtpLogPath = LOG_DIR_PATH + GTP_LOG_FILE_NAME;
+            var i = 0;
+            while (File.Exists(string.Format(gtpLogPath, i)))
+                i++;
+            gtpLogPath = string.Format(gtpLogPath, i);
+
+            var thoughtLogPath = LOG_DIR_PATH + THOUGHT_LOG_FILE_NAME;
+            i = 0;
+            while (File.Exists(string.Format(thoughtLogPath, i)))
+                i++;
+            thoughtLogPath = string.Format(thoughtLogPath, i);
+            return (gtpLogPath, thoughtLogPath);
+        }
+
+        static KalmiaConfig? SelectLevel(string level)
+        {
+            const string LEVEL_CONFIG_DIR = "level_config/";
+
+            var path = $"{LEVEL_CONFIG_DIR}level{level}.json";
+            if (File.Exists(path))
+                return new KalmiaConfig(File.ReadAllText(path));
+            Console.WriteLine("invalid level.");
+            return null;
         }
     }
 }

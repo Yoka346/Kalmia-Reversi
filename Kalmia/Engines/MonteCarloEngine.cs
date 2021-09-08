@@ -12,8 +12,8 @@ namespace Kalmia.Engines
 {
     public class MonteCarloEngine : GTPEngine
     {
-        const string NAME = "MonteCarloEngine";
-        const string VERSION = "0.0";
+        new const string NAME = "MonteCarloEngine";
+        new const string VERSION = "0.0";
 
         readonly int PLAYOUT_NUM;
         readonly int THREAD_NUM;
@@ -52,7 +52,7 @@ namespace Kalmia.Engines
             throw new NotImplementedException();
         }
 
-        public override string LoadSGF(string path, int moveNum)
+        public override string LoadSGF(string path, int moveCount)
         {
             throw new NotImplementedException();
         }
@@ -129,13 +129,12 @@ namespace Kalmia.Engines
             return sum.Sum() / this.PLAYOUT_NUM;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         double Simulate(Board board, Color color, int threadID)
         {
             var rand = this.RAND[threadID];
-            int moveNum;
-            while ((moveNum = board.GetNextMovesNum()) != 0)
-                board.Update(board.GetNextMove(rand.Next(moveNum)));
+            int moveCount;
+            while ((moveCount = board.GetNextMovesCount()) != 0)
+                board.Update(board.GetNextMove(rand.Next(moveCount)));
 
             switch (board.GetGameResult(color))
             {

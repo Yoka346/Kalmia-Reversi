@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Kalmia
 {
-    class Xorshift
+    public class Xorshift
     {
         static readonly Xorshift SEED_GENERATOR = new Xorshift((uint)Environment.TickCount);
         static readonly object LOCK_OBJ = new object();
@@ -38,6 +36,24 @@ namespace Kalmia
         public ulong Next(uint minValue, uint maxValue)
         {
             return Next(maxValue - minValue) + minValue;
+        }
+
+        public float NextFloat()
+        {
+            return (float)Next() / uint.MaxValue;
+        }
+
+        public void Shuffle<T>(T[] array)
+        {
+            var n = (uint)array.Length;
+            while (n > 1u)
+            {
+                n--;
+                var k = this.Next(n + 1u);
+                var tmp = array[k];
+                array[k] = array[n];
+                array[n] = tmp;
+            }
         }
     }
 }

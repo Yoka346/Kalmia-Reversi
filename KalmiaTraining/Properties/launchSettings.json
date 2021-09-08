@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "KalmiaTraining": {
+      "commandName": "Project",
+      "commandLineArgs": "ValueFunc C:\\Users\\admin\\source\\repos\\Kalmia\\ValueFunctionOptimize "
+    }
+  }
+}

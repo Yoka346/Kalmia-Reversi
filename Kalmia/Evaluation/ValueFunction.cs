@@ -1,10 +1,8 @@
-﻿#define DISC_DIFF
-//#define WIN_RATE
+﻿//#define DISC_DIFF
+#define WIN_RATE
 
 using System;
 using System.IO;
-using System.Linq;
-using System.Collections.Generic;
 
 using Kalmia.Reversi;
 
@@ -12,50 +10,62 @@ namespace Kalmia.Evaluation
 {
     public class ValueFunction
     {
-        static readonly float[] FEATURE_PATTERN_OFFSET;
+        public static int BiasIdx { get; } = BoardFeature.PatternIdxOffset[^1];
 
-        public float[][][] Weight { get; }      // WEIGHT[Color][Stage][Feature pattern]
+        public float[][][] Weight { get; }      // WEIGHT[Color][Stage][Feature]
 
-        public EvalParamsFileHeader Header { get; }
-        public int StageNum { get; }
-        public int MoveNumPerStage { get; }
+        public EvalParamsFileHeader Header { get; private set; }
+        public int StageNum { get; private set; }
+        public int MoveCountPerStage { get; private set; }
 
-        static ValueFunction()
+        public ValueFunction(string label, int version, int moveCountPerStage)
         {
-            FEATURE_PATTERN_OFFSET = new float[FeatureBoard.FEATURE_TYPE_NUM - 1];
-            for (var i = 0; i < FEATURE_PATTERN_OFFSET.Length; i++)
-                FEATURE_PATTERN_OFFSET[i] = FeatureBoard.FeaturePatternNum[i + 1];
-        }
-
-        public ValueFunction(int moveNumPerStage)
-        {
-            this.MoveNumPerStage = moveNumPerStage;
-            this.StageNum = ((Board.SQUARE_NUM - 4) / moveNumPerStage) + 1;
-            this.MoveNumPerStage = moveNumPerStage;
+            this.Header = new EvalParamsFileHeader(label, version, DateTime.Now);
+            this.MoveCountPerStage = moveCountPerStage;
+            this.StageNum = ((Board.SQUARE_NUM - 4) / moveCountPerStage) + 1;
             this.Weight = new float[2][][];
             for (var color = 0; color < this.Weight.Length; color++)
             {
-                this.Weight[color] = new float[StageNum + 1][];
+                this.Weight[color] = new float[this.StageNum][];
                 for (var stage = 0; stage < this.Weight[color].Length; stage++)
-                    this.Weight[color][stage] = new float[FeatureBoard.FeaturePatternNum.Sum()];
+                    this.Weight[color][stage] = new float[BoardFeature.PatternFeatureNum.Sum()];
             }
         }
-
+        
         public ValueFunction(string path)
         {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             this.Header = new EvalParamsFileHeader(fs);
             var packedWeight = LoadPackedWeight(fs);
             this.StageNum = packedWeight.Length;
-            this.MoveNumPerStage = Board.SQUARE_NUM / (this.StageNum - 1);
+            this.MoveCountPerStage = Board.SQUARE_NUM / (this.StageNum - 1);
             this.Weight = new float[2][][];
             for (var color = 0; color < this.Weight.Length; color++)
             {
                 this.Weight[color] = new float[this.StageNum][];
                 for (var stage = 0; stage < this.Weight[color].Length; stage++)
-                    this.Weight[color][stage] = new float[FeatureBoard.FeaturePatternNum.Sum()];
+                    this.Weight[color][stage] = new float[BoardFeature.PatternFeatureNum.Sum()];
             }
             ExpandPackedWeight(packedWeight);
+        }
+
+        public ValueFunction(ValueFunction valueFunc)
+        {
+            this.Header = valueFunc.Header;
+            this.StageNum = valueFunc.StageNum;
+            this.MoveCountPerStage = valueFunc.MoveCountPerStage;
+            this.Weight = new float[2][][];
+            for(var color = 0; color < this.Weight.Length; color++)
+            {
+                var srcWeight = valueFunc.Weight[color];
+                var destWeight = this.Weight[color] = new float[this.StageNum][];
+                for(var stage = 0; stage < this.StageNum; stage++)
+                {
+                    var sw = srcWeight[stage];
+                    var dw = destWeight[stage] = new float[BoardFeature.PatternFeatureNum.Sum()];
+                    Buffer.BlockCopy(sw, 0, dw, 0, sizeof(float) * dw.Length);
+                }
+            }
         }
 
         float[][][] LoadPackedWeight(FileStream fs)
@@ -66,14 +76,14 @@ namespace Kalmia.Evaluation
             var buffer = new byte[sizeof(float)];
             for (var stage = 0; stage < stageNum; stage++)
             {
-                weight[stage] = new float[FeatureBoard.FEATURE_TYPE_NUM][];
-                for (var featureType = 0; featureType < weight[stage].Length; featureType++)
+                weight[stage] = new float[BoardFeature.PATTERN_TYPE][];
+                for (var patternType = 0; patternType < weight[stage].Length; patternType++)
                 {
-                    weight[stage][featureType] = new float[FeatureBoard.PackedFeaturePatternNum[featureType]];
-                    for (var i = 0; i < weight[stage][featureType].Length; i++)
+                    weight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
+                    for (var i = 0; i < weight[stage][patternType].Length; i++)
                     {
                         fs.Read(buffer, 0, buffer.Length);
-                        weight[stage][featureType][i] = BitConverter.ToSingle(buffer);
+                        weight[stage][patternType][i] = BitConverter.ToSingle(buffer);
                     }
                 }
             }
@@ -83,57 +93,61 @@ namespace Kalmia.Evaluation
         void ExpandPackedWeight(float[][][] packedWeight)
         {
             int i;
-            for (var stage = 0; stage < StageNum; stage++)
+            for (var stage = 0; stage < this.StageNum; stage++)
             {
-                int featureType;
+                int patternType;
                 var offset = 0;
-                for (featureType = 0; featureType < FeatureBoard.FEATURE_TYPE_NUM - 1; featureType++)
+                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE - 1; patternType++)
                 {
-                    for (var pattern = i = 0; pattern < FeatureBoard.FeaturePatternNum[featureType]; pattern++)
+                    for (var feature = i = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
                     {
-                        var featureSize = FeatureBoard.FeatureSize[featureType];
-                        var symmetricalPattern = FeatureBoard.FlipPatternCallbacks[featureType](pattern);
-                        if (symmetricalPattern < pattern)
-                            this.Weight[(int)Color.Black][stage][offset + pattern] = this.Weight[(int)Color.Black][stage][offset + symmetricalPattern];
+                        var featureIdx = offset + feature;
+                        var symmetricFeatureIdx = BoardFeature.SymmetricFeatureIdxMapping[featureIdx];
+                        if (symmetricFeatureIdx < featureIdx)
+                            this.Weight[(int)Color.Black][stage][featureIdx] = this.Weight[(int)Color.Black][stage][symmetricFeatureIdx];
                         else
-                            this.Weight[(int)Color.Black][stage][offset + pattern] = packedWeight[stage][featureType][i++];
-                        this.Weight[(int)Color.White][stage][offset + FeatureBoard.InvertPattern(pattern, featureSize)] = this.Weight[(int)Color.Black][stage][offset + pattern];
+                            this.Weight[(int)Color.Black][stage][featureIdx] = packedWeight[stage][patternType][i++];
+                        this.Weight[(int)Color.White][stage][BoardFeature.OpponentFeatureIdxMapping[featureIdx]] = this.Weight[(int)Color.Black][stage][featureIdx];
                     }
-                    offset += FeatureBoard.FeaturePatternNum[featureType];
+                    offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
-                this.Weight[(int)Color.Black][stage][offset] = packedWeight[stage][featureType][0];
-                this.Weight[(int)Color.White][stage][offset] = packedWeight[stage][featureType][0];
+                this.Weight[(int)Color.Black][stage][offset] = packedWeight[stage][patternType][0];
+                this.Weight[(int)Color.White][stage][offset] = packedWeight[stage][patternType][0];
             }
         }
 
         public void SaveToFile(string label, int version, string path)
         {
             using var fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
+            SaveToFile(label, version, fs);
+        }
+
+        public void SaveToFile(string label, int version, FileStream fs)
+        {
             var header = new EvalParamsFileHeader(label, version, DateTime.Now);
             header.WriteToStream(fs);
-
             var weight = PackWeight();
             fs.WriteByte((byte)this.StageNum);
             for (var stage = 0; stage < this.StageNum; stage++)
-                for (var featureType = 0; featureType < FeatureBoard.FEATURE_TYPE_NUM; featureType++)
-                    for (var i = 0; i < FeatureBoard.PackedFeaturePatternNum[featureType]; i++)
-                        fs.Write(BitConverter.GetBytes(weight[stage][featureType][i]), 0, sizeof(float));
+                for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE; patternType++)
+                    for (var i = 0; i < BoardFeature.PackedPatternFeatureNum[patternType]; i++)
+                        fs.Write(BitConverter.GetBytes(weight[stage][patternType][i]), 0, sizeof(float));
         }
 
-        public float F(FeatureBoard board)      // calculate value 
+        public float F(BoardFeature board)      // calculate value 
         {
-            var stage = (Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveNumPerStage;
+            var stage = (Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveCountPerStage;
             var value = 0.0f;
-            var patterns = board.FeaturePatterns;
-            var color = (int)board.Turn;
-            for (var i = 0; i < FeatureBoard.ALL_FEATURE_NUM; i++)
-                value += this.Weight[color][stage][patterns[i]];
-
+            var featureIndices = board.FeatureIndices;
+            var color = (int)board.SideToMove;
+            var weight = this.Weight[color][stage];
+            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
+                value += weight[featureIndices[i]];
 #if WIN_RATE
             value = FastMath.StdSigmoid(value);
-            return (color == (int)Color.Black) ? value : 1.0f - value;
+            return value;
 #endif
 
 #if DISC_DIFF
@@ -145,16 +159,21 @@ namespace Kalmia.Evaluation
                 value = SCORE_MIN + 1;
             else if (value >= SCORE_MAX) 
                 value = SCORE_MAX - 1;
-#endif
             return value;
+#endif
         }
 
-        public float Loss(FeatureBoard[] trainInput, float[] trainOutput)
+        public void CopyBlackWeightToWhiteWeight()
         {
-            var loss = 0.0f;
-            for (var i = 0; i < trainOutput.Length; i++)
-                loss += FastMath.BinaryCrossEntropy(F(trainInput[i]), trainOutput[i]);
-            return loss;
+            var blackWeight = this.Weight[(int)Color.Black];
+            var whiteWeight = this.Weight[(int)Color.White];
+            for(var stage = 0; stage < this.StageNum; stage++)
+            {
+                var bw = blackWeight[stage];
+                var ww = whiteWeight[stage];
+                for (var featureIdx = 0; featureIdx < ww.Length; featureIdx++)
+                    ww[BoardFeature.OpponentFeatureIdxMapping[featureIdx]] = bw[featureIdx];
+            }
         }
 
         float[][][] PackWeight()
@@ -163,24 +182,24 @@ namespace Kalmia.Evaluation
             int packedWIdx;
             for (var stage = 0; stage < this.StageNum; stage++)
             {
-                packedWeight[stage] = new float[FeatureBoard.FEATURE_TYPE_NUM][];
-                int featureType;
+                packedWeight[stage] = new float[BoardFeature.PATTERN_TYPE][];
+                int patternType;
                 var offset = 0;
-                for (featureType = 0; featureType < FeatureBoard.FEATURE_TYPE_NUM - 1; featureType++)
+                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE - 1; patternType++)
                 {
-                    packedWeight[stage][featureType] = new float[FeatureBoard.PackedFeaturePatternNum[featureType]];
-                    for (var pattern = packedWIdx = 0; pattern < FeatureBoard.FeaturePatternNum[featureType]; pattern++)
+                    packedWeight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
+                    for (var feature = packedWIdx = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
                     {
-                        var symmetricalPattern = FeatureBoard.FlipPatternCallbacks[featureType](pattern);
-                        if (pattern <= symmetricalPattern)
-                            packedWeight[stage][featureType][packedWIdx++] = this.Weight[(int)Color.Black][stage][offset + pattern];
+                        var symmetricalPattern = BoardFeature.FlipFeatureCallbacks[patternType](feature);
+                        if (feature <= symmetricalPattern)
+                            packedWeight[stage][patternType][packedWIdx++] = this.Weight[(int)Color.Black][stage][offset + feature];
                     }
-                    offset += FeatureBoard.FeaturePatternNum[featureType];
+                    offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
-                packedWeight[stage][featureType] = new float[FeatureBoard.PackedFeaturePatternNum[featureType]];
-                packedWeight[stage][featureType][0] = this.Weight[(int)Color.Black][stage][offset];
+                packedWeight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
+                packedWeight[stage][patternType][0] = this.Weight[(int)Color.Black][stage][offset];
             }
             return packedWeight;
         }

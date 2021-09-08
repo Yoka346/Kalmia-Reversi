@@ -9,8 +9,8 @@ namespace Kalmia.Engines
 {
     public class RandomMoveEngine : GTPEngine
     {
-        const string NAME = "Random Move Engine";
-        const string VERSION = "0.0";
+        new const string NAME = "Random Move Engine";
+        new const string VERSION = "0.0";
 
         readonly Random RAND;
 
@@ -26,18 +26,18 @@ namespace Kalmia.Engines
 
         public override Move GenerateMove(Color color)
         {
-            if (this.board.Turn != color)
-                this.board.SwitchTurn();
-            var move = this.board.GetNextMove(this.RAND.Next(this.board.GetNextMovesNum()));
+            if (this.board.SideToMove != color)
+                this.board.SwitchSideToMove();
+            var move = this.board.GetNextMove(this.RAND.Next(this.board.GetNextMovesCount()));
             this.board.Update(move);
             return move;
         }
 
         public override Move RegGenerateMove(Color color)
         {
-            if (this.board.Turn != color)
-                this.board.SwitchTurn();
-            var move = this.board.GetNextMove(this.RAND.Next(this.board.GetNextMovesNum()));
+            if (this.board.SideToMove != color)
+                this.board.SwitchSideToMove();
+            var move = this.board.GetNextMove(this.RAND.Next(this.board.GetNextMovesCount()));
             return move;
         }
 
@@ -51,7 +51,7 @@ namespace Kalmia.Engines
             throw new NotImplementedException();
         }
 
-        public override string LoadSGF(string path, int moveNum)
+        public override string LoadSGF(string path, int moveCount)
         {
             throw new NotImplementedException();
         }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Runtime.CompilerServices;
 
 namespace Kalmia
@@ -72,9 +70,36 @@ namespace Kalmia
             return 1.0f / (1.0f + Exp(-x));
         }
 
+        public static void Softmax(float[] x, float[] y)
+        {
+            Softmax(x.AsSpan(), y.AsSpan());
+        }
+
+        public static void Softmax(Span<float> x, Span<float> y)
+        {
+            var sum = 0.0f;
+            for (var i = 0; i < x.Length; i++)
+                sum += y[i] = Exp(x[i]);
+            for (var i = 0; i < y.Length; i++)
+                y[i] = y[i] / sum;
+        }
+
         public static float BinaryCrossEntropy(float y, float t)
         {
+            const float EPSILON = 1.0e-7f;
+            y += EPSILON;
             return -(t * Log(y) + (1.0f - t) * Log(1.0f - y));
+        }
+
+        public static float OneHotCrossEntropy(float[] y, int i)
+        {
+            return OneHotCrossEntropy(y.AsSpan(), i);
+        }
+
+        public static float OneHotCrossEntropy(Span<float> y, int i)
+        {
+            const float EPSILON = 1.0e-7f;
+            return -Log(y[i] + EPSILON);
         }
     }
 }

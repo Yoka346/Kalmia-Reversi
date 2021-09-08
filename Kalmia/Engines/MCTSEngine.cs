@@ -5,31 +5,31 @@ using System.IO;
 using System.Diagnostics;
 
 using Kalmia.GoTextProtocol;
-using Kalmia.Reversi;
+using Kalmia.IO;
 using Kalmia.MCTS;
+using Kalmia.Reversi;
 
 namespace Kalmia.Engines
 {
     public class MCTSEngine : GTPEngine
     {
-        const string NAME = "MCTS Engine";
-        const string VERSION = "0.0";
+        new const string NAME = "MCTS Engine";
+        new const string VERSION = "0.0";
 
         readonly int PLAYOUT_NUM;
         UCT tree;
         Move lastMove;
-        StreamWriter logger;
 
         public MCTSEngine(int playoutNum, int threadNum, string logPath):base(NAME, VERSION)
         {
             this.PLAYOUT_NUM = playoutNum;
             this.tree = new UCT(threadNum);
-            this.logger = new StreamWriter(logPath);
         }
 
-        string MoveEvalToString(MoveEval moveEval)
+        public MCTSEngine(int playoutNum, int threadNum, string logPath, Action<Board, Move[], float[], int, int> rolloutPolicy) : base(NAME, VERSION)
         {
-            return $"Move: {moveEval.Move}\nRate: {moveEval.Rate * 100.0f}%\nWinRate: {moveEval.Value * 100.0f}%\nSimulationCount: {moveEval.SimulationCount}";
+            this.PLAYOUT_NUM = playoutNum;
+            this.tree = new UCT(threadNum);
         }
 
         public override void Quit() { }
@@ -55,17 +55,8 @@ namespace Kalmia.Engines
 
         public override Move RegGenerateMove(Color color)
         {
-            var sw = new Stopwatch();
-            sw.Start();
             this.tree.SetRoot(this.lastMove);
             var move = this.tree.Search(this.board, this.PLAYOUT_NUM);
-            sw.Stop();
-            this.logger.WriteLine($"Ellapsed: {sw.ElapsedMilliseconds}ms");
-            this.logger.WriteLine($"[ROOT_EVAL]\n{MoveEvalToString(this.tree.GetRootNodeEvaluation())}\n");
-            this.logger.WriteLine($"[NEXT_MOVES_EVAL]\n");
-            foreach (var moveEval in this.tree.GetChildNodeEvaluations())
-                this.logger.WriteLine($"{MoveEvalToString(moveEval)}\n");
-            this.logger.Flush();
             return move;
         }
 
@@ -84,7 +75,7 @@ namespace Kalmia.Engines
             throw new NotImplementedException();
         }
 
-        public override string LoadSGF(string path, int moveNum)
+        public override string LoadSGF(string path, int moveCount)
         {
             throw new NotImplementedException();
         }
