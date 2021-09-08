@@ -17,7 +17,7 @@ C#(.net core 3.1)で書かれたリバーシの思考エンジンです。探索
 このソフトウェアはmacOSに対応していますが、M1チップ搭載のMacでは動作確認ができていません。またARMのCPUにおいても動作確認ができておりません。
 
 ## 2. ダウンロード
-[Release](ここにURLを入れる)からKalmia本体とReversiRulerをダウンロードしてください。ReversiRulerはGoGuiでリバーシをプレイするために必要です。
+[Release](https://github.com/Yoka346/Kalmia-Reversi/releases)からKalmia本体とReversiRulerをダウンロードしてください。ReversiRulerはGoGuiでリバーシをプレイするために必要です。
 KalmiaとReversiRulerの実行には.net core 3.1のランタイムが必要です。[ここ](https://dotnet.microsoft.com/download/dotnet/3.1)からインストーラーをダウンロードし、インストールしてください。
 GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウンロード可能です。ここ以外の場所からダウンロードしたGoGuiの場合はリバーシに対応できない可能性があります。
 
