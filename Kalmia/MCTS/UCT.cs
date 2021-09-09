@@ -46,7 +46,7 @@ namespace Kalmia.MCTS
 
     public class UCT
     {
-        const float DEFAULT_UCB_FACTOR = 2.0f;
+        const float DEFAULT_UCB_FACTOR = 1.0f;
 
         readonly int THREAD_NUM;
         readonly Board[] ROLLOUT_BOARD;
@@ -308,7 +308,7 @@ namespace Kalmia.MCTS
         float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, Board currentBoard, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score
         {
             int childNodeIdx;
-            var currentNodeSideToMove = currentBoard.SideToMove;
+            var sideToMove = currentBoard.SideToMove;
             float value;
 
             if (depth > this.Depth)
@@ -333,7 +333,7 @@ namespace Kalmia.MCTS
 
                 if (!edge.IsLabeled) 
                 {
-                    LabelEdge(ref edges[childNodeIdx], currentBoard, currentNodeSideToMove);
+                    LabelEdge(ref edges[childNodeIdx], currentBoard, sideToMove);
                     edge = edges[childNodeIdx];
                 }
                 

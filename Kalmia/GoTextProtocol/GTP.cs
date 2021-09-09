@@ -110,8 +110,7 @@ namespace Kalmia.GoTextProtocol
             Engine = engine;
             if (logFilePath != null)
             {
-                LogFileStream = new FileStream(logFilePath, FileMode.Create, FileAccess.Write);
-                Logger = new StreamWriter(LogFileStream);
+                Logger = new StreamWriter(logFilePath);
             }
             else
                 Logger = new StreamWriter(Stream.Null);
@@ -192,6 +191,7 @@ namespace Kalmia.GoTextProtocol
 
         static void ExecuteQuitCommand(int id, string[] args)
         {
+            Engine.Quit();
             Quit = true;
             GTPSuccess(id);
         }
@@ -219,19 +219,15 @@ namespace Kalmia.GoTextProtocol
             GTPSuccess(id);
         }
 
-        static void ExecuteKomiCommand(int id, string[] args)   // There are few people setting komi in reversi.
+        static void ExecuteKomiCommand(int id, string[] args)
         {
+            // Komi is a proper name that means handicap rule in Go(Chinese game).
+            // In Reversi there is no komi rule, however I implemented this method for compatibility with GTP.
             if (args.Length < 1)
             {
                 GTPFailure(id, "invalid option");
                 return;
-            }
-
-            double komi;    // Komi is a proper name that means handicap rule in Go(Chinese game).
-                            // In Reversi there is no komi rule, however I implemented that rule for compatibility with GTP.
-            var isDouble = double.TryParse(args[0], out komi);
-            if (!isDouble)
-                GTPFailure(id, "komi must be real number");
+            }    
             GTPSuccess(id);     // Do nothing of it.
         }
 

@@ -56,8 +56,7 @@ namespace Kalmia.Reversi
         {
             if (!(obj is Move))
                 return false;
-            var move = (Move)obj;
-            return (move.Color == this.Color) && (move.Pos == this.Pos);
+            return this == (Move)obj;
         }
 
         public override int GetHashCode()   // This method will not be used. I implemented this just to suppress a caution.
@@ -67,7 +66,7 @@ namespace Kalmia.Reversi
 
         public static bool operator ==(Move left, Move right)
         {
-            return left.Equals(right);
+            return (left.Color == right.Color) && (left.Pos == right.Pos);
         }
 
         public static bool operator !=(Move left, Move right)
