@@ -26,11 +26,11 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 
 ![キャプチャ](https://user-images.githubusercontent.com/53616737/132211712-a2bbcb9a-cf22-4be1-9822-2ef1072b99f3.PNG)
 
-次にGoGuiを起動し、上部のツールバーから 対局 -> ルール -> 新規プログラム　を選択します。「囲碁プログラムの選択」から展開したフォルダ内にあるReversiRuler.exe(LinuxやmacOS版では".exe"が付いていません)を選択し、OKを選択します。
+次にGoGuiを起動し、上部のメニューバーから 対局 -> ルール -> 新規プログラム　を選択します。「囲碁プログラムの選択」から展開したフォルダ内にあるReversiRuler.exe(LinuxやmacOS版では".exe"が付いていません)を選択し、OKを選択します。
 ![キャプチャ](https://user-images.githubusercontent.com/53616737/132212273-d823a48a-c929-44b9-8b77-140fe29dabc6.PNG)
 
 これでGoGuiでリバーシをプレイできるようになります。
-次に上部のツールバーから プログラム -> 新規プログラム を選択します。ReversiRulerを導入した時と同様に、「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exe(LinuxやmacOS版では".exe"が付いていません)を選択します。
+次に上部のメニューバーから プログラム -> 新規プログラム を選択します。ReversiRulerを導入した時と同様に、「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exe(LinuxやmacOS版では".exe"が付いていません)を選択します。
 ![キャプチャ](https://user-images.githubusercontent.com/53616737/132213450-b0a5ab70-e27d-44cd-8ccf-dbcf5abcf7fa.PNG)
 
 次にコマンドテキストボックスで".../Kalmia.exe --level {0~10の整数値}"という形式でレベルを指定します。レベルの指定を行わなかった場合はデフォルトでレベル5が適用されます。このままOKを選択すればプログラムの登録は完了です。(レベルについての詳細は後述)
@@ -40,7 +40,7 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 登録が完了した次回以降は 対局 -> ルール -> プログラムの起動 からReversiRulerを起動し、 プログラム -> プログラムの起動 からKalmiaを起動すれば対局可能な状態になります。
 
 ## 4. GoGuiでの遊び方
-ReversiRulerとGoGuiが起動した時点では以下のような初期局面が表示されています。このまま黒石を置けばKalmiaが白番となり思考および着手を行います。Kalmiaに黒番をにぎらせたい場合は 対局 -> コンピュータの手番 から手番を選択してください。
+ReversiRulerとKalmiaが起動した時点では以下のような初期局面が表示されています。このまま黒石を置けばKalmiaが白番となり思考および着手を行います。Kalmiaに黒番をにぎらせたい場合は 対局 -> コンピュータの手番 から手番を選択してください。
 ![キャプチャ](https://user-images.githubusercontent.com/53616737/132214173-a7072512-482a-4546-bc27-ac11b37c139e.PNG)
 
 自分の石を置ける場所がないときはF2キーを押下、または 対局 -> パス からパスをすることが可能です。また、Kalmiaに石を置ける場所がないときは自動的にパスされます。Kalmiaがパスした際に以下のようなウインドウが表示されますが、対局は続いているのでそのまま着手を続けてください。
