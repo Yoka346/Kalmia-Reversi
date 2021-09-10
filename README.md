@@ -1,5 +1,5 @@
 # Kalmia-Reversi
-C#(.net core 3.1)で書かれたリバーシの思考エンジンです。探索アルゴリズムにUCT(Upper Confidence Bound applied Tree)を採用していることが特徴です。  
+C#(.net core 3.1)で書かれたリバーシの思考エンジンです。探索アルゴリズムにUCT(Upper Confidence Bound applied to Trees)を採用していることが特徴です。  
 囲碁プログラムでよく用いられるGTP(Go Text Protocol)に対応しているため、GoGuiで対戦することが可能です(方法は後述)。  
 現在は試作段階のPrototypeがリリースされています。棋力は有段者程度と見込んでいますが、正確に何段かは作者にリバーシの素養が無いため分かりません。
 
