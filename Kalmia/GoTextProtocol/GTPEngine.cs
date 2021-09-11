@@ -48,15 +48,12 @@ namespace Kalmia.GoTextProtocol
 
         public virtual bool Play(Move move)
         {
-            if (!this.board.IsLegalMove(move))
-                return false;
-            this.board.Update(move);
-            return true;
+            return this.board.Update(move);
         }
 
         public virtual string ShowBoard()
         {
-            return this.board.ToString();
+            return $"\n{this.board}";
         }
 
         public virtual bool Undo()

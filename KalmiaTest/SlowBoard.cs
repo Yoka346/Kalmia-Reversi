@@ -37,6 +37,11 @@ namespace KalmiaTest
             this.SideToMove = firstPlayer;
         }
 
+        public Color GetColor(int x, int y)
+        {
+            return this.DISCS[x, y];
+        }
+
         public Color[,] GetDiscsArray()
         {
             return (Color[,])this.DISCS.Clone();

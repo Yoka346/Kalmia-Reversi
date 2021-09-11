@@ -39,7 +39,7 @@ namespace Kalmia.Engines
             }
 
             Span<float> y = stackalloc float[moves.Length];
-            this.POLICY_FUNC.F(new BoardFeature(board), moves, y, moves.Length);
+            this.POLICY_FUNC.F(new BoardFeature(new FastBoard(board)), moves, y, moves.Length);
             var arrorw = this.RAND.NextFloat();
             var sum = 0.0f;
             var i = 0;

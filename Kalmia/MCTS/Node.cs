@@ -20,7 +20,7 @@ namespace Kalmia.MCTS
         public float MoveProbability;
         public float Value;
         public float WinCount;
-        public Move Move;
+        public BoardPosition NextPos;
         public EdgeLabel Label;
         public float ActionValue { get { return (this.IsLabeled && !this.IsUnknown) ? ConvertEdgeLabelToActionValue(this.Label) : this.WinCount / this.VisitCount; } }
         public bool IsWin { get { return this.Label == EdgeLabel.Win; } }
@@ -75,19 +75,19 @@ namespace Kalmia.MCTS
         public Edge[] Edges;
         public int ChildNum { get { return this.Edges.Length; } }
 
-        public void Expand(Move[] moves, int moveCount)
+        public void Expand(BoardPosition[] positions, int moveCount)
         {
             this.Edges = new Edge[moveCount];
             for (var i = 0; i < this.Edges.Length; i++)
-                this.Edges[i].Move = moves[i];
+                this.Edges[i].NextPos = positions[i];
         }
 
-        public void Expand(Move[] moves, float[] moveProb, int moveCount)
+        public void Expand(BoardPosition[] positions, float[] moveProb, int moveCount)
         {
             this.Edges = new Edge[moveCount];
             for (var i = 0; i < this.Edges.Length; i++)
             {
-                this.Edges[i].Move = moves[i];
+                this.Edges[i].NextPos = positions[i];
                 this.Edges[i].MoveProbability = moveProb[i];
             }
         }

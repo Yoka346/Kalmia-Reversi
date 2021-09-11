@@ -162,7 +162,7 @@ namespace KalmiaTraining
                 {
                     var data = (PolicyFuncTrainData)trainDataSet.Items[i];
                     board.Init(Color.Black, data.Board);
-                    boardFeature.SetBoard(board);
+                    boardFeature.SetBoard(new FastBoard(board));
                     this.policyFunc.F(boardFeature, y);
                     var nextPos = (int)data.NextMove.Pos;
                     for (var pos = 0; pos < nextPos; pos++)
@@ -224,7 +224,7 @@ namespace KalmiaTraining
                 {
                     var data = (PolicyFuncTrainData)testDataSet.Items[i];
                     board.Init(Color.Black, data.Board);
-                    boardFeature.SetBoard(board);
+                    boardFeature.SetBoard(new FastBoard(board));
                     this.policyFunc.F(boardFeature, y);
                     var nextPos = (int)data.NextMove.Pos;
                     testLosses[threadID] += FastMath.OneHotCrossEntropy(y, nextPos);

@@ -102,16 +102,13 @@ namespace Kalmia.Engines
                     var childEvals = this.tree.GetChildNodeEvaluations().ToArray();
                     this.thoughtLog.WriteLine(SearchInfoToString(rootEval, childEvals));
                 }
-                this.tree.SetRoot(move);
+                this.tree.SetRoot(move.Pos);
 
                 this.thoughtLog.WriteLine($"opponent's move is {move}\n\n");
 
                 this.lastMove = move;
                 return true;
             }
-
-            if (board.GetNextMovesCount() == 0 && move.Pos == BoardPosition.Pass)
-                return true;
             return false;
         }
 
@@ -138,7 +135,7 @@ namespace Kalmia.Engines
             this.board.Update(move);
             this.lastMove = move;
             if (this.REUSE_SUBTREE)
-                this.tree.SetRoot(this.lastMove);
+                this.tree.SetRoot(this.lastMove.Pos);
             else
                 this.tree.Clear();
 
@@ -150,15 +147,16 @@ namespace Kalmia.Engines
         public override Move RegGenerateMove(Color color)
         {
             if (this.board.SideToMove != color)
+            {
                 this.board.SwitchSideToMove();
+                this.tree.Clear();
+            }
 
-            this.tree.SetRoot(this.lastMove);
+            this.tree.SetRoot(this.lastMove.Pos);
 
-            var moveCount = this.board.GetNextMovesCount();
-            if (this.board.GetNextMovesCount() == 1)
-                return this.board.GetNextMove(0);
-            else if (moveCount == 0)
-                return new Move(this.board.SideToMove, BoardPosition.Pass);
+            var moves = this.board.GetNextMoves();
+            if (moves.Length == 1)
+                return moves[0];
 
             var move = this.tree.Search(this.board, this.SIMULATION_COUNT);
             var rootEval = this.tree.GetRootNodeEvaluation();
@@ -198,7 +196,7 @@ namespace Kalmia.Engines
             return string.Empty;
         }
 
-        float CalculateValue(Board board, int threadID)
+        float CalculateValue(FastBoard board, int threadID)
         {
             var boardFeature = this.BOARD_FEATURE[threadID];
             boardFeature.SetBoard(board);
@@ -217,7 +215,7 @@ namespace Kalmia.Engines
             this.searchTask.Wait();
         }
 
-        string SearchInfoToString(MoveEval rootEval, MoveEval[] childrenEval)
+        string SearchInfoToString(PositionEval rootEval, PositionEval[] childrenEval)
         {
             var sb = new StringBuilder($"simulation_count={rootEval.SimulationCount}\tellapsed={this.tree.SearchEllapsedTime}[ms]");
             sb.AppendLine($"{this.tree.NodeCount}[nodes], {this.tree.Nps}[nps], value={rootEval.Value * 100.0f}, winning_rate={rootEval.ActionValue * 100.0f}%");
@@ -226,8 +224,8 @@ namespace Kalmia.Engines
             {
                 var moveEval = childrenEval[i];
                 var bestPath = this.tree.GetBestPath(i).ToArray();
-                sb.Append($"| {moveEval.Move} |{moveEval.SimulationCount,16}|{moveEval.Value * 100.0f,5:f2}|{moveEval.ActionValue * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
-                foreach (var move in bestPath.Select(n => n.Move))
+                sb.Append($"| {moveEval.Position} |{moveEval.SimulationCount,16}|{moveEval.Value * 100.0f,5:f2}|{moveEval.ActionValue * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
+                foreach (var move in bestPath.Select(n => n.Position))
                     sb.Append($"{move} ");
                 sb.AppendLine();
             }

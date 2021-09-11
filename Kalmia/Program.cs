@@ -30,7 +30,7 @@ namespace Kalmia
                 return;
             (var gtpLogPath, var thoughtLogPath) = CreateFiles();
             var engine = new KalmiaEngine(config.Value, thoughtLogPath);
-            GTP.Mainloop(engine, GTPCoordinateRule.Chess, gtpLogPath);
+            GTP.Mainloop(engine, GTPCoordinateRule.Othello, gtpLogPath);
         }
 
         static void SetCurrentDirectry()

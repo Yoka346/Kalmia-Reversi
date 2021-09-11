@@ -17,7 +17,7 @@ namespace KalmiaTraining
         {
             this.Items = data.ToArray();
             this.FeatureCount = new int[BoardFeature.PatternFeatureNum.Sum()];
-            var board = new Board(Color.Black, InitialBoardState.Cross);
+            var board = new FastBoard();
             var boardFeature = new BoardFeature();
             foreach (var bitboard in this.Items.Select(n => n.Board))
             {

@@ -163,9 +163,9 @@ namespace Kalmia.Evaluation
                 OPPONENT_FEATURE_IDX_MAPPING[featureIdx] = CalcOpponentFeatureIdx(featureIdx);
         }
 
-        public BoardFeature() : this(new Board(Color.Black, InitialBoardState.Cross)) { }
+        public BoardFeature() : this(new FastBoard()) { }
 
-        public BoardFeature(Board board)
+        public BoardFeature(FastBoard board)
         {
             SetBoard(board);
         }
@@ -177,7 +177,7 @@ namespace Kalmia.Evaluation
             this.EmptyCount = board.EmptyCount;
         }
 
-        public void SetBoard(Board board)
+        public void SetBoard(FastBoard board)
         {
             for (var i = 0; i < PATTERN_NUM_SUM; i++)
             {

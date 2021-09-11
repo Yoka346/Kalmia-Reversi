@@ -161,7 +161,7 @@ namespace KalmiaTraining
 
             void calcWeightGradKernel(int start, int end)
             {
-                var board = new Board(Color.Black, InitialBoardState.Cross);
+                var board = new FastBoard();
                 var boardFeature = new BoardFeature();
                 for (var i = start; i < end; i++)
                 {
@@ -210,7 +210,7 @@ namespace KalmiaTraining
 
             void calcTestLossKernel(int start, int end)
             {
-                var board = new Board(Color.Black, InitialBoardState.Cross);
+                var board = new FastBoard();
                 var boardFeature = new BoardFeature();
                 for (var i = start; i < end; i++)
                 {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -8,27 +9,27 @@ using static Kalmia.Reversi.Board;
 namespace KalmiaTest
 {
     [TestClass]
-    public class Board_Test
+    public class FastBoard_Test
     {
         [TestMethod]
         public void CalculateMobilityAndFlipped_Test()
         {
-            var board = new Board(Color.Black, InitialBoardState.Cross);
+            var board = new FastBoard();
             var boardTest = new SlowBoard(Color.Black, InitialBoardState.Cross);
+            var positons = new BoardPosition[SQUARE_NUM];
             var moves = new Move[SQUARE_NUM];
-            var movesTest = new Move[SQUARE_NUM];
             var rand = new Random();
 
             while (!boardTest.IsGameover())
             {
-                var moveCount = board.GetNextMoves(moves);
-                var moveCountTest = boardTest.GetNextMoves(movesTest);
+                var moveCount = board.GetNextPositions(positons);
+                var moveCountTest = boardTest.GetNextMoves(moves);
                 Assert.AreEqual(moveCountTest, moveCount);
-                AssertMovesAreEqual(boardTest, movesTest, moves, moveCount);
+                AssertMovesAreEqual(boardTest, moves, positons.Select(p=>new Move(board.SideToMove, p)).ToArray(), moveCount);
                 var nextMove = moves[rand.Next(moveCount)];
-                board.Update(nextMove);
+                board.Update(nextMove.Pos);
                 boardTest.Update(nextMove);
-                AssertDiscsAreEqual(boardTest.GetDiscsArray(), board.GetDiscsArray());
+                AssertDiscsAreEqual(boardTest, board);
             }
         }
 
@@ -40,22 +41,22 @@ namespace KalmiaTest
                 if (idx == -1 || idx >= moveCount)
                     Assert.Fail($"Expected to contain move {expected[i]}, but it was not found." +
                                 $"\nexpected = {MoveArrayToString(expected, moveCount)}\nactual = {MoveArrayToString(actual, moveCount)}" +
-                                $"\n{DiscsToString(board.GetDiscsArray())}");
+                                $"\n{DiscsToString((from n in Enumerable.Range(0, SQUARE_NUM) select board.GetColor(n % BOARD_SIZE, n / BOARD_SIZE)).ToArray())}");
             }
         }
 
-        void AssertDiscsAreEqual(Color[,] expected, Color[,] actual)
+        void AssertDiscsAreEqual(SlowBoard expected, FastBoard actual)
         {
             bool equal = true;
-            for(var x = 0; x < expected.GetLength(0); x++)
-                for(var y = 0; y < expected.GetLength(1); y++)
-                    if(expected[x, y] != actual[x, y])
+            for(var x = 0; x < BOARD_SIZE; x++)
+                for(var y = 0; y < BOARD_SIZE; y++)
+                    if(expected.GetColor(x, y) != actual.GetDiscColor((BoardPosition)(x + y * BOARD_SIZE)))
                     {
                         equal = false;
                         break;
                     }
             if (!equal)
-                Assert.Fail($"\nexpected = \n{DiscsToString(expected)}\nactual = \n{DiscsToString(actual)}");
+                Assert.Fail();
         }
 
         string MoveArrayToString(Move[] moves, int moveCount)
@@ -67,16 +68,16 @@ namespace KalmiaTest
             return sb.ToString();
         }
 
-        string DiscsToString(Color[,] discs)
+        string DiscsToString(Color[] discs)
         {
             var sb = new StringBuilder();
-            for (var y = 0; y < discs.GetLength(1); y++)
+            for (var y = 0; y < BOARD_SIZE; y++)
             {
-                for (var x = 0; x < discs.GetLength(0); x++)
+                for (var x = 0; x < BOARD_SIZE; x++)
                 {
-                    if (discs[x, y] == Color.Black)
+                    if (discs[x + y * BOARD_SIZE] == Color.Black)
                         sb.Append(" X");
-                    else if (discs[x, y] == Color.White)
+                    else if (discs[x + y * BOARD_SIZE] == Color.White)
                         sb.Append(" O");
                     else
                         sb.Append(" .");
