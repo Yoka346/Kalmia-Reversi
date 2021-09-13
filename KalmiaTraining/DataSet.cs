@@ -22,7 +22,7 @@ namespace KalmiaTraining
             foreach (var bitboard in this.Items.Select(n => n.Board))
             {
                 board.Init(Color.Black, bitboard);
-                boardFeature.SetBoard(board);
+                boardFeature.InitBoard(board);
                 foreach (var featureIdx in boardFeature.FeatureIndices)
                 {
                     this.FeatureCount[featureIdx]++;

@@ -167,7 +167,7 @@ namespace KalmiaTraining
                 {
                     var data = (ValueFuncTrainData)trainDataSet.Items[i];
                     board.Init(Color.Black, data.Board);
-                    boardFeature.SetBoard(board);
+                    boardFeature.InitBoard(board);
                     var y = this.valueFunc.F(boardFeature);
                     var t = GetValue(data.Result);
                     var delta = t - y;
@@ -216,7 +216,7 @@ namespace KalmiaTraining
                 {
                     var data = (ValueFuncTrainData)testDataSet.Items[i];
                     board.Init(Color.Black, data.Board);
-                    boardFeature.SetBoard(board);
+                    boardFeature.InitBoard(board);
                     var y = this.valueFunc.F(boardFeature);
                     var t = GetValue(data.Result);
                     var loss = FastMath.BinaryCrossEntropy(y, t);

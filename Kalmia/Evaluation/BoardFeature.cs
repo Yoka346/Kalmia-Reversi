@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 using Kalmia;
 using Kalmia.Reversi;
+
+using static Kalmia.BitManipulations;
 
 namespace Kalmia.Evaluation
 {
@@ -15,6 +18,7 @@ namespace Kalmia.Evaluation
 
         public const int PATTERN_TYPE = 13;
         public const int PATTERN_NUM_SUM = 47;
+        const int HISTORY_STACK_SIZE = 96;
 
         static readonly BoardPosition[][] PATTERN_POSITIONS = new BoardPosition[PATTERN_NUM_SUM][]
         {
@@ -113,6 +117,9 @@ namespace Kalmia.Evaluation
         // the mapping of feature indices into opponent's feature indices.
         static readonly int[] OPPONENT_FEATURE_IDX_MAPPING;
 
+        // the converter of disc position to feature
+        static readonly (int patternIdx, int feature)[][] POSITION_TO_FEATURE = new (int patternIdx, int feature)[Board.SQUARE_NUM + 1][];
+
         // the functions which flips the pattern's feature about appropriate axis.
         // e.g.) corner3x3 is flipped about diagonal axis.
         public static ReadOnlyCollection<Func<int, int>> FlipFeatureCallbacks { get; }
@@ -126,6 +133,9 @@ namespace Kalmia.Evaluation
         public static ReadOnlySpan<int> OpponentFeatureIdxMapping { get { return OPPONENT_FEATURE_IDX_MAPPING; } }
 
         readonly int[] FEATURE_INDICES = new int[PATTERN_NUM_SUM];
+        readonly Action<BoardPosition, ulong>[] UPDATE_CALLBACKS;
+        readonly Action<BoardPosition, ulong>[] UNDO_CALLBACKS;
+        readonly Stack<(BoardPosition pos, ulong flipped)> MOVE_HISTORY = new Stack<(BoardPosition pos, ulong flipped)>(HISTORY_STACK_SIZE);
 
         public Color SideToMove { get; private set; }
         public int EmptyCount { get; private set; }
@@ -161,23 +171,38 @@ namespace Kalmia.Evaluation
             OPPONENT_FEATURE_IDX_MAPPING = new int[PATTERN_FEATURE_NUM.Sum()];
             for (var featureIdx = 0; featureIdx < OPPONENT_FEATURE_IDX_MAPPING.Length; featureIdx++)
                 OPPONENT_FEATURE_IDX_MAPPING[featureIdx] = CalcOpponentFeatureIdx(featureIdx);
+
+            for(var pos = 0; pos < Board.SQUARE_NUM + 1; pos++)
+            {
+                var featureList = new List<(int patternIdx, int feature)>();
+                for(var patternIdx = 0; patternIdx < PATTERN_POSITIONS.Length; patternIdx++)
+                {
+                    var positions = PATTERN_POSITIONS[patternIdx];
+                    var size = positions.Length;
+                    var idx = Array.IndexOf(positions, (BoardPosition)pos);
+                    if (idx == -1)
+                        continue;
+                    featureList.Add((patternIdx, FastMath.Pow3(size - idx - 1)));
+                }
+                POSITION_TO_FEATURE[pos] = featureList.ToArray();
+            }
         }
 
         public BoardFeature() : this(new FastBoard()) { }
 
         public BoardFeature(FastBoard board)
         {
-            SetBoard(board);
+            InitBoard(board);
+            this.UPDATE_CALLBACKS = new Action<BoardPosition, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
         }
 
         public BoardFeature(BoardFeature board)
         {
-            Buffer.BlockCopy(board.FEATURE_INDICES, 0, this.FEATURE_INDICES, 0, sizeof(int) * PATTERN_NUM_SUM);
-            this.SideToMove = board.SideToMove;
-            this.EmptyCount = board.EmptyCount;
+            board.CopyTo(this);
+            this.UPDATE_CALLBACKS = new Action<BoardPosition, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
         }
 
-        public void SetBoard(FastBoard board)
+        public void InitBoard(FastBoard board)
         {
             for (var i = 0; i < PATTERN_NUM_SUM; i++)
             {
@@ -188,6 +213,15 @@ namespace Kalmia.Evaluation
             }
             this.SideToMove = board.SideToMove;
             this.EmptyCount = board.GetEmptyCount();
+            this.MOVE_HISTORY.Clear();
+        }
+
+        public void Update(BoardPosition pos, ulong flipped)   
+        {
+            this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
+            this.SideToMove ^= Color.White;
+            this.EmptyCount--;
+            this.MOVE_HISTORY.Push((pos, flipped));
         }
 
         public void ConvertToOpponentBoard()
@@ -195,6 +229,45 @@ namespace Kalmia.Evaluation
             this.SideToMove = (this.SideToMove == Color.Black) ? Color.White : Color.Black;
             for (var i = 0; i < this.FEATURE_INDICES.Length; i++)
                 this.FEATURE_INDICES[i] = OPPONENT_FEATURE_IDX_MAPPING[this.FEATURE_INDICES[i]];
+        }
+
+        public void CopyTo(BoardFeature dest)
+        {
+            Buffer.BlockCopy(this.FEATURE_INDICES, 0, dest.FEATURE_INDICES, 0, sizeof(int) * PATTERN_NUM_SUM);
+            dest.SideToMove = this.SideToMove;
+            dest.EmptyCount = this.EmptyCount;
+        }
+
+        void UpdateAfterBlackMove(BoardPosition pos, ulong flipped)
+        {
+            var featureIndices = this.FEATURE_INDICES;
+            var posToFeature = POSITION_TO_FEATURE[(int)pos];
+
+            foreach (var n in posToFeature)
+                featureIndices[n.patternIdx] -= 2 * n.feature;
+
+            for(var p = FindFirstSet(flipped); flipped != 0UL; p = FindNextSet(ref flipped))
+            {
+                posToFeature = POSITION_TO_FEATURE[p];
+                foreach(var n in posToFeature)
+                    featureIndices[n.patternIdx] -= n.feature;
+            }
+        }
+
+        void UpdateAfterWhiteMove(BoardPosition pos, ulong flipped)
+        {
+            var featureIndices = this.FEATURE_INDICES;
+            var posToFeature = POSITION_TO_FEATURE[(int)pos];
+
+            foreach (var n in posToFeature)
+                featureIndices[n.patternIdx] -= n.feature;
+
+            for (var p = FindFirstSet(flipped); flipped != 0UL; p = FindNextSet(ref flipped))
+            {
+                posToFeature = POSITION_TO_FEATURE[p];
+                foreach (var n in posToFeature)
+                    featureIndices[n.patternIdx] += n.feature;
+            }
         }
 
         public static (int patternType, int feature) GetPatternTypeAndFeatureFromFeatureIdx(int featureIdx)

@@ -81,6 +81,14 @@ namespace Kalmia.Reversi
             Init(sideToMove, bitboard);
         }
 
+        public FastBoard(FastBoard board)
+        {
+            this.bitboard = board.bitboard;
+            this.SideToMove = board.SideToMove;
+            this.mobilityWasCalculated = board.mobilityWasCalculated;
+            this.mobility = board.mobility;
+        }
+
         public void Init(Color sideToMove, Bitboard bitboard)
         {
             this.bitboard = bitboard;
@@ -101,7 +109,7 @@ namespace Kalmia.Reversi
         public void CopyTo(FastBoard dest)
         {
             dest.bitboard = this.bitboard;
-            dest.SideToMove = dest.SideToMove;
+            dest.SideToMove = this.SideToMove;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -156,16 +164,18 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Update(BoardPosition pos)
+        public ulong Update(BoardPosition pos)
         {
+            var flipped = 0UL;
             if(pos != BoardPosition.Pass)
             {
                 var x = 1UL << (byte)pos;
-                var flipped = CalculateFlippedDiscs((byte)pos);
+                flipped = CalculateFlippedDiscs((byte)pos);
                 this.bitboard.OpponentPlayer ^= flipped;
                 this.bitboard.CurrentPlayer |= (flipped | x);
             }
             SwitchSideToMove();
+            return flipped;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

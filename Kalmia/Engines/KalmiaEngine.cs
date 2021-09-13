@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -36,7 +38,8 @@ namespace Kalmia.Engines
         new const string NAME = "Kalmia";
         new const string VERSION = "Prototype";
 
-        readonly BoardFeature[] BOARD_FEATURE;
+        readonly ReadOnlyDictionary<string, Func<string[], string>> COMMANDS;
+
         readonly int SIMULATION_COUNT;
         readonly bool PONDERING_ENABLED;
         readonly bool REUSE_SUBTREE;
@@ -47,15 +50,12 @@ namespace Kalmia.Engines
         CancellationTokenSource cts;
         Logger thoughtLog;
 
-        public ValueFunction ValueFunction { get; set; }
-
         public KalmiaEngine(KalmiaConfig config, string logFilePath) : base(NAME, VERSION)
         {
-            this.BOARD_FEATURE = (from _ in Enumerable.Range(0, config.ThreadNum) select new BoardFeature()).ToArray();
+            this.COMMANDS = new ReadOnlyDictionary<string, Func<string[], string>>(InitCommands());
             this.SIMULATION_COUNT = config.SimulationCount;
-            this.ValueFunction = new ValueFunction(config.ValueFuncParamsFilePath);
-            this.tree = new UCT(config.UCBFactor, config.ThreadNum);
-            this.tree.ValueFunctionCallback = CalculateValue;
+            var valueFunc = new ValueFunction(config.ValueFuncParamsFilePath);
+            this.tree = new UCT(valueFunc, config.UCBFactor, config.ThreadNum);
             this.tree.MoveProbabilityTemperature = config.Temperature;
             this.lastMove = new Move(Color.Black, BoardPosition.Null);
             this.REUSE_SUBTREE = config.ReuseSubTree;
@@ -69,6 +69,13 @@ namespace Kalmia.Engines
         {
             if (this.thoughtLog != null && !this.thoughtLog.IsDisposed)
                 this.thoughtLog.Close();
+        }
+
+        Dictionary<string, Func<string[], string>> InitCommands()
+        {
+            var commands = new Dictionary<string, Func<string[], string>>();
+            commands.Add("benchmark_nps", ExecuteBenchmarkNPSCommand);
+            return commands;
         }
 
         public override void Quit()
@@ -193,14 +200,34 @@ namespace Kalmia.Engines
 
         public override string ExecuteOriginalCommand(string command, string[] args)
         {
-            return string.Empty;
+            return this.COMMANDS[command](args);
         }
 
-        float CalculateValue(FastBoard board, int threadID)
+        public override string[] GetOriginalCommands()
         {
-            var boardFeature = this.BOARD_FEATURE[threadID];
-            boardFeature.SetBoard(board);
-            return this.ValueFunction.F(boardFeature);
+            return this.COMMANDS.Keys.ToArray();
+        }
+
+        string ExecuteBenchmarkNPSCommand(string[] args)
+        {
+            try
+            {
+                var sampleNum = int.Parse(args[0]);
+                var simulationCount = int.Parse(args[1]);
+                var boards = GenerateBoards(sampleNum);
+                var npsSum = 0.0f;
+                foreach (var board in boards)
+                {
+                    this.tree.SetRoot(BoardPosition.Null);
+                    this.tree.Search(board, simulationCount);
+                    npsSum += this.tree.Nps;
+                }
+                return $"{npsSum / sampleNum} [nps]";
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException)
+            {
+                return "? invalid option.";
+            }
         }
 
         void StartPondering()
@@ -230,6 +257,28 @@ namespace Kalmia.Engines
                 sb.AppendLine();
             }
             return sb.ToString();
+        }
+
+        static Board[] GenerateBoards(int count)
+        {
+            const int MAX_DISC_COUNT = 36;
+
+            var boards = new Board[count];
+            var rand = new Xorshift();
+            for(var i = 0; i < count; i++)
+            {
+                var n = rand.Next(MAX_DISC_COUNT);
+                var board = new Board(Color.Black, InitialBoardState.Cross);
+                var moveCount = 0;
+                while(moveCount < n && board.GetGameResult(Color.Black) == GameResult.NotOver)
+                {
+                    var moves = board.GetNextMoves();
+                    board.Update(moves[rand.Next((uint)moves.Length)]);
+                    moveCount++;
+                }
+                boards[i] = board;
+            }
+            return boards;
         }
     }
 }

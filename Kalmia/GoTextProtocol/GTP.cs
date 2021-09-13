@@ -118,16 +118,22 @@ namespace Kalmia.GoTextProtocol
             int id = 0;
             while (!Quit)
             {
+                var cmdName = string.Empty;
+                string[] args = null;
                 try
                 {
                     var input = Console.ReadLine();
                     Logger.WriteLine($"[{DateTime.Now}] Input: {input}");
                     Logger.Flush();
-                    COMMANDS[ParseCommand(input, out id, out string[] args)](id, args); ;
+                    cmdName = ParseCommand(input, out id, out args);
+                    COMMANDS[cmdName](id, args); 
                 }
                 catch (KeyNotFoundException)
                 {
-                    GTPFailure(id, "unknown command");
+                    if (Engine.GetOriginalCommands().Contains(cmdName))
+                        GTPSuccess(id, Engine.ExecuteOriginalCommand(cmdName, args));
+                    else
+                        GTPFailure(id, "unknown command");
                 }
             }
             Quit = false;

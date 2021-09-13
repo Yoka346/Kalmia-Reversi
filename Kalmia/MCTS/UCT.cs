@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Kalmia.Reversi;
+using Kalmia.Evaluation;
 
 namespace Kalmia.MCTS
 {
@@ -44,17 +45,45 @@ namespace Kalmia.MCTS
         }
     }
 
+    public class GameInfo
+    {
+        public FastBoard Board;
+        public BoardFeature Feature;
+        public Color SideToMove { get { return this.Board.SideToMove; } }
+
+        public GameInfo()
+        {
+            this.Board = new FastBoard();
+            this.Feature = new BoardFeature(this.Board);
+        }
+
+        public GameInfo(FastBoard board):this()
+        {
+            board.CopyTo(this.Board);
+            this.Feature = new BoardFeature(board);
+        }
+
+        public void Update(BoardPosition pos)
+        {
+            var flipped = this.Board.Update(pos);
+            this.Feature.Update(pos, flipped);
+        }
+
+        public void CopyTo(GameInfo dest)
+        {
+            this.Board.CopyTo(dest.Board);
+            this.Feature.CopyTo(dest.Feature);
+        }
+    }
+
     public class UCT
     {
-        const float DEFAULT_UCB_FACTOR = 1.0f;
-
         readonly int THREAD_NUM;
-        readonly FastBoard[] ROLLOUT_BOARD;
         readonly BoardPosition[][] POSITIONS;
         readonly Xorshift[] RAND;
         readonly float UCB_FACTOR;
+        readonly ValueFunction VALUE_FUNC;
 
-        int expansionThreshold = 1;
         int virtualLoss = 3;
         float moveProbTemperature = 0.0f;
         Edge edgeToRoot;
@@ -64,20 +93,12 @@ namespace Kalmia.MCTS
         int searchStartTime;
         int searchEndTime;
 
-        public Func<FastBoard, int, float> ValueFunctionCallback { get; set; }
-
-        public float Nps { get { return this.npsCounter / (this.SearchEllapsedTime / 1000.0f); } }
+        public float Nps { get { return (this.SearchEllapsedTime != 0) ? this.npsCounter / (this.SearchEllapsedTime / 1000.0f) : 0;  } }
 
         public int Depth { get; private set; } = 0;
         public int NodeCount { get { return this.nodeCount; } private set { this.nodeCount = value; } }
         public bool IsSearching { get; private set; }
         public int SearchEllapsedTime { get { return (this.IsSearching) ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
-
-        public int ExpansionThreshold
-        {
-            get { return this.expansionThreshold; }
-            set { if (value > 0) this.expansionThreshold = value; else throw new ArgumentOutOfRangeException("expansion threshold must be positive."); }
-        }
 
         public int VirtualLoss
         {
@@ -88,18 +109,14 @@ namespace Kalmia.MCTS
         public float MoveProbabilityTemperature 
         {
             get { return this.moveProbTemperature; }
-            set { if (value < 0.0f) throw new ArgumentOutOfRangeException("softmax temperature must be positive or zero."); else this.moveProbTemperature = value; }
+            set { if (value < 0.0f) throw new ArgumentOutOfRangeException("move probability temperature must be positive or zero."); else this.moveProbTemperature = value; }
         }
 
-        public UCT() : this(DEFAULT_UCB_FACTOR) { }
-
-        public UCT(float ucbFactor) : this(ucbFactor, Environment.ProcessorCount) { }
-
-        public UCT(float ucbFactor, int threadNum)
+        public UCT(ValueFunction valueFunc, float ucbFactor, int threadNum)
         {
+            this.VALUE_FUNC = valueFunc;
             this.UCB_FACTOR = ucbFactor;
             this.THREAD_NUM = threadNum;
-            this.ROLLOUT_BOARD = (from i in Enumerable.Range(0, threadNum) select new FastBoard()).ToArray();
             this.POSITIONS = (from _ in Enumerable.Range(0, threadNum) select new BoardPosition[Board.MAX_MOVE_COUNT]).ToArray();
             this.RAND = (from i in Enumerable.Range(0, threadNum) select new Xorshift()).ToArray();
             this.edgeToRoot.NextPos = BoardPosition.Null;
@@ -193,12 +210,9 @@ namespace Kalmia.MCTS
             if (this.root == null)
                 throw new NullReferenceException("Set root before searching.");
 
-            if (this.ValueFunctionCallback == null)
-                throw new NullReferenceException("Set value function before searching.");
-
-            var rootBoard = new FastBoard(board);
-            var currentBoard = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new FastBoard()).ToArray();
-            this.edgeToRoot.Value = 1.0f - this.ValueFunctionCallback(rootBoard, 0);
+            var rootGameInfo = new GameInfo(new FastBoard(board));
+            var gameInfo = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new GameInfo()).ToArray();
+            this.edgeToRoot.Value = 1.0f - this.VALUE_FUNC.F(rootGameInfo.Feature);
             this.searchStartTime = Environment.TickCount;
             this.IsSearching = true;
             this.npsCounter = 0;
@@ -217,22 +231,23 @@ namespace Kalmia.MCTS
 #else
             Parallel.For(0, this.THREAD_NUM, (threadID) =>
             {
-                var b = currentBoard[threadID];
+                var gInfo = gameInfo[threadID];
                 for (var i = 0; !stop() && i < count / this.THREAD_NUM; i++)
                 {
-                    rootBoard.CopyTo(b);
-                    SearchKernel(this.root, ref this.edgeToRoot, b, 0, threadID);
+                    rootGameInfo.CopyTo(gInfo);
+                    SearchKernel(this.root, ref this.edgeToRoot, gInfo, 0, threadID);
                 }
             });
 #endif
+            rootGameInfo.CopyTo(gameInfo[0]);
             for (var i = 0; !stop() && i < count % this.THREAD_NUM; i++)
             {
-                rootBoard.CopyTo(currentBoard[0]);
-                SearchKernel(this.root, ref this.edgeToRoot, currentBoard[0], 0, 0);
+                rootGameInfo.CopyTo(gameInfo[0]);
+                SearchKernel(this.root, ref this.edgeToRoot, gameInfo[0], 0, 0);
             }
             this.IsSearching = false;
             this.searchEndTime = Environment.TickCount;
-            return new Move(rootBoard.SideToMove, SelectPosition());
+            return new Move(rootGameInfo.SideToMove, SelectPosition());
 
             bool stop()
             {
@@ -309,8 +324,9 @@ namespace Kalmia.MCTS
             return edges[k].NextPos;
         }
 
-        float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, FastBoard currentBoard, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score
+        float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, GameInfo currentGameInfo, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score
         {
+            var currentBoard = currentGameInfo.Board;
             int childNodeIdx;
             float value;
 
@@ -332,7 +348,7 @@ namespace Kalmia.MCTS
                 AddVirtualLoss(currentNode, childNodeIdx); 
                 var edges = currentNode.Edges;
                 var edge = edges[childNodeIdx];
-                currentBoard.Update(edge.NextPos);
+                currentGameInfo.Update(edge.NextPos);
 
                 if (!edge.IsLabeled) 
                 {
@@ -342,7 +358,7 @@ namespace Kalmia.MCTS
                 
                 if (edge.IsUnknown)
                 {
-                    if (edge.VisitCount >= this.expansionThreshold)     // current node is not a leaf node 
+                    if (edge.VisitCount >= 1)     // current node is not a leaf node 
                     {
                         if (currentNode.ChildNodes == null)
                             currentNode.InitChildNodes();
@@ -354,13 +370,13 @@ namespace Kalmia.MCTS
                         }
                         Monitor.Exit(currentNode);
                         lockTaken = false;
-                        value = SearchKernel(currentNode.ChildNodes[childNodeIdx], ref edges[childNodeIdx], currentBoard, ++depth, threadID);
+                        value = SearchKernel(currentNode.ChildNodes[childNodeIdx], ref edges[childNodeIdx], currentGameInfo, ++depth, threadID);
                     }
                     else    // current node is a leaf node
                     {
                         Monitor.Exit(currentNode);
                         lockTaken = false;
-                        edges[childNodeIdx].Value = 1.0f - ValueFunctionCallback(currentBoard, threadID);
+                        edges[childNodeIdx].Value = 1.0f - this.VALUE_FUNC.F(currentGameInfo.Feature);
                         value = edges[childNodeIdx].Value;
                     }
                 }

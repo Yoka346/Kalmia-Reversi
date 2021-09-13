@@ -49,6 +49,19 @@ namespace Kalmia
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int FindFirstSet(ulong bits)
+        {
+            return BitOperations.TrailingZeroCount(bits);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int FindNextSet(ref ulong bits)
+        {
+            bits &= bits - 1UL;
+            return FindFirstSet(bits);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong PopCount(ulong bits)
         {
             if (Popcnt.X64.IsSupported)

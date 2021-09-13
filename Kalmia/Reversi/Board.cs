@@ -142,9 +142,9 @@ namespace Kalmia.Reversi
 
         public bool Update(Move move)
         {
-            this.boardHistory.Push(this.fastBoard.GetBitboard());
             if (move.Color != this.SideToMove || !this.fastBoard.IsLegalPosition(move.Pos))
                 return false;
+            this.boardHistory.Push(this.fastBoard.GetBitboard());
             this.fastBoard.Update(move.Pos);
             return true;
         }
