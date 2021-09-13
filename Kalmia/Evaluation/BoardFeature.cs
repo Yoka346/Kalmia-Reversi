@@ -18,7 +18,6 @@ namespace Kalmia.Evaluation
 
         public const int PATTERN_TYPE = 13;
         public const int PATTERN_NUM_SUM = 47;
-        const int HISTORY_STACK_SIZE = 96;
 
         static readonly BoardPosition[][] PATTERN_POSITIONS = new BoardPosition[PATTERN_NUM_SUM][]
         {
@@ -135,7 +134,6 @@ namespace Kalmia.Evaluation
         readonly int[] FEATURE_INDICES = new int[PATTERN_NUM_SUM];
         readonly Action<BoardPosition, ulong>[] UPDATE_CALLBACKS;
         readonly Action<BoardPosition, ulong>[] UNDO_CALLBACKS;
-        readonly Stack<(BoardPosition pos, ulong flipped)> MOVE_HISTORY = new Stack<(BoardPosition pos, ulong flipped)>(HISTORY_STACK_SIZE);
 
         public Color SideToMove { get; private set; }
         public int EmptyCount { get; private set; }
@@ -213,7 +211,6 @@ namespace Kalmia.Evaluation
             }
             this.SideToMove = board.SideToMove;
             this.EmptyCount = board.GetEmptyCount();
-            this.MOVE_HISTORY.Clear();
         }
 
         public void Update(BoardPosition pos, ulong flipped)   
@@ -221,7 +218,6 @@ namespace Kalmia.Evaluation
             this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
             this.SideToMove ^= Color.White;
             this.EmptyCount--;
-            this.MOVE_HISTORY.Push((pos, flipped));
         }
 
         public void ConvertToOpponentBoard()
