@@ -1,8 +1,7 @@
-﻿//#define DISC_DIFF
-#define WIN_RATE
-
-using System;
+﻿using System;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 using Kalmia.Reversi;
 
@@ -10,13 +9,48 @@ namespace Kalmia.Evaluation
 {
     public class ValueFunction
     {
-        public static int BiasIdx { get; } = BoardFeature.PatternIdxOffset[^1];
+        static readonly int[] FEATURE_IDX_OFFSET;
+        static readonly int[] TO_OPPONENT_FEATURE_IDX;
+        static readonly int[] TO_SYMMETRIC_FEATURE_IDX;
+        public static readonly int BIAS_IDX;
+
+        public static ReadOnlySpan<int> FeatureIdxOffset { get { return FEATURE_IDX_OFFSET; } }
+        public static ReadOnlySpan<int> ToOpponentFeatureIdx { get { return TO_OPPONENT_FEATURE_IDX; } }
+        public static ReadOnlySpan<int> ToSymmetricFeatureIdx { get { return TO_SYMMETRIC_FEATURE_IDX; } }
 
         public float[][][] Weight { get; }      // WEIGHT[Color][Stage][Feature]
 
         public EvalParamsFileHeader Header { get; private set; }
         public int StageNum { get; private set; }
         public int MoveCountPerStage { get; private set; }
+
+        static ValueFunction()
+        {
+            FEATURE_IDX_OFFSET = new int[BoardFeature.PATTERN_NUM_SUM];
+            var i = 0;
+            var offset = 0;
+            for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM; patternType++)
+            {
+                for (var j = 0; j < BoardFeature.PatternNum[patternType]; j++)
+                    FEATURE_IDX_OFFSET[i++] = offset;
+                offset += BoardFeature.PatternFeatureNum[patternType];
+            }
+            BIAS_IDX = FEATURE_IDX_OFFSET[^1];
+
+            TO_OPPONENT_FEATURE_IDX = new int[BoardFeature.PatternFeatureNum.Sum()];
+            TO_SYMMETRIC_FEATURE_IDX = new int[BoardFeature.PatternFeatureNum.Sum()];
+            offset = 0;
+            for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM; patternType++)
+            {
+                var patternSize = BoardFeature.PatternSize[patternType];
+                for (var feature = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
+                {
+                    TO_OPPONENT_FEATURE_IDX[feature + offset] = BoardFeature.CalcOpponentFeature(feature, patternSize) + offset;
+                    TO_SYMMETRIC_FEATURE_IDX[feature + offset] = BoardFeature.FlipFeature(patternType, feature) + offset;
+                }
+                offset += BoardFeature.PatternFeatureNum[patternType];
+            }
+        }
 
         public ValueFunction(string label, int version, int moveCountPerStage)
         {
@@ -74,9 +108,9 @@ namespace Kalmia.Evaluation
             var stageNum = fs.ReadByte();
             var weight = new float[stageNum][][];
             var buffer = new byte[sizeof(float)];
-            for (var stage = 0; stage < stageNum; stage++)
+            for (var stage = 0; stage < weight.Length; stage++)
             {
-                weight[stage] = new float[BoardFeature.PATTERN_TYPE][];
+                weight[stage] = new float[BoardFeature.PATTERN_TYPE_NUM][];
                 for (var patternType = 0; patternType < weight[stage].Length; patternType++)
                 {
                     weight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
@@ -97,17 +131,17 @@ namespace Kalmia.Evaluation
             {
                 int patternType;
                 var offset = 0;
-                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE - 1; patternType++)
+                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM - 1; patternType++)
                 {
                     for (var feature = i = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
                     {
-                        var featureIdx = offset + feature;
-                        var symmetricFeatureIdx = BoardFeature.SymmetricFeatureIdxMapping[featureIdx];
+                        var featureIdx = feature + offset;
+                        var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
                         if (symmetricFeatureIdx < featureIdx)
                             this.Weight[(int)Color.Black][stage][featureIdx] = this.Weight[(int)Color.Black][stage][symmetricFeatureIdx];
                         else
                             this.Weight[(int)Color.Black][stage][featureIdx] = packedWeight[stage][patternType][i++];
-                        this.Weight[(int)Color.White][stage][BoardFeature.OpponentFeatureIdxMapping[featureIdx]] = this.Weight[(int)Color.Black][stage][featureIdx];
+                        this.Weight[(int)Color.White][stage][TO_OPPONENT_FEATURE_IDX[featureIdx]] = this.Weight[(int)Color.Black][stage][featureIdx];
                     }
                     offset += BoardFeature.PatternFeatureNum[patternType];
                 }
@@ -118,49 +152,91 @@ namespace Kalmia.Evaluation
             }
         }
 
-        public void SaveToFile(string label, int version, string path)
+        public void SaveToFile(string path)
         {
             using var fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
-            SaveToFile(label, version, fs);
+            SaveToFile(fs);
         }
 
-        public void SaveToFile(string label, int version, FileStream fs)
+        public void SaveToFile(FileStream fs)
         {
-            var header = new EvalParamsFileHeader(label, version, DateTime.Now);
-            header.WriteToStream(fs);
+            this.Header.WriteToStream(fs);
             var weight = PackWeight();
             fs.WriteByte((byte)this.StageNum);
             for (var stage = 0; stage < this.StageNum; stage++)
-                for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE; patternType++)
+                for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM; patternType++)
                     for (var i = 0; i < BoardFeature.PackedPatternFeatureNum[patternType]; i++)
                         fs.Write(BitConverter.GetBytes(weight[stage][patternType][i]), 0, sizeof(float));
         }
 
         public float F(BoardFeature board)      // calculate value 
         {
-            var stage = (Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveCountPerStage;
+            return F((Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveCountPerStage, board);
+            
+        }
+
+        public float F(int stage, BoardFeature board)
+        {
             var value = 0.0f;
-            var featureIndices = board.FeatureIndices;
+            var features = board.Features;
             var color = (int)board.SideToMove;
             var weight = this.Weight[color][stage];
             for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
-                value += weight[featureIndices[i]];
-#if WIN_RATE
-            value = FastMath.StdSigmoid(value);
+                value += weight[features[i] + FEATURE_IDX_OFFSET[i]];
+            value = MathFunctions.StdSigmoid(value);
             return value;
-#endif
+        }
 
-#if DISC_DIFF
-            const int SCORE_MIN = -64;
-            const int SCORE_MAX = 64;
-            value /= 128;
+        public float CalculateGradient(int stage, (BoardFeature board, float output)[] batch, float[] weightGrad)
+        {
+            var loss = 0.0f;
+            Parallel.ForEach(batch, data =>
+            {
+                var y = F(stage, data.board);
+                var delta = y - data.output;
+                AtomicOperations.Add(ref loss, MathFunctions.BinaryCrossEntropy(y, data.output));
 
-            if (value <= SCORE_MIN) 
-                value = SCORE_MIN + 1;
-            else if (value >= SCORE_MAX) 
-                value = SCORE_MAX - 1;
-            return value;
-#endif
+                var features = data.board.Features;
+                for (var i = 0; i < features.Length; i++)
+                {
+                    var featureIdx = features[i] + FEATURE_IDX_OFFSET[i];
+                    AtomicOperations.Add(ref weightGrad[featureIdx], delta);
+
+                    var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
+                    if(symmetricFeatureIdx != featureIdx)
+                        AtomicOperations.Add(ref weightGrad[symmetricFeatureIdx], delta);
+                }
+            });
+            return loss / batch.Length;
+        }
+
+        public void ApplyGradientToBlackWeight(int stage, float[] weightGrad, float[] rate)
+        {
+            var weight = this.Weight[(int)Color.Black][stage];
+            Parallel.For(0, weight.Length, featureIdx => weight[featureIdx] -= rate[featureIdx] * weightGrad[featureIdx]);
+        }
+
+        public float CalculateLoss((BoardFeature board, float output)[] batch)
+        {
+            var threadNum = Environment.ProcessorCount;
+            var lossSum = new float[threadNum];
+            var batchSizePerThread = batch.Length / threadNum;
+
+            Parallel.For(0, threadNum, threadID =>
+            {
+                for (var i = batchSizePerThread * threadID; i < batchSizePerThread * (threadID + 1); i++)
+                {
+                    var data = batch[i];
+                    lossSum[threadID] += MathFunctions.BinaryCrossEntropy(F(data.board), data.output);
+                }
+            });
+            
+            for(var i = batchSizePerThread * threadNum; i < batch.Length; i++)
+            {
+                var data = batch[i];
+                lossSum[0] += MathFunctions.BinaryCrossEntropy(F(data.board), data.output);
+            }
+            return lossSum.Sum() / batch.Length;
         }
 
         public void CopyBlackWeightToWhiteWeight()
@@ -172,7 +248,7 @@ namespace Kalmia.Evaluation
                 var bw = blackWeight[stage];
                 var ww = whiteWeight[stage];
                 for (var featureIdx = 0; featureIdx < ww.Length; featureIdx++)
-                    ww[BoardFeature.OpponentFeatureIdxMapping[featureIdx]] = bw[featureIdx];
+                    ww[TO_OPPONENT_FEATURE_IDX[featureIdx]] = bw[featureIdx];
             }
         }
 
@@ -182,15 +258,15 @@ namespace Kalmia.Evaluation
             int packedWIdx;
             for (var stage = 0; stage < this.StageNum; stage++)
             {
-                packedWeight[stage] = new float[BoardFeature.PATTERN_TYPE][];
+                packedWeight[stage] = new float[BoardFeature.PATTERN_TYPE_NUM][];
                 int patternType;
                 var offset = 0;
-                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE - 1; patternType++)
+                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM - 1; patternType++)
                 {
                     packedWeight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
                     for (var feature = packedWIdx = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
                     {
-                        var symmetricalPattern = BoardFeature.FlipFeatureCallbacks[patternType](feature);
+                        var symmetricalPattern = BoardFeature.FlipFeature(patternType, feature);
                         if (feature <= symmetricalPattern)
                             packedWeight[stage][patternType][packedWIdx++] = this.Weight[(int)Color.Black][stage][offset + feature];
                     }

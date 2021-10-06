@@ -23,7 +23,7 @@ namespace KalmiaTest
                 var posCount = board.GetNextPositions(positions);
                 var pos = positions[rand.Next(posCount)];
                 var flipped = board.Update(pos);
-                bf0.InitBoard(board);
+                bf0.InitFeatures(board);
                 bf1.Update(pos, flipped);
                 AssertAreEqual(bf0, bf1);
             }
@@ -32,7 +32,7 @@ namespace KalmiaTest
         void AssertAreEqual(BoardFeature bf0, BoardFeature bf1)
         {
             for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
-                Assert.AreEqual(bf0.FeatureIndices[i], bf1.FeatureIndices[i]);
+                Assert.AreEqual(bf0.Features[i], bf1.Features[i]);
         }
     }
 }

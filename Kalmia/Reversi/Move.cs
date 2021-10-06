@@ -30,7 +30,7 @@ namespace Kalmia.Reversi
         public int PosX { get { return (byte)this.Pos % BOARD_SIZE; } }
         public int PosY { get { return (byte)this.Pos / BOARD_SIZE; } }
 
-        public Move(Color color, string pos) : this(color, StringToCoordinate(pos)) { }
+        public Move(Color color, string pos) : this(color, StringToPosition(pos)) { }
 
         public Move(Color color, (int posX, int posY) coord) : this(color, coord.posX, coord.posY) { }
 
@@ -40,6 +40,31 @@ namespace Kalmia.Reversi
         {
             this.Color = color;
             this.Pos = pos;
+        }
+
+        public Move Mirror()
+        {
+            return new Move(this.Color, MirrorPosition(this.Pos));
+        }
+
+        public Move FlipVertical()
+        {
+            return new Move(this.Color, FlipPositionVertical(this.Pos));
+        }
+
+        public Move Rotate90Clockwise()
+        {
+            return new Move(this.Color, RotatePosition90Clockwise(this.Pos));
+        }
+
+        public Move Rotate90AntiClockwise()
+        {
+            return new Move(this.Color, RotatePosition90AntiClockwise(this.Pos));
+        }
+
+        public Move Rotate180Clockwise()
+        {
+            return new Move(this.Color, RotatePosition180Clockwise(this.Pos));
         }
 
         public override string ToString()
@@ -74,7 +99,37 @@ namespace Kalmia.Reversi
             return !(left == right);
         }
 
-        static BoardPosition StringToCoordinate(string pos)
+        public static BoardPosition MirrorPosition(BoardPosition pos)
+        {
+            (var posX, var posY) = ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
+            return (BoardPosition)((BOARD_SIZE - posX - 1) + posY * BOARD_SIZE);
+        }
+
+        public static BoardPosition FlipPositionVertical(BoardPosition pos)
+        {
+            (var posX, var posY) = ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
+            return (BoardPosition)(posX + (BOARD_SIZE - posY - 1) * BOARD_SIZE);
+        }
+
+        public static BoardPosition RotatePosition90Clockwise(BoardPosition pos)
+        {
+            (var posX, var posY) = ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
+            return (BoardPosition)((BOARD_SIZE - posY - 1) + posX * BOARD_SIZE);
+        }
+
+        public static BoardPosition RotatePosition90AntiClockwise(BoardPosition pos)
+        {
+            (var posX, var posY) = ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
+            return (BoardPosition)(posY + (BOARD_SIZE - posX - 1) * BOARD_SIZE);
+        }
+
+        public static BoardPosition RotatePosition180Clockwise(BoardPosition pos)
+        {
+            (var posX, var posY) = ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
+            return (BoardPosition)((BOARD_SIZE - posX - 1) + (BOARD_SIZE - posY - 1) * BOARD_SIZE);
+        }
+
+        public static BoardPosition StringToPosition(string pos)
         {
             if (pos.ToLower() == "pass")
                 return BoardPosition.Pass;

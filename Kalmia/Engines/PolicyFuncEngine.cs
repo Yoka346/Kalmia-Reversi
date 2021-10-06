@@ -40,13 +40,19 @@ namespace Kalmia.Engines
 
             Span<float> y = stackalloc float[moves.Length];
             this.POLICY_FUNC.F(new BoardFeature(new FastBoard(board)), moves, y, moves.Length);
-            var arrorw = this.RAND.NextFloat();
-            var sum = 0.0f;
-            var i = 0;
-            while ((sum += y[i]) < arrorw)
-                i++;
-            this.board.Update(moves[i]);
-            return moves[i];
+            //var arrorw = this.RAND.NextFloat();
+            //var sum = 0.0f;
+            //var i = 0;
+            //while ((sum += y[i]) < arrorw)
+            //    i++;
+            //this.board.Update(moves[i]);
+            //return moves[i];
+            var maxIdx = 0;
+            for (var i = 1; i < y.Length; i++)
+                if (y[i] > y[maxIdx])
+                    maxIdx = i;
+            this.board.Update(moves[maxIdx]);
+            return moves[maxIdx];
         }
 
         public override string LoadSGF(string path)

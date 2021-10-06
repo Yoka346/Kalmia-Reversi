@@ -62,8 +62,6 @@ namespace Kalmia.IO
 
     public struct WTHORGameRecord
     {
-        const int SIZE = 68;
-
         public string TornamentName { get; set; }
         public string BlackPlayerName { get; set; }
         public string WhitePlayerName { get; set; }
@@ -218,7 +216,7 @@ namespace Kalmia.IO
             {
                 if (d == 0)
                     break;
-                if (board.GetNextMoves().Where(m => m.Pos == BoardPosition.Pass).Count() == 1)     // because pass is not described in WTHOR file, check if current board can be passed
+                if (board.GetNextMoves()[0].Pos == BoardPosition.Pass)     // because pass is not described in WTHOR file, check if current board can be passed
                                                                                                    // and if so add pass to move record.
                 {
                     var pass = new Move(board.SideToMove, BoardPosition.Pass);

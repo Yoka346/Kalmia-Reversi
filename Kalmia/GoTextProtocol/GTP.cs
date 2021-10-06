@@ -41,7 +41,6 @@ namespace Kalmia.GoTextProtocol
         static GTPEngine Engine;
         static readonly ReadOnlyDictionary<string, Action<int, string[]>> COMMANDS;
         static bool Quit = false;
-        static FileStream LogFileStream;
         static StreamWriter Logger;
 
         static GTP()

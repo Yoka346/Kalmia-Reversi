@@ -35,6 +35,33 @@ namespace Kalmia.Reversi
             return (int)PopCount(~(this.CurrentPlayer | this.OpponentPlayer));
         }
 
+        public Bitboard Mirror()
+        {
+            return new Bitboard(MirrorByte(this.CurrentPlayer), MirrorByte(this.OpponentPlayer));
+        }
+
+        public Bitboard FlipVertical()
+        {
+            return new Bitboard(ByteSwap(this.CurrentPlayer), ByteSwap(this.OpponentPlayer));
+        }
+
+        public Bitboard Rotate90Clockwise()
+        {
+            return new Bitboard(BitManipulations.Rotate90Clockwise(this.CurrentPlayer), BitManipulations.Rotate90Clockwise(this.OpponentPlayer));
+        }
+
+        public Bitboard Rotate90AntiClockwise()
+        {
+            return new Bitboard(BitManipulations.Rotate90AntiClockwise(this.CurrentPlayer), BitManipulations.Rotate90AntiClockwise(this.OpponentPlayer));
+        }
+
+        public Bitboard Rotate180Clockwise()
+        {
+            var p = BitManipulations.Rotate90Clockwise(BitManipulations.Rotate90Clockwise(this.CurrentPlayer));
+            var o = BitManipulations.Rotate90Clockwise(BitManipulations.Rotate90Clockwise(this.OpponentPlayer));
+            return new Bitboard(p, o);
+        }
+
         public override bool Equals(object obj)
         {
             return obj is Bitboard && (Bitboard)obj == this;

@@ -13,8 +13,6 @@ namespace Kalmia
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Add(ref float target, float value)
         {
-            if (float.IsNaN(target) || float.IsNaN(value))
-                throw new System.ArgumentException("atomic add does not support NaN.");
             float expected;
             do
                 expected = target;

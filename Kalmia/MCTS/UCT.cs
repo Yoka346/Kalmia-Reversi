@@ -221,11 +221,11 @@ namespace Kalmia.MCTS
 #if SINGLE_THREAD
             for(var threadID = 0; threadID < this.THREAD_NUM; threadID++)
             {
-                var b = currentBoard[threadID];
+                var gInfo = gameInfo[threadID];
                 for (var i = 0; !stop() && i < count / this.THREAD_NUM; i++)
                 {
-                    board.CopyTo(b, false);
-                    SearchKernel(this.root, ref this.edgeToRoot, b, 0, threadID);
+                    rootGameInfo.CopyTo(gInfo);
+                    SearchKernel(this.root, ref this.edgeToRoot, gInfo, 0, threadID);
                 }
             }
 #else

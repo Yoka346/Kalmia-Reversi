@@ -16,7 +16,7 @@ namespace Kalmia.Evaluation
         // "pattern type" means the type of pattern. for example corner3x3 or corner edge x etc.
         // "feature" means the unique integer being calculated from discs position in the specific pattern.
 
-        public const int PATTERN_TYPE = 13;
+        public const int PATTERN_TYPE_NUM = 13;
         public const int PATTERN_NUM_SUM = 47;
 
         static readonly BoardPosition[][] PATTERN_POSITIONS = new BoardPosition[PATTERN_NUM_SUM][]
@@ -108,72 +108,41 @@ namespace Kalmia.Evaluation
         // e.g.) corner3x3 has 3^9 possible patterns, however 3^9 - 3^6 patterns are asymmetric so total is (3^9 - 3^6) / 2 + 3^6 = 10206 patterns.
         static readonly int[] PACKED_PATTERN_FEATURE_NUM = new int[] { 10206, 29889, 29646, 29646, 3321, 3321, 3321, 3321, 1134, 378, 135, 45, 1 };
 
-        static readonly int[] FEATURE_IDX_OFFSET;
-
-        // the mapping of feature indices into symmetric feature indices.
-        static readonly int[] SYMMETRIC_FEATURE_IDX_MAPPING;
-
-        // the mapping of feature indices into opponent's feature indices.
-        static readonly int[] OPPONENT_FEATURE_IDX_MAPPING;
-
         // the converter of disc position to feature
         static readonly (int patternIdx, int feature)[][] POSITION_TO_FEATURE = new (int patternIdx, int feature)[Board.SQUARE_NUM + 1][];
 
         // the functions which flips the pattern's feature about appropriate axis.
         // e.g.) corner3x3 is flipped about diagonal axis.
-        public static ReadOnlyCollection<Func<int, int>> FlipFeatureCallbacks { get; }
+        static ReadOnlyCollection<Func<int, int>> FlipFeatureCallbacks { get; }
 
         public static ReadOnlySpan<int> PatternSize { get { return PATTERN_SIZE; } }
         public static ReadOnlySpan<int> PatternNum { get { return PATTERN_NUM; } }
         public static ReadOnlySpan<int> PatternFeatureNum { get { return PATTERN_FEATURE_NUM; } }
-        public static ReadOnlySpan<int> PatternIdxOffset { get { return FEATURE_IDX_OFFSET; } }
         public static ReadOnlySpan<int> PackedPatternFeatureNum { get { return PACKED_PATTERN_FEATURE_NUM; } }
-        public static ReadOnlySpan<int> SymmetricFeatureIdxMapping { get { return SYMMETRIC_FEATURE_IDX_MAPPING; } }
-        public static ReadOnlySpan<int> OpponentFeatureIdxMapping { get { return OPPONENT_FEATURE_IDX_MAPPING; } }
 
-        readonly int[] FEATURE_INDICES = new int[PATTERN_NUM_SUM];
+        readonly int[] FEATURES = new int[PATTERN_NUM_SUM];
         readonly Action<BoardPosition, ulong>[] UPDATE_CALLBACKS;
-        readonly Action<BoardPosition, ulong>[] UNDO_CALLBACKS;
 
         public Color SideToMove { get; private set; }
         public int EmptyCount { get; private set; }
-        public ReadOnlySpan<int> FeatureIndices { get { return this.FEATURE_INDICES; } }
+        public ReadOnlySpan<int> Features { get { return this.FEATURES; } }
 
         static BoardFeature()
         {
-            FEATURE_IDX_OFFSET = new int[PATTERN_NUM_SUM];
-            var i = 0;
-            var offset = 0;
-            for (var patternType = 0; patternType < PATTERN_TYPE; patternType++)
-            {
-                if (patternType != 0)
-                    offset += PATTERN_FEATURE_NUM[patternType - 1];
-                for (var j = 0; j < PATTERN_NUM[patternType]; j++)
-                        FEATURE_IDX_OFFSET[i++] = offset;
-            }
-
-            var flipFeatureCallbacks = new Func<int, int>[PATTERN_TYPE];
+            var flipFeatureCallbacks = new Func<int, int>[PATTERN_TYPE_NUM];
             flipFeatureCallbacks[0] = FlipCorner3x3Feature;
             flipFeatureCallbacks[1] = FlipCornerEdgeXFeature;
-            for (var featureType = 2; featureType < PATTERN_TYPE; featureType++)
+            for (var patternType = 2; patternType < PATTERN_TYPE_NUM; patternType++)
             {
-                var idx = featureType;
-                flipFeatureCallbacks[featureType] = (int pat) => MirrorFeature(pat, PatternSize[idx]);
+                int patType = patternType;
+                flipFeatureCallbacks[patType] = (int pat) => MirrorFeature(pat, PatternSize[patType]);
             }
             FlipFeatureCallbacks = new ReadOnlyCollection<Func<int, int>>(flipFeatureCallbacks);
 
-            SYMMETRIC_FEATURE_IDX_MAPPING = new int[PATTERN_FEATURE_NUM.Sum()];
-            for (var featureIdx = 0; featureIdx < SYMMETRIC_FEATURE_IDX_MAPPING.Length; featureIdx++)
-                SYMMETRIC_FEATURE_IDX_MAPPING[featureIdx] = CalcSymmetricFeatureIdx(featureIdx);
-
-            OPPONENT_FEATURE_IDX_MAPPING = new int[PATTERN_FEATURE_NUM.Sum()];
-            for (var featureIdx = 0; featureIdx < OPPONENT_FEATURE_IDX_MAPPING.Length; featureIdx++)
-                OPPONENT_FEATURE_IDX_MAPPING[featureIdx] = CalcOpponentFeatureIdx(featureIdx);
-
-            for(var pos = 0; pos < Board.SQUARE_NUM + 1; pos++)
+            for (var pos = 0; pos < Board.SQUARE_NUM + 1; pos++)
             {
                 var featureList = new List<(int patternIdx, int feature)>();
-                for(var patternIdx = 0; patternIdx < PATTERN_POSITIONS.Length; patternIdx++)
+                for (var patternIdx = 0; patternIdx < PATTERN_POSITIONS.Length; patternIdx++)
                 {
                     var positions = PATTERN_POSITIONS[patternIdx];
                     var size = positions.Length;
@@ -190,7 +159,7 @@ namespace Kalmia.Evaluation
 
         public BoardFeature(FastBoard board)
         {
-            InitBoard(board);
+            InitFeatures(board);
             this.UPDATE_CALLBACKS = new Action<BoardPosition, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
         }
 
@@ -200,14 +169,13 @@ namespace Kalmia.Evaluation
             this.UPDATE_CALLBACKS = new Action<BoardPosition, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
         }
 
-        public void InitBoard(FastBoard board)
+        public void InitFeatures(FastBoard board)
         {
             for (var i = 0; i < PATTERN_NUM_SUM; i++)
             {
-                this.FEATURE_INDICES[i] = 0;
+                this.FEATURES[i] = 0;
                 foreach (var patternPos in PATTERN_POSITIONS[i])
-                    this.FEATURE_INDICES[i] = this.FEATURE_INDICES[i] * 3 + (int)board.GetDiscColor(patternPos);
-                this.FEATURE_INDICES[i] += FEATURE_IDX_OFFSET[i];
+                    this.FEATURES[i] = this.FEATURES[i] * 3 + (int)board.GetDiscColor(patternPos);
             }
             this.SideToMove = board.SideToMove;
             this.EmptyCount = board.GetEmptyCount();
@@ -215,68 +183,51 @@ namespace Kalmia.Evaluation
 
         public void Update(BoardPosition pos, ulong flipped)   
         {
-            this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
+            if (pos != BoardPosition.Pass)
+            {
+                this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
+                this.EmptyCount--;
+            }
             this.SideToMove ^= Color.White;
-            this.EmptyCount--;
-        }
-
-        public void ConvertToOpponentBoard()
-        {
-            this.SideToMove = (this.SideToMove == Color.Black) ? Color.White : Color.Black;
-            for (var i = 0; i < this.FEATURE_INDICES.Length; i++)
-                this.FEATURE_INDICES[i] = OPPONENT_FEATURE_IDX_MAPPING[this.FEATURE_INDICES[i]];
         }
 
         public void CopyTo(BoardFeature dest)
         {
-            Buffer.BlockCopy(this.FEATURE_INDICES, 0, dest.FEATURE_INDICES, 0, sizeof(int) * PATTERN_NUM_SUM);
+            Buffer.BlockCopy(this.FEATURES, 0, dest.FEATURES, 0, sizeof(int) * PATTERN_NUM_SUM);
             dest.SideToMove = this.SideToMove;
             dest.EmptyCount = this.EmptyCount;
         }
 
         void UpdateAfterBlackMove(BoardPosition pos, ulong flipped)
         {
-            var featureIndices = this.FEATURE_INDICES;
+            var features = this.FEATURES;
             var posToFeature = POSITION_TO_FEATURE[(int)pos];
 
             foreach (var n in posToFeature)
-                featureIndices[n.patternIdx] -= 2 * n.feature;
+                features[n.patternIdx] -= 2 * n.feature;
 
             for(var p = FindFirstSet(flipped); flipped != 0UL; p = FindNextSet(ref flipped))
             {
                 posToFeature = POSITION_TO_FEATURE[p];
                 foreach(var n in posToFeature)
-                    featureIndices[n.patternIdx] -= n.feature;
+                    features[n.patternIdx] -= n.feature;
             }
         }
 
         void UpdateAfterWhiteMove(BoardPosition pos, ulong flipped)
         {
-            var featureIndices = this.FEATURE_INDICES;
+            var features = this.FEATURES;
             var posToFeature = POSITION_TO_FEATURE[(int)pos];
 
             foreach (var n in posToFeature)
-                featureIndices[n.patternIdx] -= n.feature;
+                features[n.patternIdx] -= n.feature;
 
             for (var p = FindFirstSet(flipped); flipped != 0UL; p = FindNextSet(ref flipped))
             {
                 posToFeature = POSITION_TO_FEATURE[p];
                 foreach (var n in posToFeature)
-                    featureIndices[n.patternIdx] += n.feature;
+                    features[n.patternIdx] += n.feature;
             }
-        }
-
-        public static (int patternType, int feature) GetPatternTypeAndFeatureFromFeatureIdx(int featureIdx)
-        {
-            int patternType;
-            var offset = PATTERN_FEATURE_NUM.Sum();
-            for(patternType = PATTERN_TYPE; patternType > 0;)
-            {
-                offset -= PATTERN_FEATURE_NUM[--patternType];
-                if (featureIdx >= offset)
-                    break;
-            }
-            return (patternType, featureIdx - offset);
         }
 
         public static int CalcOpponentFeature(int feature, int patternSize)
@@ -293,16 +244,9 @@ namespace Kalmia.Evaluation
             return patternInverce;
         }
 
-        static int CalcOpponentFeatureIdx(int featureIdx)
+        public static int FlipFeature(int patternType, int feature)
         {
-            (var patternType, var feature) = GetPatternTypeAndFeatureFromFeatureIdx(featureIdx);
-            return CalcOpponentFeature(feature, PATTERN_SIZE[patternType]) + (featureIdx - feature);
-        }
-
-        static int CalcSymmetricFeatureIdx(int featureIdx)
-        {
-            (var patternType, var feature) = GetPatternTypeAndFeatureFromFeatureIdx(featureIdx);
-            return FlipFeatureCallbacks[patternType](feature) + (featureIdx - feature);
+            return FlipFeatureCallbacks[patternType](feature);
         }
 
         static int FlipCorner3x3Feature(int feature)
