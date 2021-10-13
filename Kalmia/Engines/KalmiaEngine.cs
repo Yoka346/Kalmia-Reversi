@@ -46,6 +46,7 @@ namespace Kalmia.Engines
 
         UCT tree;
         Move lastMove;
+        ValueFunction valueFunc;
         Task searchTask;
         CancellationTokenSource cts;
         Logger thoughtLog;
@@ -54,8 +55,8 @@ namespace Kalmia.Engines
         {
             this.COMMANDS = new ReadOnlyDictionary<string, Func<string[], string>>(InitCommands());
             this.SIMULATION_COUNT = config.SimulationCount;
-            var valueFunc = new ValueFunction(config.ValueFuncParamsFilePath);
-            this.tree = new UCT(valueFunc, config.UCBFactor, config.ThreadNum);
+            this.valueFunc = new ValueFunction(config.ValueFuncParamsFilePath);
+            this.tree = new UCT(this.valueFunc, config.UCBFactor, config.ThreadNum);
             this.tree.MoveProbabilityTemperature = config.Temperature;
             this.lastMove = new Move(Color.Black, BoardPosition.Null);
             this.REUSE_SUBTREE = config.ReuseSubTree;
@@ -76,6 +77,21 @@ namespace Kalmia.Engines
             var commands = new Dictionary<string, Func<string[], string>>();
             commands.Add("benchmark_nps", ExecuteBenchmarkNPSCommand);
             return commands;
+        }
+
+        public float GetValueFunctionEvaluation()
+        {
+            return this.valueFunc.F(new BoardFeature(new FastBoard(this.board)));
+        }
+
+        public PositionEval GetCurrentBoardEvaluation()
+        {
+            return this.tree.GetRootNodeEvaluation();
+        }
+
+        public PositionEval[] GetNextPositionsEvaluation()
+        {
+            return this.tree.GetChildNodeEvaluations().ToArray();
         }
 
         public override void Quit()
@@ -244,14 +260,13 @@ namespace Kalmia.Engines
 
         string SearchInfoToString(PositionEval rootEval, PositionEval[] childrenEval)
         {
-            var sb = new StringBuilder($"simulation_count={rootEval.SimulationCount}\tellapsed={this.tree.SearchEllapsedTime}[ms]");
-            sb.AppendLine($"{this.tree.NodeCount}[nodes], {this.tree.Nps}[nps], value={rootEval.Value * 100.0f}, winning_rate={rootEval.ActionValue * 100.0f}%");
-            sb.AppendLine("|move|simulation_count|value|winnning_rate|probability|depth|pv");
+            var sb = new StringBuilder($"ellapsed={this.tree.SearchEllapsedTime}[ms] {rootEval.PlayoutCount}[playout] {this.tree.Pps}[pps] {this.tree.NodeCount}[nodes] {this.tree.Nps}[nps] winning_rate={rootEval.Value * 100.0f}%\n");
+            sb.AppendLine("|move|playout_count|winnning_rate|probability|depth|pv");
             for(var i = 0; i < childrenEval.Length; i++)
             {
                 var moveEval = childrenEval[i];
-                var bestPath = this.tree.GetBestPath(i).ToArray();
-                sb.Append($"| {moveEval.Position} |{moveEval.SimulationCount,16}|{moveEval.Value * 100.0f,5:f2}|{moveEval.ActionValue * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
+                var bestPath = this.tree.GetPV(i).ToArray();
+                sb.Append($"| {moveEval.Position} |{moveEval.PlayoutCount,13}|{moveEval.Value * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
                 foreach (var move in bestPath.Select(n => n.Position))
                     sb.Append($"{move} ");
                 sb.AppendLine();

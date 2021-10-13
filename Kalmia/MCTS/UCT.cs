@@ -16,32 +16,29 @@ namespace Kalmia.MCTS
         public BoardPosition Position { get; }
         public float MoveProbability { get; }
         public float Value { get; }
-        public float ActionValue { get; }
-        public int SimulationCount { get; }
+        public int PlayoutCount { get; }
 
         public PositionEval(Edge edge, float moveProb)
         {
             this.Position = edge.NextPos;
             this.MoveProbability = moveProb;
             this.Value = edge.Value;
-            this.ActionValue = edge.ActionValue;
-            this.SimulationCount = edge.VisitCount; 
+            this.PlayoutCount = edge.VisitCount;
         }
 
-        public PositionEval(BoardPosition pos, float moveProb, float value, float actionValue, int simCount)
+        public PositionEval(BoardPosition pos, float moveProb, float value, int playoutCount)
         {
             this.Position = pos;
             this.MoveProbability = moveProb;
             this.Value = value;
-            this.ActionValue = actionValue;
-            this.SimulationCount = simCount;
+            this.PlayoutCount = playoutCount;
         }
 
         public static IEnumerable<PositionEval> EnumerateMoveEvals(Edge[] edges)
         {
             var visitCountSum = edges.Sum(e => e.VisitCount);
             for (var i = 0; i < edges.Length; i++)
-                yield return new PositionEval(edges[i], (float)edges[i].VisitCount / visitCountSum);
+                yield return new PositionEval(edges[i], (edges[i].VisitCount != 0) ? (float)edges[i].VisitCount / visitCountSum : 0.0f);
         }
     }
 
@@ -89,14 +86,16 @@ namespace Kalmia.MCTS
         Edge edgeToRoot;
         Node root;
         int nodeCount = 0;
-        int npsCounter = 0;
+        int npsCount = 0;   // nps = node per second
+        int ppsCount = 0;   // pps = playout per second
         int searchStartTime;
         int searchEndTime;
 
-        public float Nps { get { return (this.SearchEllapsedTime != 0) ? this.npsCounter / (this.SearchEllapsedTime / 1000.0f) : 0;  } }
-
         public int Depth { get; private set; } = 0;
-        public int NodeCount { get { return this.nodeCount; } private set { this.nodeCount = value; } }
+        public int NodeCount { get { return this.nodeCount; } }
+        public int PlayoutCount { get { return (this.root != null) ? this.root.VisitCount : 0; } }
+        public float Nps { get { return (this.SearchEllapsedTime != 0) ? this.npsCount / (this.SearchEllapsedTime * 0.001f) : 0; } }
+        public float Pps { get { return (this.SearchEllapsedTime != 0) ? this.ppsCount / (this.SearchEllapsedTime * 0.001f) : 0; } }
         public bool IsSearching { get; private set; }
         public int SearchEllapsedTime { get { return (this.IsSearching) ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
 
@@ -128,7 +127,7 @@ namespace Kalmia.MCTS
         {
             if (this.root == null)
                 return new PositionEval();
-            return new PositionEval(this.edgeToRoot.NextPos, 1.0f, 1.0f - this.edgeToRoot.Value, this.root.WinCount / this.root.VisitCount, this.root.VisitCount);
+            return new PositionEval(this.edgeToRoot.NextPos, 1.0f, (this.edgeToRoot.IsProved) ? 1.0f - this.edgeToRoot.Value : this.root.Value, this.root.VisitCount);
         }
 
         public IEnumerable<PositionEval> GetChildNodeEvaluations()
@@ -139,7 +138,7 @@ namespace Kalmia.MCTS
                 yield return n;
         }
 
-        public IEnumerable<PositionEval> GetBestPath(int childIdx)
+        public IEnumerable<PositionEval> GetPV(int childIdx)    // PV = Principal Variation
         {
             if (this.root == null || this.root.ChildNodes == null || this.root.ChildNodes[childIdx] == null)
                 yield break;
@@ -183,7 +182,7 @@ namespace Kalmia.MCTS
             this.edgeToRoot = new Edge();
             this.edgeToRoot.NextPos = pos;
             this.root = new Node();
-            this.NodeCount = 1;
+            nodeCount = 1;
         }
 
         public void Clear()
@@ -192,7 +191,7 @@ namespace Kalmia.MCTS
             this.edgeToRoot.NextPos = BoardPosition.Null;
             this.edgeToRoot.SetUnknown();
             this.root = new Node();
-            this.NodeCount = 1;
+            nodeCount = 1;
         }
 
         public async Task<Move> SearchAsync(Board board, int count, int timeLimit, CancellationToken ct)
@@ -212,10 +211,10 @@ namespace Kalmia.MCTS
 
             var rootGameInfo = new GameInfo(new FastBoard(board));
             var gameInfo = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new GameInfo()).ToArray();
-            this.edgeToRoot.Value = 1.0f - this.VALUE_FUNC.F(rootGameInfo.Feature);
             this.searchStartTime = Environment.TickCount;
             this.IsSearching = true;
-            this.npsCounter = 0;
+            this.npsCount = 0;
+            this.ppsCount = 0;
             this.Depth = 0;
 
 #if SINGLE_THREAD
@@ -340,8 +339,8 @@ namespace Kalmia.MCTS
                 if (currentNode.Edges == null)      // not expanded
                 {
                     var positions = this.POSITIONS[threadID];
-                    var moveCount = currentBoard.GetNextPositions(positions);
-                    currentNode.Expand(positions, moveCount);
+                    var moveNum = currentBoard.GetNextPositions(positions);
+                    currentNode.Expand(positions, moveNum);
                 }
 
                 childNodeIdx = SelectChildNode(currentNode, ref edgeToCurrentNode);
@@ -366,7 +365,7 @@ namespace Kalmia.MCTS
                         {
                             currentNode.CreateChildNode(childNodeIdx);
                             AtomicOperations.Increment(ref this.nodeCount);
-                            AtomicOperations.Increment(ref this.npsCounter);
+                            AtomicOperations.Increment(ref this.npsCount);
                         }
                         Monitor.Exit(currentNode);
                         lockTaken = false;
@@ -376,14 +375,14 @@ namespace Kalmia.MCTS
                     {
                         Monitor.Exit(currentNode);
                         lockTaken = false;
-                        edges[childNodeIdx].Value = 1.0f - this.VALUE_FUNC.F(currentGameInfo.Feature);
-                        value = edges[childNodeIdx].Value;
+                        value = 1.0f - this.VALUE_FUNC.F(currentGameInfo.Feature);
+                        AtomicOperations.Increment(ref this.ppsCount);
                     }
                 }
                 else
                 {
                     Monitor.Exit(currentNode);
-                    value = currentNode.Edges[childNodeIdx].ActionValue;
+                    value = currentNode.Edges[childNodeIdx].Value;
                 }
             }
             catch
@@ -435,7 +434,7 @@ namespace Kalmia.MCTS
 
                 var edge = parentNode.Edges[i];
                 var n = edge.VisitCount + edge.VirtualLossSum + 1;
-                var q = parentNode.Edges[i].WinCount / n;       
+                var q = parentNode.Edges[i].ValueSum / n;       
                 var u = this.UCB_FACTOR * MathF.Sqrt(twoLogSum / n);
                 var score = q + u;
 
@@ -460,10 +459,10 @@ namespace Kalmia.MCTS
         {
             AtomicOperations.Increment(ref node.Edges[childNodeIdx].VisitCount);
             AtomicOperations.Add(ref node.Edges[childNodeIdx].VirtualLossSum, -this.virtualLoss);
-            AtomicOperations.Add(ref node.Edges[childNodeIdx].WinCount, value);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].ValueSum, value);
             AtomicOperations.Increment(ref node.VisitCount);
             AtomicOperations.Add(ref node.VirtualLossSum, -this.virtualLoss);
-            AtomicOperations.Add(ref node.WinCount, value);
+            AtomicOperations.Add(ref node.ValueSum, value);
         }
 
         static void LabelEdge(ref Edge edge, FastBoard currentBoard)

@@ -18,16 +18,16 @@ namespace Kalmia.MCTS
         public int VisitCount;
         public int VirtualLossSum;
         public float MoveProbability;
-        public float Value;
-        public float WinCount;
+        public float ValueSum;
         public BoardPosition NextPos;
         public EdgeLabel Label;
-        public float ActionValue { get { return (this.IsLabeled && !this.IsUnknown) ? ConvertEdgeLabelToActionValue(this.Label) : this.WinCount / this.VisitCount; } }
+        public float Value { get { return (this.IsLabeled && !this.IsUnknown) ? GetValueFromEdgeLabel(this.Label) : this.ValueSum / this.VisitCount; } }
         public bool IsWin { get { return this.Label == EdgeLabel.Win; } }
         public bool IsLoss { get { return this.Label == EdgeLabel.Loss; } }
         public bool IsDraw { get { return this.Label == EdgeLabel.Draw; } }
         public bool IsUnknown { get { return this.Label == EdgeLabel.Unknown; } }
         public bool IsLabeled { get { return this.Label != EdgeLabel.NotLabeled; } }
+        public bool IsProved { get { return this.IsLabeled && !this.IsUnknown; } }
 
         public void SetWin()
         {
@@ -49,7 +49,7 @@ namespace Kalmia.MCTS
             this.Label = EdgeLabel.Unknown;
         }
         
-        static float ConvertEdgeLabelToActionValue(EdgeLabel label)
+        static float GetValueFromEdgeLabel(EdgeLabel label)
         {
             switch (label)
             {
@@ -62,7 +62,7 @@ namespace Kalmia.MCTS
                 case EdgeLabel.Draw:
                     return 0.5f;
             }
-            throw new ArgumentException($"{label} cannnot be converted to action value.");
+            throw new ArgumentException($"{label} must be Win, Loss or Draw");
         }
     }
 
@@ -70,21 +70,22 @@ namespace Kalmia.MCTS
     {
         public int VisitCount = 0;
         public int VirtualLossSum = 0;
-        public float WinCount = 0.0f;
+        public float ValueSum = 0.0f;
+        public float Value { get { return this.ValueSum / this.VisitCount; } }
         public Node[] ChildNodes;
         public Edge[] Edges;
         public int ChildNum { get { return this.Edges.Length; } }
 
-        public void Expand(BoardPosition[] positions, int moveCount)
+        public void Expand(BoardPosition[] positions, int posNum)
         {
-            this.Edges = new Edge[moveCount];
+            this.Edges = new Edge[posNum];
             for (var i = 0; i < this.Edges.Length; i++)
                 this.Edges[i].NextPos = positions[i];
         }
 
-        public void Expand(BoardPosition[] positions, float[] moveProb, int moveCount)
+        public void Expand(BoardPosition[] positions, float[] moveProb, int posNum)
         {
-            this.Edges = new Edge[moveCount];
+            this.Edges = new Edge[posNum];
             for (var i = 0; i < this.Edges.Length; i++)
             {
                 this.Edges[i].NextPos = positions[i];
