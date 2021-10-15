@@ -264,10 +264,10 @@ namespace Kalmia.Engines
             sb.AppendLine("|move|search_count|winnning_rate|probability|depth|pv");
             for(var i = 0; i < childrenEval.Length; i++)
             {
-                var moveEval = childrenEval[i];
-                var bestPath = this.tree.GetPV(i).ToArray();
-                sb.Append($"| {moveEval.Position} |{moveEval.PlayoutCount,12}|{moveEval.Value * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
-                foreach (var move in bestPath.Select(n => n.Position))
+                var posEval = childrenEval[i];
+                var pv = posEval.PV;
+                sb.Append($"| {posEval.Position} |{posEval.PlayoutCount,12}|{posEval.Value * 100.0f,12:f2}%|{posEval.MoveProbability * 100.0f,10:f2}%|{pv.Count,5}|");
+                foreach (var move in pv.Select(n => n.Position))
                     sb.Append($"{move} ");
                 sb.AppendLine();
             }

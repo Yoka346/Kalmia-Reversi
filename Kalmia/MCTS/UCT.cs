@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,14 +18,11 @@ namespace Kalmia.MCTS
         public float MoveProbability { get; }
         public float Value { get; }
         public int PlayoutCount { get; }
+        public ReadOnlyCollection<PositionEval> PV { get; }
 
-        public PositionEval(Edge edge, float moveProb)
-        {
-            this.Position = edge.NextPos;
-            this.MoveProbability = moveProb;
-            this.Value = edge.Value;
-            this.PlayoutCount = edge.VisitCount;
-        }
+        public PositionEval(Edge edge, float moveProb):this(edge, moveProb, new PositionEval[0]) { }
+
+        public PositionEval(Edge edge, float moveProb, IEnumerable<PositionEval> pv):this(edge, moveProb, new ReadOnlyCollection<PositionEval>(pv.ToArray())) { }
 
         public PositionEval(BoardPosition pos, float moveProb, float value, int playoutCount)
         {
@@ -32,6 +30,16 @@ namespace Kalmia.MCTS
             this.MoveProbability = moveProb;
             this.Value = value;
             this.PlayoutCount = playoutCount;
+            this.PV = new ReadOnlyCollection<PositionEval>(new PositionEval[0]);
+        }
+
+        PositionEval(Edge edge, float moveProb, ReadOnlyCollection<PositionEval> pv)
+        {
+            this.Position = edge.NextPos;
+            this.MoveProbability = moveProb;
+            this.Value = edge.Value;
+            this.PlayoutCount = edge.VisitCount;
+            this.PV = pv;
         }
 
         public static IEnumerable<PositionEval> EnumerateMoveEvals(Edge[] edges)
@@ -139,28 +147,11 @@ namespace Kalmia.MCTS
         {
             if (this.root == null || this.root.Edges == null)
                 yield break;
-            foreach (var n in PositionEval.EnumerateMoveEvals(this.root.Edges))
-                yield return n;
-        }
 
-        public IEnumerable<PositionEval> GetPV(int childIdx)    // PV = Principal Variation
-        {
-            if (this.root == null || this.root.ChildNodes == null || this.root.ChildNodes[childIdx] == null)
-                yield break;
-
-            var node = this.root.ChildNodes[childIdx];
-            while (node != null && node.Edges != null)
-            {
-                var idx = SelectBestChildNode(node);
-                var edge = node.Edges[idx];
-                var vistCountSum = node.Edges.Sum(e => e.VisitCount);
-                yield return new PositionEval(edge, edge.VisitCount / vistCountSum);
-
-                if (node.ChildNodes != null && node.ChildNodes[idx] != null)
-                    node = node.ChildNodes[idx];
-                else
-                    break;
-            }
+            var edges = this.root.Edges;
+            var visitCountSum = edges.Sum(e => e.VisitCount);
+            for (var i = 0; i < edges.Length; i++)
+                yield return new PositionEval(edges[i], (edges[i].VisitCount != 0) ? (float)edges[i].VisitCount / visitCountSum : 0.0f, GetPV(i));
         }
 
         // Looks one move ahead, and if a child node which has same position as specified one is found, sets it to root,
@@ -529,6 +520,26 @@ namespace Kalmia.MCTS
                     bestEdgeIdx = i;
             }
             return bestEdgeIdx;
+        }
+
+        IEnumerable<PositionEval> GetPV(int childIdx)    // PV = Principal Variation
+        {
+            if (this.root == null || this.root.ChildNodes == null || this.root.ChildNodes[childIdx] == null)
+                yield break;
+
+            var node = this.root.ChildNodes[childIdx];
+            while (node != null && node.Edges != null)
+            {
+                var idx = SelectBestChildNode(node);
+                var edge = node.Edges[idx];
+                var vistCountSum = node.Edges.Sum(e => e.VisitCount);
+                yield return new PositionEval(edge, edge.VisitCount / vistCountSum);
+
+                if (node.ChildNodes != null && node.ChildNodes[idx] != null)
+                    node = node.ChildNodes[idx];
+                else
+                    break;
+            }
         }
     }
 }
