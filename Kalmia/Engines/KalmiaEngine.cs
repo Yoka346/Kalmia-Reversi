@@ -260,13 +260,13 @@ namespace Kalmia.Engines
 
         string SearchInfoToString(PositionEval rootEval, PositionEval[] childrenEval)
         {
-            var sb = new StringBuilder($"ellapsed={this.tree.SearchEllapsedTime}[ms] {rootEval.PlayoutCount}[playout] {this.tree.Pps}[pps] {this.tree.NodeCount}[nodes] {this.tree.Nps}[nps] winning_rate={rootEval.Value * 100.0f}%\n");
-            sb.AppendLine("|move|playout_count|winnning_rate|probability|depth|pv");
+            var sb = new StringBuilder($"ellapsed={this.tree.SearchEllapsedTime}[ms] {this.tree.PlayoutCount}[playouts] {this.tree.Pps}[pps] {this.tree.NodeCount}[nodes] {this.tree.VisitedEdgeCount}[boards] {this.tree.Nps}[nps] winning_rate={rootEval.Value * 100.0f}%\n");
+            sb.AppendLine("|move|search_count|winnning_rate|probability|depth|pv");
             for(var i = 0; i < childrenEval.Length; i++)
             {
                 var moveEval = childrenEval[i];
                 var bestPath = this.tree.GetPV(i).ToArray();
-                sb.Append($"| {moveEval.Position} |{moveEval.PlayoutCount,13}|{moveEval.Value * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
+                sb.Append($"| {moveEval.Position} |{moveEval.PlayoutCount,12}|{moveEval.Value * 100.0f,12:f2}%|{moveEval.MoveProbability * 100.0f,10:f2}%|{bestPath.Length - 1,5}|");
                 foreach (var move in bestPath.Select(n => n.Position))
                     sb.Append($"{move} ");
                 sb.AppendLine();
