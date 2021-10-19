@@ -411,7 +411,7 @@ namespace Kalmia.MCTS
             AtomicOperations.Add(ref node.Edges[childNodeIdx].VirtualLossSum, this.virtualLoss);
         }
 
-        int SelectChildNode(Node parentNode, ref Edge edgeToParentNode)        
+        int SelectChildNode(Node parentNode, ref Edge edgeToParentNode)
         {
             // to avoid division by zero or log(0), calculates UCB score assuming lost the game at least one time.
             var childNum = parentNode.ChildNum;
@@ -443,7 +443,7 @@ namespace Kalmia.MCTS
 
                 var edge = parentNode.Edges[i];
                 var n = edge.VisitCount + edge.VirtualLossSum + 1;
-                var q = parentNode.Edges[i].ValueSum / n;       
+                var q = parentNode.Edges[i].ValueSum / n;
                 var u = this.UCB_FACTOR * MathF.Sqrt(twoLogSum / n);
                 var score = q + u;
 

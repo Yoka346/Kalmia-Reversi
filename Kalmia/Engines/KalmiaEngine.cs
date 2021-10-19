@@ -47,9 +47,12 @@ namespace Kalmia.Engines
         UCT tree;
         Move lastMove;
         ValueFunction valueFunc;
+        PositionEval[] lastGenerateMoveResult;     // next positions evaluations that were calculated by the latest genmove.
         Task searchTask;
         CancellationTokenSource cts;
         Logger thoughtLog;
+
+        public int SearchedBoardCount { get { return this.tree.VisitedEdgeCount; } }
 
         public KalmiaEngine(KalmiaConfig config, string logFilePath) : base(NAME, VERSION)
         {
@@ -66,16 +69,11 @@ namespace Kalmia.Engines
             this.thoughtLog = new Logger(logFilePath, false);
         }
 
-        ~KalmiaEngine()
-        {
-            if (this.thoughtLog != null && !this.thoughtLog.IsDisposed)
-                this.thoughtLog.Close();
-        }
-
         Dictionary<string, Func<string[], string>> InitCommands()
         {
             var commands = new Dictionary<string, Func<string[], string>>();
             commands.Add("benchmark_nps", ExecuteBenchmarkNPSCommand);
+            commands.Add("benchmark_pps", ExecuteBenchmarkPPSCommand);
             return commands;
         }
 
@@ -94,11 +92,17 @@ namespace Kalmia.Engines
             return this.tree.GetChildNodeEvaluations().ToArray();
         }
 
+        public PositionEval[] GetLastGenerateMoveResult()
+        {
+            if (this.lastGenerateMoveResult == null)
+                return new PositionEval[0];
+            return (PositionEval[])this.lastGenerateMoveResult.Clone();
+        }
+
         public override void Quit()
         {
             if (this.thoughtLog != null && !this.thoughtLog.IsDisposed)
-                this.thoughtLog.Close();
-            GC.SuppressFinalize(this);
+                this.thoughtLog.Dispose();
         }
 
         public override void ClearBoard()
@@ -157,6 +161,7 @@ namespace Kalmia.Engines
             var move = RegGenerateMove(color);
             this.board.Update(move);
             this.lastMove = move;
+            this.lastGenerateMoveResult = GetNextPositionsEvaluation();
             if (this.REUSE_SUBTREE)
                 this.tree.SetRoot(this.lastMove.Pos);
             else
@@ -239,6 +244,28 @@ namespace Kalmia.Engines
                     npsSum += this.tree.Nps;
                 }
                 return $"{npsSum / sampleNum} [nps]";
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException)
+            {
+                return "? invalid option.";
+            }
+        }
+
+        string ExecuteBenchmarkPPSCommand(string[] args)
+        {
+            try
+            {
+                var sampleNum = int.Parse(args[0]);
+                var simulationCount = int.Parse(args[1]);
+                var boards = GenerateBoards(sampleNum);
+                var ppsSum = 0.0f;
+                foreach (var board in boards)
+                {
+                    this.tree.SetRoot(BoardPosition.Null);
+                    this.tree.Search(board, simulationCount);
+                    ppsSum += this.tree.Pps;
+                }
+                return $"{ppsSum / sampleNum} [pps]";
             }
             catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException)
             {

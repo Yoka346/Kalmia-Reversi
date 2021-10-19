@@ -5,6 +5,7 @@ namespace Kalmia.IO
 {
     public class Logger : IDisposable
     {
+        FileStream logFs;
         StreamWriter logSw;
         bool outputToStdOut;
 
@@ -12,23 +13,15 @@ namespace Kalmia.IO
 
         public Logger(string path, bool outputToStdOut)
         {
-            this.logSw = new StreamWriter(path);
+            this.logFs = new FileStream(path, FileMode.Create, FileAccess.Write);
+            this.logSw = new StreamWriter(this.logFs);
             this.outputToStdOut = outputToStdOut;
-        }
-
-        ~Logger()
-        {
-            this.logSw.Close();
-        }
-
-        public void Close()
-        {
-            Dispose();
         }
 
         public void Dispose()
         {
             this.logSw.Close();
+            this.logFs.Close();
             this.IsDisposed = true;
             GC.SuppressFinalize(this);
         }
