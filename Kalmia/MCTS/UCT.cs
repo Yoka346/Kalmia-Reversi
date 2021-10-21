@@ -86,11 +86,11 @@ namespace Kalmia.MCTS
         readonly int THREAD_NUM;
         readonly BoardPosition[][] POSITIONS;
         readonly Xorshift[] RAND;
-        readonly float UCB_FACTOR;
+        readonly float UCB_FACTOR_INIT;
+        readonly float UCB_FACTOR_BASE;
         readonly ValueFunction VALUE_FUNC;
 
         int virtualLoss = 3;
-        float moveProbTemperature = 0.0f;
         Edge edgeToRoot;
         Node root;
         int nodeCount = 0;
@@ -118,16 +118,11 @@ namespace Kalmia.MCTS
             set { if (value >= 0) this.virtualLoss = value; else throw new ArgumentOutOfRangeException("virtual loss must be positive or zero."); }
         }
 
-        public float MoveProbabilityTemperature 
-        {
-            get { return this.moveProbTemperature; }
-            set { if (value < 0.0f) throw new ArgumentOutOfRangeException("move probability temperature must be positive or zero."); else this.moveProbTemperature = value; }
-        }
-
-        public UCT(ValueFunction valueFunc, float ucbFactor, int threadNum)
+        public UCT(ValueFunction valueFunc, float ucbFactorInit, float ucbFactorBase, int threadNum)
         {
             this.VALUE_FUNC = valueFunc;
-            this.UCB_FACTOR = ucbFactor;
+            this.UCB_FACTOR_INIT = ucbFactorInit;
+            this.UCB_FACTOR_BASE = ucbFactorBase;
             this.THREAD_NUM = threadNum;
             this.POSITIONS = (from _ in Enumerable.Range(0, threadNum) select new BoardPosition[Board.MAX_MOVE_COUNT]).ToArray();
             this.RAND = (from i in Enumerable.Range(0, threadNum) select new Xorshift()).ToArray();
@@ -170,9 +165,10 @@ namespace Kalmia.MCTS
                         var prevRoot = this.root;
                         this.root = prevRoot.ChildNodes[i];
                         this.edgeToRoot = prevRoot.Edges[i];
+                        this.root.VisitCount += edgeToRoot.VisitCount;
+                        this.root.ValueSum += edgeToRoot.VisitCount - edgeToRoot.ValueSum;
                         prevRoot.ChildNodes[i] = null;
                         DecrementNodeCountAndEdgeCount(prevRoot);
-                        this.visitedEdgeCount++;
                         return;
                     }
                 }
@@ -180,6 +176,8 @@ namespace Kalmia.MCTS
             this.edgeToRoot.NextPos = pos;
             this.root = new Node();
             nodeCount = 1;
+            edgeCount = 0;
+            visitedEdgeCount = 0;
         }
 
         public void Clear()
@@ -191,17 +189,17 @@ namespace Kalmia.MCTS
             nodeCount = 1;
         }
 
-        public async Task<Move> SearchAsync(Board board, int count, int timeLimit, CancellationToken ct)
+        public async Task SearchAsync(Board board, int count, int timeLimit, CancellationToken ct)
         {
-            return await Task.Run(() => Search(board, count, timeLimit, ct)).ConfigureAwait(false);
+            await Task.Run(() => Search(board, count, timeLimit, ct)).ConfigureAwait(false);
         }
 
-        public Move Search(Board board, int count, int timeLimit = int.MaxValue) 
+        public void Search(Board board, int count, int timeLimit = int.MaxValue) 
         {
-            return Search(board, count, timeLimit, new CancellationToken(false));
+            Search(board, count, timeLimit, new CancellationToken(false));
         }
 
-        public Move Search(Board board, int count, int timeLimit, CancellationToken ct)
+        public void Search(Board board, int count, int timeLimit, CancellationToken ct)
         {
             if (this.root == null)
                 throw new NullReferenceException("Set root before searching.");
@@ -243,7 +241,6 @@ namespace Kalmia.MCTS
             }
             this.IsSearching = false;
             this.searchEndTime = Environment.TickCount;
-            return new Move(rootGameInfo.SideToMove, SelectPosition());
 
             bool stop()
             {
@@ -251,37 +248,29 @@ namespace Kalmia.MCTS
             }
         }
 
-        void DecrementNodeCountAndEdgeCount(Node node)
+        public BoardPosition SelectMaxVisitCountAndMaxValuePosition()
         {
-            this.nodeCount--;
-            if (node.Edges != null)
-            {
-                foreach (var edge in node.Edges)
-                {
-                    this.edgeCount--;
-                    if (edge.VisitCount != 0)
-                        this.visitedEdgeCount--;
-                }
-            }
-            if (node.ChildNodes == null)
-                return;
-            foreach (var childNode in node.ChildNodes)
-                if(childNode != null)
-                    DecrementNodeCountAndEdgeCount(childNode);
+            var edges = this.root.Edges;
+            var maxIdx = 0;
+            for (var i = 1; i < edges.Length; i++)
+                if (edges[i].VisitCount > edges[maxIdx].VisitCount)
+                    maxIdx = i;
+                else if (edges[i].VisitCount == edges[maxIdx].VisitCount && edges[i].Value > edges[maxIdx].Value)
+                    maxIdx = i;
+            return edges[maxIdx].NextPos;
         }
 
-        BoardPosition SelectPosition()       
+        public BoardPosition SelectNextPositionByMoveProbability(float temperature)
         {
             var edges = this.root.Edges;
             var prob = new float[edges.Length];
-            var t = this.moveProbTemperature;
-            for(var i = 0; i < prob.Length; i++)
+            for (var i = 0; i < prob.Length; i++)
             {
                 var n = edges[i].VisitCount;
                 if (n != 0)
                 {
                     for (var j = 0; j < prob.Length; j++)
-                        prob[i] += MathF.Pow((float)edges[j].VisitCount / n, 1.0f / t);
+                        prob[i] += MathF.Pow((float)edges[j].VisitCount / n, 1.0f / temperature);
                     prob[i] = 1.0f / prob[i];
                 }
                 else
@@ -327,6 +316,25 @@ namespace Kalmia.MCTS
                 sum += prob[++k];
             while (sum < arrow);
             return edges[k].NextPos;
+        }
+
+        void DecrementNodeCountAndEdgeCount(Node node)
+        {
+            this.nodeCount--;
+            if (node.Edges != null)
+            {
+                foreach (var edge in node.Edges)
+                {
+                    this.edgeCount--;
+                    if (edge.VisitCount != 0)
+                        this.visitedEdgeCount--;
+                }
+            }
+            if (node.ChildNodes == null)
+                return;
+            foreach (var childNode in node.ChildNodes)
+                if(childNode != null)
+                    DecrementNodeCountAndEdgeCount(childNode);
         }
 
         float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, GameInfo currentGameInfo, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score
@@ -419,6 +427,8 @@ namespace Kalmia.MCTS
             var maxScore = float.NegativeInfinity;
             var sum = parentNode.VisitCount + parentNode.VirtualLossSum + parentNode.Edges.Length;
             var twoLogSum = 2.0f * FastMath.Log(sum);
+            var cBase = this.UCB_FACTOR_BASE;
+            var c = this.UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
 
             var lossCount = 0;
             var drawCount = 0;
@@ -444,7 +454,7 @@ namespace Kalmia.MCTS
                 var edge = parentNode.Edges[i];
                 var n = edge.VisitCount + edge.VirtualLossSum + 1;
                 var q = parentNode.Edges[i].ValueSum / n;
-                var u = this.UCB_FACTOR * MathF.Sqrt(twoLogSum / n);
+                var u = c * MathF.Sqrt(twoLogSum / n);
                 var score = q + u;
 
                 if (score > maxScore)

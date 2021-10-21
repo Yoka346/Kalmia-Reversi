@@ -18,8 +18,10 @@ namespace Kalmia.Engines
     public struct KalmiaConfig 
     {
         public int SimulationCount { get; set; }
+        public bool SelectMoveByProbability { get; set; }
         public float Temperature { get; set; }
-        public float UCBFactor { get; set; }
+        public float UCBFactorInit { get; set; }
+        public float UCBFactorBase { get; set; }
         public bool ReuseSubTree { get; set; }
         public bool EnablePondering { get; set; }
         public string ValueFuncParamsFilePath { get; set; }
@@ -43,11 +45,14 @@ namespace Kalmia.Engines
         readonly int SIMULATION_COUNT;
         readonly bool PONDERING_ENABLED;
         readonly bool REUSE_SUBTREE;
+        readonly bool SELECT_MOVE_BY_PROBABILITY;
+        readonly float MOVE_SELECTION_TEMPERATURE;
 
         UCT tree;
         Move lastMove;
         ValueFunction valueFunc;
         PositionEval[] lastGenerateMoveResult;     // next positions evaluations that were calculated by the latest genmove.
+
         Task searchTask;
         CancellationTokenSource cts;
         Logger thoughtLog;
@@ -59,8 +64,9 @@ namespace Kalmia.Engines
             this.COMMANDS = new ReadOnlyDictionary<string, Func<string[], string>>(InitCommands());
             this.SIMULATION_COUNT = config.SimulationCount;
             this.valueFunc = new ValueFunction(config.ValueFuncParamsFilePath);
-            this.tree = new UCT(this.valueFunc, config.UCBFactor, config.ThreadNum);
-            this.tree.MoveProbabilityTemperature = config.Temperature;
+            this.tree = new UCT(this.valueFunc, config.UCBFactorInit, config.UCBFactorBase, config.ThreadNum);
+            this.SELECT_MOVE_BY_PROBABILITY = config.SelectMoveByProbability;
+            this.MOVE_SELECTION_TEMPERATURE = config.Temperature;
             this.lastMove = new Move(Color.Black, BoardPosition.Null);
             this.REUSE_SUBTREE = config.ReuseSubTree;
             this.PONDERING_ENABLED = config.EnablePondering;
@@ -186,12 +192,14 @@ namespace Kalmia.Engines
             if (moves.Length == 1)
                 return moves[0];
 
-            var move = this.tree.Search(this.board, this.SIMULATION_COUNT);
+            this.tree.Search(this.board, this.SIMULATION_COUNT);
+            var pos = (this.SELECT_MOVE_BY_PROBABILITY) ? this.tree.SelectNextPositionByMoveProbability(this.MOVE_SELECTION_TEMPERATURE)
+                                                         : this.tree.SelectMaxVisitCountAndMaxValuePosition();
             var rootEval = this.tree.GetRootNodeEvaluation();
             var moveEvals = this.tree.GetChildNodeEvaluations().ToArray();
             this.thoughtLog.WriteLine(SearchInfoToString(rootEval, moveEvals));
-            this.thoughtLog.WriteLine($"kalmia selects {move}.");
-            return move;
+            this.thoughtLog.WriteLine($"kalmia selects {pos}.");
+            return new Move(this.board.SideToMove, pos);
         }
 
         public override string LoadSGF(string path)
