@@ -84,6 +84,7 @@ namespace Kalmia.MCTS
     public class UCT
     {
         readonly int THREAD_NUM;
+        readonly int MAX_NODE_COUNT;
         readonly BoardPosition[][] POSITIONS;
         readonly Xorshift[] RAND;
         readonly float UCB_FACTOR_INIT;
@@ -107,8 +108,8 @@ namespace Kalmia.MCTS
         public int EdgeCount { get { return this.edgeCount; } }
         public int VisitedEdgeCount { get { return this.visitedEdgeCount; } }
         public int PlayoutCount { get { return this.playoutCount; } }
-        public float Nps { get { return (this.SearchEllapsedTime != 0) ? this.npsCount / (this.SearchEllapsedTime * 0.001f) : 0; } }
-        public float Pps { get { return (this.SearchEllapsedTime != 0) ? this.ppsCount / (this.SearchEllapsedTime * 0.001f) : 0; } }
+        public float Nps { get { return (this.SearchEllapsedTime != 0) ? this.npsCount / (this.SearchEllapsedTime * 1.0e-3f) : 0; } }
+        public float Pps { get { return (this.SearchEllapsedTime != 0) ? this.ppsCount / (this.SearchEllapsedTime * 1.0e-3f) : 0; } }
         public bool IsSearching { get; private set; }
         public int SearchEllapsedTime { get { return (this.IsSearching) ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
 
@@ -118,8 +119,9 @@ namespace Kalmia.MCTS
             set { if (value >= 0) this.virtualLoss = value; else throw new ArgumentOutOfRangeException("virtual loss must be positive or zero."); }
         }
 
-        public UCT(ValueFunction valueFunc, float ucbFactorInit, float ucbFactorBase, int threadNum)
+        public UCT(ValueFunction valueFunc, float ucbFactorInit, float ucbFactorBase, int maxNodeCount, int threadNum)
         {
+            this.MAX_NODE_COUNT = maxNodeCount;
             this.VALUE_FUNC = valueFunc;
             this.UCB_FACTOR_INIT = ucbFactorInit;
             this.UCB_FACTOR_BASE = ucbFactorBase;
@@ -168,7 +170,7 @@ namespace Kalmia.MCTS
                         this.root.VisitCount += edgeToRoot.VisitCount;
                         this.root.ValueSum += edgeToRoot.VisitCount - edgeToRoot.ValueSum;
                         prevRoot.ChildNodes[i] = null;
-                        DecrementNodeCountAndEdgeCount(prevRoot);
+                        DeleteNodes(prevRoot);
                         return;
                     }
                 }
@@ -208,6 +210,7 @@ namespace Kalmia.MCTS
             var gameInfo = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new GameInfo()).ToArray();
             this.searchStartTime = Environment.TickCount;
             this.IsSearching = true;
+            this.playoutCount = 0;
             this.npsCount = 0;
             this.ppsCount = 0;
             this.Depth = 0;
@@ -230,6 +233,8 @@ namespace Kalmia.MCTS
                 {
                     rootGameInfo.CopyTo(gInfo);
                     SearchKernel(this.root, ref this.edgeToRoot, gInfo, 0, threadID);
+                    if (this.nodeCount >= this.MAX_NODE_COUNT)
+                        break;
                 }
             });
 #endif
@@ -238,6 +243,8 @@ namespace Kalmia.MCTS
             {
                 rootGameInfo.CopyTo(gameInfo[0]);
                 SearchKernel(this.root, ref this.edgeToRoot, gameInfo[0], 0, 0);
+                if (this.nodeCount >= this.MAX_NODE_COUNT)
+                    break;
             }
             this.IsSearching = false;
             this.searchEndTime = Environment.TickCount;
@@ -318,7 +325,7 @@ namespace Kalmia.MCTS
             return edges[k].NextPos;
         }
 
-        void DecrementNodeCountAndEdgeCount(Node node)
+        void DeleteNodes(Node node)
         {
             this.nodeCount--;
             if (node.Edges != null)
@@ -330,11 +337,16 @@ namespace Kalmia.MCTS
                         this.visitedEdgeCount--;
                 }
             }
+            node.Edges = null;
             if (node.ChildNodes == null)
                 return;
-            foreach (var childNode in node.ChildNodes)
-                if(childNode != null)
-                    DecrementNodeCountAndEdgeCount(childNode);
+            for (var i = 0; i < node.ChildNodes.Length; i++)
+            {
+                var childNode = node.ChildNodes[i];
+                if (childNode != null)
+                    DeleteNodes(childNode);
+                node.ChildNodes[i] = null;
+            }
         }
 
         float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, GameInfo currentGameInfo, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score

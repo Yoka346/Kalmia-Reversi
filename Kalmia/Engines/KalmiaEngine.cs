@@ -18,12 +18,18 @@ namespace Kalmia.Engines
     public struct KalmiaConfig 
     {
         public int SimulationCount { get; set; }
+        public bool SetTimeLimit { get; set; }
+        public int TimeLimit { get; set; }
+        public bool DoAdditionalSearch { get; set; }
+        public int AdditionalSimulationCount { get; set; }
+        public int AdditionalTimeLimit { get; set; }
         public bool SelectMoveByProbability { get; set; }
         public float Temperature { get; set; }
         public float UCBFactorInit { get; set; }
         public float UCBFactorBase { get; set; }
         public bool ReuseSubTree { get; set; }
         public bool EnablePondering { get; set; }
+        public int MaxNodeCount { get; set; }
         public string ValueFuncParamsFilePath { get; set; }
         public int ThreadNum { get; set; }
 
@@ -41,12 +47,7 @@ namespace Kalmia.Engines
         new const string VERSION = "Prototype";
 
         readonly ReadOnlyDictionary<string, Func<string[], string>> COMMANDS;
-
-        readonly int SIMULATION_COUNT;
-        readonly bool PONDERING_ENABLED;
-        readonly bool REUSE_SUBTREE;
-        readonly bool SELECT_MOVE_BY_PROBABILITY;
-        readonly float MOVE_SELECTION_TEMPERATURE;
+        readonly KalmiaConfig CONFIG;
 
         UCT tree;
         Move lastMove;
@@ -62,16 +63,10 @@ namespace Kalmia.Engines
         public KalmiaEngine(KalmiaConfig config, string logFilePath) : base(NAME, VERSION)
         {
             this.COMMANDS = new ReadOnlyDictionary<string, Func<string[], string>>(InitCommands());
-            this.SIMULATION_COUNT = config.SimulationCount;
+            this.CONFIG = config;
             this.valueFunc = new ValueFunction(config.ValueFuncParamsFilePath);
-            this.tree = new UCT(this.valueFunc, config.UCBFactorInit, config.UCBFactorBase, config.ThreadNum);
-            this.SELECT_MOVE_BY_PROBABILITY = config.SelectMoveByProbability;
-            this.MOVE_SELECTION_TEMPERATURE = config.Temperature;
+            this.tree = new UCT(this.valueFunc, config.UCBFactorInit, config.UCBFactorBase, config.MaxNodeCount, config.ThreadNum);
             this.lastMove = new Move(Color.Black, BoardPosition.Null);
-            this.REUSE_SUBTREE = config.ReuseSubTree;
-            this.PONDERING_ENABLED = config.EnablePondering;
-            if (this.PONDERING_ENABLED)
-                this.REUSE_SUBTREE = true;
             this.thoughtLog = new Logger(logFilePath, false);
         }
 
@@ -128,9 +123,10 @@ namespace Kalmia.Engines
         {
             if (base.Play(move))
             {
-                if (this.PONDERING_ENABLED && this.searchTask != null && !this.searchTask.IsCompleted)
+                if (this.CONFIG.EnablePondering && this.searchTask != null)
                 {
-                    StopPondering();
+                    if(!this.searchTask.IsCompleted)
+                        StopPondering();
                     var rootEval = this.tree.GetRootNodeEvaluation();
                     var childEvals = this.tree.GetChildNodeEvaluations().ToArray();
                     this.thoughtLog.WriteLine(SearchInfoToString(rootEval, childEvals));
@@ -149,7 +145,7 @@ namespace Kalmia.Engines
         {
             if (base.Undo())
             {
-                if (this.PONDERING_ENABLED && this.searchTask != null && !this.searchTask.IsCompleted)
+                if (this.CONFIG.EnablePondering && this.searchTask != null && !this.searchTask.IsCompleted)
                     StopPondering();
                 this.tree.Clear();
                 this.lastMove = new Move(Color.Black, BoardPosition.Null);
@@ -161,19 +157,19 @@ namespace Kalmia.Engines
 
         public override Move GenerateMove(Color color)
         {
-            if (this.PONDERING_ENABLED && this.searchTask != null && !this.searchTask.IsCompleted)
+            if (this.CONFIG.EnablePondering && this.searchTask != null && !this.searchTask.IsCompleted)
                 StopPondering();
 
             var move = RegGenerateMove(color);
             this.board.Update(move);
             this.lastMove = move;
             this.lastGenerateMoveResult = GetNextPositionsEvaluation();
-            if (this.REUSE_SUBTREE)
+            if (this.CONFIG.ReuseSubTree || this.CONFIG.EnablePondering)
                 this.tree.SetRoot(this.lastMove.Pos);
             else
                 this.tree.Clear();
 
-            if (this.PONDERING_ENABLED && this.board.GetGameResult(Color.Black) == GameResult.NotOver)
+            if (this.CONFIG.EnablePondering && this.board.GetGameResult(Color.Black) == GameResult.NotOver)
                 StartPondering();
             return move;
         }
@@ -192,12 +188,24 @@ namespace Kalmia.Engines
             if (moves.Length == 1)
                 return moves[0];
 
-            this.tree.Search(this.board, this.SIMULATION_COUNT);
-            var pos = (this.SELECT_MOVE_BY_PROBABILITY) ? this.tree.SelectNextPositionByMoveProbability(this.MOVE_SELECTION_TEMPERATURE)
-                                                         : this.tree.SelectMaxVisitCountAndMaxValuePosition();
-            var rootEval = this.tree.GetRootNodeEvaluation();
-            var moveEvals = this.tree.GetChildNodeEvaluations().ToArray();
-            this.thoughtLog.WriteLine(SearchInfoToString(rootEval, moveEvals));
+            this.tree.Search(this.board, this.CONFIG.SimulationCount, this.CONFIG.SetTimeLimit ? this.CONFIG.TimeLimit : int.MaxValue);
+
+            PositionEval rootEval;
+            PositionEval[] childEvals;
+            if (this.CONFIG.DoAdditionalSearch && CheckIfAdditionalSearchIsRequired())
+            {
+                rootEval = this.tree.GetRootNodeEvaluation();
+                childEvals = this.tree.GetChildNodeEvaluations().ToArray();
+                this.thoughtLog.WriteLine(SearchInfoToString(rootEval, childEvals));
+                this.thoughtLog.WriteLine($"kalmia decides to do additional search.");
+                this.tree.Search(this.board, this.CONFIG.AdditionalSimulationCount,
+                                 this.CONFIG.SetTimeLimit ? Math.Max(this.CONFIG.TimeLimit - this.tree.SearchEllapsedTime, 0) + this.CONFIG.AdditionalTimeLimit : int.MaxValue);
+            }
+            BoardPosition pos = (this.CONFIG.SelectMoveByProbability) ? this.tree.SelectNextPositionByMoveProbability(this.CONFIG.Temperature)
+                                                                      : this.tree.SelectMaxVisitCountAndMaxValuePosition();
+            rootEval = this.tree.GetRootNodeEvaluation();
+            childEvals = this.tree.GetChildNodeEvaluations().ToArray();
+            this.thoughtLog.WriteLine(SearchInfoToString(rootEval, childEvals));
             this.thoughtLog.WriteLine($"kalmia selects {pos}.");
             return new Move(this.board.SideToMove, pos);
         }
@@ -291,6 +299,29 @@ namespace Kalmia.Engines
         {
             this.cts.Cancel();
             this.searchTask.Wait();
+        }
+
+        bool CheckIfAdditionalSearchIsRequired()
+        {
+            // If the playout count of the most visited child node is less than SEARCH_EXTEND_CRITERIA times of the playout count of the second visited node, additional searching is required.
+            const double SEARCH_EXTEND_CRITERIA = 1.2;  
+
+            var childNodeEvals = this.tree.GetChildNodeEvaluations().ToArray();
+            var first = childNodeEvals[0];
+            PositionEval? second = null; 
+            for(var i = 1; i < childNodeEvals.Length; i++)
+            {
+                var childNodeEval = childNodeEvals[i];
+                if (childNodeEval.PlayoutCount > first.PlayoutCount)
+                {
+                    if (!second.HasValue)
+                        second = first;
+                    first = childNodeEval;
+                }
+                else if (!second.HasValue || childNodeEval.PlayoutCount > second.Value.PlayoutCount)
+                    second = childNodeEval;
+            }
+            return first.PlayoutCount < second.Value.PlayoutCount * SEARCH_EXTEND_CRITERIA;
         }
 
         string SearchInfoToString(PositionEval rootEval, PositionEval[] childrenEval)

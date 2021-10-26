@@ -1,5 +1,5 @@
-﻿//#r "../../Kalmia/bin/x64/Release/netcoreapp3.1/Kalmia.dll"
-#r "../../Kalmia/bin/x64/Debug/netcoreapp3.1/Kalmia.dll"
+﻿//#r "../Kalmia/bin/x64/Release/netcoreapp3.1/Kalmia.dll"
+#r "../Kalmia/bin/x64/Debug/netcoreapp3.1/Kalmia.dll"
 
 using System;
 using System.IO;
@@ -12,8 +12,6 @@ using Kalmia;
 using Kalmia.IO;
 using Kalmia.Reversi;
 using Kalmia.Evaluation;
-
-DllInfo.PrintDllVersion();
 
 const int MOVE_COUNT_PER_STAGE = 60;
 const int STAGE_NUM = 1;
@@ -37,7 +35,7 @@ TrainData[][] LoadData(string path, bool smoothing)
     var csv = new CSVReader(path);
     var trainData = (from _ in Enumerable.Range(0, STAGE_NUM) select new List<TrainData>()).ToArray();
 
-    while(csv.Peek() != -1)
+    while (csv.Peek() != -1)
     {
         var row = csv.ReadRow();
         var data = new TrainData();

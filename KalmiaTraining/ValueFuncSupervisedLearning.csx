@@ -1,11 +1,13 @@
-﻿#r "../../Kalmia/bin/x64/Release/netcoreapp3.1/Kalmia.dll"
-//#r "../../Kalmia/bin/x64/Debug/netcoreapp3.1/Kalmia.dll"
+﻿#r "../Kalmia/bin/x64/Release/netcoreapp3.1/Kalmia.dll"
+//#r "../Kalmia/bin/x64/Debug/netcoreapp3.1/Kalmia.dll"
 
 using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime;
+using System.Reflection;
 
 using Kalmia;
 using Kalmia.IO;
@@ -34,7 +36,7 @@ TrainData[][] LoadData(string path, bool smoothing)
     var csv = new CSVReader(path);
     var trainData = (from _ in Enumerable.Range(0, STAGE_NUM) select new List<TrainData>()).ToArray();
 
-    while(csv.Peek() != -1)
+    while (csv.Peek() != -1)
     {
         var row = csv.ReadRow();
         var data = new TrainData();
@@ -84,7 +86,7 @@ float[] NormalizeLearningRate(float learningRateBase, float maxLearningRate, int
 
 float GetValueFromGameResult(GameResult result)
 {
-    switch (result) 
+    switch (result)
     {
         case GameResult.Win:
             return 1.0f;
@@ -125,7 +127,7 @@ var valueFunc = new ValueFunction("Kalmia", 0, 4);
 var bestModel = new ValueFunction(valueFunc);
 var logger = new Logger(LOG_FILE_NAME, true);
 
-for(var stage = 0; stage < STAGE_NUM; stage++)
+for (var stage = 0; stage < STAGE_NUM; stage++)
 {
     logger.WriteLine("////////////////////////////////////////////////////////////");
     logger.WriteLine($"stage = {stage}");
@@ -141,7 +143,7 @@ for(var stage = 0; stage < STAGE_NUM; stage++)
     var learningRate = NormalizeLearningRate(LEARNING_RATE_BASE, MAX_LEARNING_RATE, CountFeature(trainDataSet[stage]));
     var weightGrad = new float[ValueFunction.BIAS_IDX + 1];
 
-    for(var epoch = 0; epoch < MAX_EPOCH; epoch++)
+    for (var epoch = 0; epoch < MAX_EPOCH; epoch++)
     {
         logger.WriteLine($"epoch = {epoch + 1} / {MAX_EPOCH}");
         var trainLoss = valueFunc.CalculateGradient(stage, trainBatch, weightGrad);

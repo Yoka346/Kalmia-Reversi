@@ -1,5 +1,5 @@
-﻿#r "../../Kalmia/bin/x64/Release/netcoreapp3.1/Kalmia.dll"
-//#r "../../Kalmia/bin/x64/Debug/netcoreapp3.1/Kalmia.dll"
+﻿#r "../Kalmia/bin/x64/Release/netcoreapp3.1/Kalmia.dll"
+//#r "../Kalmia/bin/x64/Debug/netcoreapp3.1/Kalmia.dll"
 
 using System;
 using System.Linq;
@@ -15,7 +15,7 @@ using Kalmia.Evaluation;
  * Helper
  */
 void CreateTrainDataFile(string gameRecordDir, string outDir, double testDataRate, int moveCountThreshold = 0)      // move count threshold means exculude data before {moveCountThreshold},
-                                                                                                                                  // for example, moveCountThreshold = 10, data from move 0 to move 9 will be excluded.  
+                                                                                                                    // for example, moveCountThreshold = 10, data from move 0 to move 9 will be excluded.  
 {
     var trnFiles = SearchFilesByExtension(gameRecordDir, ".trn");
     var jouFiles = SearchFilesByExtension(gameRecordDir, ".jou");
