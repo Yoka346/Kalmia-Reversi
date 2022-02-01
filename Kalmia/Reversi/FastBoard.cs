@@ -1,6 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Runtime.InteropServices;
 
 using static Kalmia.BitManipulations;
 
@@ -67,11 +69,6 @@ namespace Kalmia.Reversi
             return obj is Bitboard && (Bitboard)obj == this;
         }
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Bitboard left, Bitboard right)
         {
@@ -93,17 +90,35 @@ namespace Kalmia.Reversi
         static readonly Vector256<ulong> FLIP_MASK = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
         static readonly Vector128<ulong> ZEROS_128 = Vector128.Create(0UL, 0UL);
         static readonly Vector256<ulong> ZEROS_256 = Vector256.Create(0UL, 0UL, 0UL, 0UL);
+        static readonly ulong[] HASH_RANK;
+        const int HASH_RANK_DIM_0_LEN = Board.BOARD_SIZE * 2;
+        const int HASH_RANK_DIM_1_LEN = 256;
+
+        static FastBoard()
+        {
+            HASH_RANK = new ulong[HASH_RANK_DIM_0_LEN * HASH_RANK_DIM_1_LEN];     
+            var rand = new Xorshift32();
+            for(var i = 0; i < HASH_RANK_DIM_0_LEN; i++)
+            {
+                for(var j = 0; j < HASH_RANK_DIM_1_LEN; j++)
+                {
+                    var r = (ulong)rand.Next();
+                    HASH_RANK[i * HASH_RANK_DIM_0_LEN + j] = (r << 32) | rand.Next();
+                }
+            }
+        }
 
         Bitboard bitboard;
-        public Color SideToMove { get; private set; }
+        public StoneColor SideToMove { get; private set; }
+        public StoneColor Opponent { get { return this.SideToMove ^ StoneColor.White; } }
         bool mobilityWasCalculated = false;
         ulong mobility;
 
-        public FastBoard():this(new Board(Color.Black, InitialBoardState.Cross)) { }
+        public FastBoard():this(new Board(StoneColor.Black, InitialBoardState.Cross)) { }
 
         public FastBoard(Board board) : this(board.SideToMove, board.GetBitBoard()) { }
 
-        public FastBoard(Color sideToMove, Bitboard bitboard)
+        public FastBoard(StoneColor sideToMove, Bitboard bitboard)
         {
             Init(sideToMove, bitboard);
         }
@@ -116,7 +131,12 @@ namespace Kalmia.Reversi
             this.mobility = board.mobility;
         }
 
-        public void Init(Color sideToMove, Bitboard bitboard)
+        public static StoneColor GetOpponentColor(StoneColor color)
+        {
+            return color ^ StoneColor.White;
+        }
+
+        public void Init(StoneColor sideToMove, Bitboard bitboard)
         {
             this.bitboard = bitboard;
             this.SideToMove = sideToMove;
@@ -158,12 +178,12 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Color GetDiscColor(BoardPosition pos)
+        public StoneColor GetDiscColor(BoardPosition pos)
         {
             var x = (int)pos;
             var sideToMove = (ulong)this.SideToMove + 1UL;
             var color = sideToMove * ((this.bitboard.CurrentPlayer >> x) & 1) + (sideToMove ^ 3) * ((this.bitboard.OpponentPlayer >> x) & 1);
-            return (color != 0) ? (Color)(color - 1) : Color.Empty;
+            return (color != 0) ? (StoneColor)(color - 1) : StoneColor.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -231,7 +251,7 @@ namespace Kalmia.Reversi
             this.bitboard.CurrentPlayer = this.bitboard.OpponentPlayer;
             this.bitboard.OpponentPlayer = tmp;
             this.mobilityWasCalculated = false;
-            this.SideToMove ^= Color.White;
+            this.SideToMove ^= StoneColor.White;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -254,6 +274,63 @@ namespace Kalmia.Reversi
                 mask <<= 1;
             }
             return posCount;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe new ulong GetHashCode()
+        {
+            var bb = this.bitboard;
+            var p = (byte*)&bb;
+            ulong hashCode;
+
+            fixed (ulong* hash_rank = &HASH_RANK[0])
+            {
+                var h0 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[p[0]]).AsDouble(), (double*)&hash_rank[4 *HASH_RANK_DIM_0_LEN +  p[4]]);
+                var h1 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[HASH_RANK_DIM_0_LEN + p[1]]).AsDouble(), (double*)&hash_rank[5 * HASH_RANK_DIM_0_LEN + p[5]]);
+                var h2 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[2 * HASH_RANK_DIM_0_LEN + p[2]]).AsDouble(), (double*)&hash_rank[6 * HASH_RANK_DIM_0_LEN + p[6]]);
+                var h3 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[3 * HASH_RANK_DIM_0_LEN + p[3]]).AsDouble(), (double*)&hash_rank[7 * HASH_RANK_DIM_0_LEN + p[7]]);
+                h0 = Sse2.Xor(h0, h2); 
+                h1 = Sse2.Xor(h1, h3);
+                h2 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[8 * HASH_RANK_DIM_0_LEN + p[8]]).AsDouble(), (double*)&hash_rank[10 * HASH_RANK_DIM_0_LEN + p[10]]);
+                h3 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[9 * HASH_RANK_DIM_0_LEN + p[9]]).AsDouble(), (double*)&hash_rank[11 * HASH_RANK_DIM_0_LEN + p[11]]);
+                h0 = Sse2.Xor(h0, h2); 
+                h1 = Sse2.Xor(h1, h3);
+                h2 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[12 * HASH_RANK_DIM_0_LEN + p[12]]).AsDouble(), (double*)&hash_rank[14 * HASH_RANK_DIM_0_LEN + p[14]]);
+                h3 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[13 * HASH_RANK_DIM_0_LEN + p[13]]).AsDouble(), (double*)&hash_rank[15 * HASH_RANK_DIM_0_LEN + p[15]]);
+                h0 = Sse2.Xor(h0, h2); 
+                h1 = Sse2.Xor(h1, h3);
+                h0 = Sse2.Xor(h0, h1);
+                h0 = Sse2.Xor(h0, Sse.MoveHighToLow(h1.AsSingle(), h0.AsSingle()).AsDouble());
+                if (Sse2.X64.IsSupported)
+                    hashCode = Sse2.X64.ConvertToUInt64(h0.AsUInt64());
+                else
+                    hashCode = h0.AsUInt64().GetElement(0);
+            }
+            return hashCode;
+        }
+
+        // This method is for test.
+        public unsafe ulong GetHashCode_CPU()
+        {
+            var bb = this.bitboard;
+            var p = (byte*)&bb;
+            var h0 = HASH_RANK[p[0]]; 
+            var h1 = HASH_RANK[HASH_RANK_DIM_0_LEN + p[1]];
+            h0 ^= HASH_RANK[2 * HASH_RANK_DIM_0_LEN + p[2]]; 
+            h1 ^= HASH_RANK[3 * HASH_RANK_DIM_0_LEN + p[3]];
+            h0 ^= HASH_RANK[4 * HASH_RANK_DIM_0_LEN + p[4]]; 
+            h1 ^= HASH_RANK[5 * HASH_RANK_DIM_0_LEN + p[5]];
+            h0 ^= HASH_RANK[6 * HASH_RANK_DIM_0_LEN + p[6]]; 
+            h1 ^= HASH_RANK[7 * HASH_RANK_DIM_0_LEN + p[7]];
+            h0 ^= HASH_RANK[8 * HASH_RANK_DIM_0_LEN + p[8]]; 
+            h1 ^= HASH_RANK[9 * HASH_RANK_DIM_0_LEN + p[9]];
+            h0 ^= HASH_RANK[10 * HASH_RANK_DIM_0_LEN + p[10]]; 
+            h1 ^= HASH_RANK[11 * HASH_RANK_DIM_0_LEN + p[11]];
+            h0 ^= HASH_RANK[12 * HASH_RANK_DIM_0_LEN + p[12]]; 
+            h1 ^= HASH_RANK[13 * HASH_RANK_DIM_0_LEN + p[13]];
+            h0 ^= HASH_RANK[14 * HASH_RANK_DIM_0_LEN + p[14]]; 
+            h1 ^= HASH_RANK[15 * HASH_RANK_DIM_0_LEN + p[15]];
+            return h0 ^ h1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

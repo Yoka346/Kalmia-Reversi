@@ -138,17 +138,17 @@ namespace Kalmia.Evaluation
                         var featureIdx = feature + offset;
                         var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
                         if (symmetricFeatureIdx < featureIdx)
-                            this.Weight[(int)Color.Black][stage][featureIdx] = this.Weight[(int)Color.Black][stage][symmetricFeatureIdx];
+                            this.Weight[(int)StoneColor.Black][stage][featureIdx] = this.Weight[(int)StoneColor.Black][stage][symmetricFeatureIdx];
                         else
-                            this.Weight[(int)Color.Black][stage][featureIdx] = packedWeight[stage][patternType][i++];
-                        this.Weight[(int)Color.White][stage][TO_OPPONENT_FEATURE_IDX[featureIdx]] = this.Weight[(int)Color.Black][stage][featureIdx];
+                            this.Weight[(int)StoneColor.Black][stage][featureIdx] = packedWeight[stage][patternType][i++];
+                        this.Weight[(int)StoneColor.White][stage][TO_OPPONENT_FEATURE_IDX[featureIdx]] = this.Weight[(int)StoneColor.Black][stage][featureIdx];
                     }
                     offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
-                this.Weight[(int)Color.Black][stage][offset] = packedWeight[stage][patternType][0];
-                this.Weight[(int)Color.White][stage][offset] = packedWeight[stage][patternType][0];
+                this.Weight[(int)StoneColor.Black][stage][offset] = packedWeight[stage][patternType][0];
+                this.Weight[(int)StoneColor.White][stage][offset] = packedWeight[stage][patternType][0];
             }
         }
 
@@ -172,7 +172,6 @@ namespace Kalmia.Evaluation
         public float F(BoardFeature board)      // calculate value 
         {
             return F((Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveCountPerStage, board);
-            
         }
 
         public float F(int stage, BoardFeature board)
@@ -212,7 +211,7 @@ namespace Kalmia.Evaluation
 
         public void ApplyGradientToBlackWeight(int stage, float[] weightGrad, float[] rate)
         {
-            var weight = this.Weight[(int)Color.Black][stage];
+            var weight = this.Weight[(int)StoneColor.Black][stage];
             Parallel.For(0, weight.Length, featureIdx => weight[featureIdx] -= rate[featureIdx] * weightGrad[featureIdx]);
         }
 
@@ -241,8 +240,8 @@ namespace Kalmia.Evaluation
 
         public void CopyBlackWeightToWhiteWeight()
         {
-            var blackWeight = this.Weight[(int)Color.Black];
-            var whiteWeight = this.Weight[(int)Color.White];
+            var blackWeight = this.Weight[(int)StoneColor.Black];
+            var whiteWeight = this.Weight[(int)StoneColor.White];
             for(var stage = 0; stage < this.StageNum; stage++)
             {
                 var bw = blackWeight[stage];
@@ -268,14 +267,14 @@ namespace Kalmia.Evaluation
                     {
                         var symmetricalPattern = BoardFeature.FlipFeature(patternType, feature);
                         if (feature <= symmetricalPattern)
-                            packedWeight[stage][patternType][packedWIdx++] = this.Weight[(int)Color.Black][stage][offset + feature];
+                            packedWeight[stage][patternType][packedWIdx++] = this.Weight[(int)StoneColor.Black][stage][offset + feature];
                     }
                     offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
                 packedWeight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
-                packedWeight[stage][patternType][0] = this.Weight[(int)Color.Black][stage][offset];
+                packedWeight[stage][patternType][0] = this.Weight[(int)StoneColor.Black][stage][offset];
             }
             return packedWeight;
         }

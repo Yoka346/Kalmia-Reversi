@@ -123,7 +123,7 @@ namespace Kalmia.Evaluation
         readonly int[] FEATURES = new int[PATTERN_NUM_SUM];
         readonly Action<BoardPosition, ulong>[] UPDATE_CALLBACKS;
 
-        public Color SideToMove { get; private set; }
+        public StoneColor SideToMove { get; private set; }
         public int EmptyCount { get; private set; }
         public ReadOnlySpan<int> Features { get { return this.FEATURES; } }
 
@@ -188,7 +188,21 @@ namespace Kalmia.Evaluation
                 this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
                 this.EmptyCount--;
             }
-            this.SideToMove ^= Color.White;
+            this.SideToMove ^= StoneColor.White;
+        }
+
+        public ulong GetHashCode(int hashTableSize)     // hashTableSize cannot be multiple of B
+        {
+            const int B = 17;
+            var hash = (ulong)((this.FEATURES[8] * B) ^ 0);
+            hash += (ulong)((this.FEATURES[9] * B) ^ 1);
+            hash += (ulong)((this.FEATURES[16] * B) ^ 2);
+            hash += (ulong)((this.FEATURES[17] * B) ^ 3);
+            hash += (ulong)((this.FEATURES[20] * B) ^ 4);
+            hash += (ulong)((this.FEATURES[21] * B) ^ 5);
+            hash += (ulong)((this.FEATURES[24] * B) ^ 6);
+            hash += (ulong)((this.FEATURES[25] * B) ^ 7);
+            return hash % (ulong)hashTableSize;
         }
 
         public void CopyTo(BoardFeature dest)
@@ -196,6 +210,12 @@ namespace Kalmia.Evaluation
             Buffer.BlockCopy(this.FEATURES, 0, dest.FEATURES, 0, sizeof(int) * PATTERN_NUM_SUM);
             dest.SideToMove = this.SideToMove;
             dest.EmptyCount = this.EmptyCount;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var bf = obj as BoardFeature;
+            return bf != null && bf.SideToMove == this.SideToMove && bf.FEATURES.SequenceEqual(this.FEATURES);
         }
 
         void UpdateAfterBlackMove(BoardPosition pos, ulong flipped)
@@ -235,11 +255,11 @@ namespace Kalmia.Evaluation
             var patternInverce = 0;
             for (var i = 0; i < patternSize; i++)
             {
-                var color = (Color)((feature / FastMath.Pow3(i)) % 3);
-                if (color == Color.Empty)
+                var color = (StoneColor)((feature / FastMath.Pow3(i)) % 3);
+                if (color == StoneColor.Empty)
                     patternInverce += (int)color * FastMath.Pow3(i);
                 else
-                    patternInverce += (int)(color ^ Color.White) * FastMath.Pow3(i);
+                    patternInverce += (int)(color ^ StoneColor.White) * FastMath.Pow3(i);
             }
             return patternInverce;
         }

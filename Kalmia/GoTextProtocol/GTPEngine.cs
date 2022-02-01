@@ -16,7 +16,7 @@ namespace Kalmia.GoTextProtocol
         {
             this.NAME = name;
             this.VERSION = version;
-            this.board = new Board(Color.Black, InitialBoardState.Cross);
+            this.board = new Board(StoneColor.Black, InitialBoardState.Cross);
         }
 
         public abstract void Quit();
@@ -38,10 +38,10 @@ namespace Kalmia.GoTextProtocol
 
         public virtual void ClearBoard()
         {
-            this.board = new Board(Color.Black, InitialBoardState.Cross);
+            this.board = new Board(StoneColor.Black, InitialBoardState.Cross);
         }
 
-        public Color GetColor(int posX, int posY)
+        public StoneColor GetColor(int posX, int posY)
         {
             return this.board.GetColor(posX, posY);
         }
@@ -63,12 +63,12 @@ namespace Kalmia.GoTextProtocol
 
         public string GetFinalScore()
         {
-            var result = this.board.GetGameResult(Color.Black);
+            var result = this.board.GetGameResult(StoneColor.Black);
             if (result == GameResult.NotOver)
                 return string.Empty;
 
-            var blackCount = this.board.GetDiscCount(Color.Black);
-            var whiteCount = this.board.GetDiscCount(Color.White);
+            var blackCount = this.board.GetDiscCount(StoneColor.Black);
+            var whiteCount = this.board.GetDiscCount(StoneColor.White);
             if (result == GameResult.Draw)
                 return "Draw";
             else
@@ -80,13 +80,13 @@ namespace Kalmia.GoTextProtocol
 
         public virtual string GetFinalResult()
         {
-            var result = this.board.GetGameResult(Color.Black);
+            var result = this.board.GetGameResult(StoneColor.Black);
             if (result == GameResult.NotOver)
                 return "Game is not over yet.";
 
             var resultMsg = new StringBuilder();
-            var blackCount = this.board.GetDiscCount(Color.Black);
-            var whiteCount = this.board.GetDiscCount(Color.White);
+            var blackCount = this.board.GetDiscCount(StoneColor.Black);
+            var whiteCount = this.board.GetDiscCount(StoneColor.White);
             if (result == GameResult.Draw)
                 resultMsg.Append("Draw. ");
             else
@@ -103,7 +103,7 @@ namespace Kalmia.GoTextProtocol
             return this.board.GetNextMoves().ToArray();
         }
 
-        public Color GetSideToMove()
+        public StoneColor GetSideToMove()
         {
             return this.board.SideToMove;
         }
@@ -117,8 +117,8 @@ namespace Kalmia.GoTextProtocol
         public abstract string LoadSGF(string path);
         public abstract string LoadSGF(string path, int posX, int posY);
         public abstract string LoadSGF(string path, int moveCount);
-        public abstract Move GenerateMove(Color color);
-        public abstract Move RegGenerateMove(Color color);
+        public abstract Move GenerateMove(StoneColor color);
+        public abstract Move RegGenerateMove(StoneColor color);
         public abstract void SetTime(int mainTime, int byoYomiTime, int byoYomiStones);
         public abstract void SendTimeLeft(int timeLeft, int byoYomiStonesLeft);
         public abstract string ExecuteOriginalCommand(string command, string[] args);

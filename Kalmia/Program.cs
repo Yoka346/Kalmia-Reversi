@@ -15,42 +15,6 @@ namespace Kalmia
 
         static void Main(string[] args)
         {
-            //var policy = new PolicyFuncEngine(new Evaluation.PolicyFunction(@"D:\PolicyFunctionOptimize\optimized_param.dat"));
-            //GTP.Mainloop(policy);
-
-            //SetCurrentDirectry();
-            //var config = new KalmiaConfig();
-            //config.EnablePondering = false;
-            //config.ReuseSubTree = true;
-            //config.SimulationCount = 3200;
-            //config.Temperature = 1.0f;
-            //config.ThreadNum = 8;
-            //config.UCBFactor = 0.25f;
-            //config.ValueFuncParamsFilePath = @"C:\Users\admin\source\repos\Kalmia\Params\kalmia_value_func.dat";
-            //var config1 = config;
-            //config1.ValueFuncParamsFilePath = @"C:\Users\admin\source\repos\Kalmia\Params\optimized_param.dat";
-            //var kalmia = new KalmiaEngine(config, "log0.txt");
-            //var kalmiaNew = new KalmiaEngine(config1, "log1.txt");
-            //var game = new EngineGame(kalmiaNew, kalmia);
-            //game.Start(400, true, "gamelog.txt");
-
-            //if (args.Length == 0)
-            //    args = new string[] { "--level", "5" };
-
-            //if (args.Length != 2 || args[0] != "--level")
-            //{
-            //    Console.WriteLine("invalid option.");
-            //    return;
-            //}
-
-            //var config = SelectLevel(args[1]);
-            //if (config == null)
-            //    return;
-            //(var gtpLogPath, var thoughtLogPath) = CreateFiles();
-            //var engine = new KalmiaEngine(config.Value, thoughtLogPath);
-            //GTP.Mainloop(engine, GTPCoordinateRule.Chess, gtpLogPath);
-
-            // Kalmia
             SetCurrentDirectry();
             if (args.Length == 0)
                 args = new string[] { "--level", "5" };
@@ -65,7 +29,7 @@ namespace Kalmia
             if (config == null)
                 return;
             (var gtpLogPath, var thoughtLogPath) = CreateFiles();
-            var engine = new KalmiaEngine(config.Value, thoughtLogPath);
+            var engine = new KalmiaEngine_Old(config.Value, thoughtLogPath);
             GTP.Mainloop(engine, GTPCoordinateRule.Chess, gtpLogPath);
         }
 
@@ -94,13 +58,13 @@ namespace Kalmia
             return (gtpLogPath, thoughtLogPath);
         }
 
-        static KalmiaConfig? SelectLevel(string level)
+        static KalmiaConfig_Old? SelectLevel(string level)
         {
             const string LEVEL_CONFIG_DIR = "level_config/";
 
             var path = $"{LEVEL_CONFIG_DIR}level{level}.json";
             if (File.Exists(path))
-                return new KalmiaConfig(File.ReadAllText(path));
+                return new KalmiaConfig_Old(File.ReadAllText(path));
             Console.WriteLine("invalid level.");
             return null;
         }

@@ -115,8 +115,8 @@ namespace Kalmia.Evaluation
             var buffer = new byte[sizeof(float) * Board.SQUARE_NUM];
             for (var stage = 0; stage < stageNum; stage++)
             {
-                var bw = weight[(int)Color.Black][stage] = new float[featureNum][];
-                var ww = weight[(int)Color.White][stage] = new float[featureNum][];
+                var bw = weight[(int)StoneColor.Black][stage] = new float[featureNum][];
+                var ww = weight[(int)StoneColor.White][stage] = new float[featureNum][];
                 for(var featureIdx = 0; featureIdx < bw.Length; featureIdx++)
                 {
                     var bbw = bw[featureIdx] = new float[Board.SQUARE_NUM];
@@ -138,7 +138,7 @@ namespace Kalmia.Evaluation
         public void SaveToFile(FileStream fs)
         {
             this.Header.WriteToStream(fs); ;
-            var weight = this.Weight[(int)Color.Black];
+            var weight = this.Weight[(int)StoneColor.Black];
             fs.WriteByte((byte)this.StageNum);
             for (var stage = 0; stage < this.StageNum; stage++)
                 for (var featureIdx = 0; featureIdx < weight.Length; featureIdx++)
@@ -241,7 +241,7 @@ namespace Kalmia.Evaluation
             }
         }
 
-        public float CalculateGradient(int stage, Color color, (Bitboard board, int outputIdx)[] batch, float[][] weightGrad)
+        public float CalculateGradient(int stage, StoneColor color, (Bitboard board, int outputIdx)[] batch, float[][] weightGrad)
         {
             var threadNum = Environment.ProcessorCount;
             var batchSizePerThread = batch.Length / threadNum;
@@ -283,7 +283,7 @@ namespace Kalmia.Evaluation
 
         public void ApplyGradientToBlackWeight(int stage, float[][] weightGrad, float[] rate)
         {
-            var weight = this.Weight[(int)Color.Black][stage];
+            var weight = this.Weight[(int)StoneColor.Black][stage];
             Parallel.For(0, weight.Length, featureIdx =>
             {
                 var w = weight[featureIdx];
@@ -323,8 +323,8 @@ namespace Kalmia.Evaluation
 
         public void CopyBlackWeightToWhiteWeight()
         {
-            var blackWeight = this.Weight[(int)Color.Black];
-            var whiteWeight = this.Weight[(int)Color.White];
+            var blackWeight = this.Weight[(int)StoneColor.Black];
+            var whiteWeight = this.Weight[(int)StoneColor.White];
             for (var stage = 0; stage < this.StageNum; stage++)
             {
                 var bw = blackWeight[stage];

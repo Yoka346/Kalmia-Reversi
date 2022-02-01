@@ -1,5 +1,5 @@
-﻿//#define SINGLE_THREAD
-
+﻿using Kalmia.Evaluation;
+using Kalmia.Reversi;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,468 +7,502 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Kalmia.Reversi;
-using Kalmia.Evaluation;
-
 namespace Kalmia.MCTS
 {
-    public struct PositionEval
+    enum EdgeLabel
     {
-        public BoardPosition Position { get; }
-        public float MoveProbability { get; }
-        public float Value { get; }
-        public int PlayoutCount { get; }
-        public ReadOnlyCollection<PositionEval> PV { get; }
+        NotVisited,
+        NotProved,
+        Win, 
+        Loss,
+        Draw
+    }
 
-        public PositionEval(Edge edge, float moveProb):this(edge, moveProb, new PositionEval[0]) { }
+    // To avoid random access to child node, Node object has Edge array,
+    // each Edge object is located sequentially in memory, and informations about each child node will be cached.
+    struct Edge   
+    {
+        public BoardPosition Pos;
+        public uint VisitCount;
+        public double RewardSum;
+        public EdgeLabel Label;
 
-        public PositionEval(Edge edge, float moveProb, IEnumerable<PositionEval> pv):this(edge, moveProb, new ReadOnlyCollection<PositionEval>(pv.ToArray())) { }
+        public double ExpReward { get { return (this.IsProved) ? EdgeLabelToReward() :this.RewardSum / this.VisitCount; } }
+        public bool IsVisited { get { return this.Label != EdgeLabel.NotVisited; } }
+        public bool IsProved { get { return this.Label != EdgeLabel.NotVisited && this.Label != EdgeLabel.NotProved; } }
+        public bool IsWin { get { return this.Label == EdgeLabel.Win; } }
+        public bool IsLoss { get { return this.Label == EdgeLabel.Loss; } }
+        public bool IsDraw { get { return this.Label == EdgeLabel.Draw; } }
 
-        public PositionEval(BoardPosition pos, float moveProb, float value, int playoutCount)
+        double EdgeLabelToReward()
         {
-            this.Position = pos;
-            this.MoveProbability = moveProb;
-            this.Value = value;
-            this.PlayoutCount = playoutCount;
-            this.PV = new ReadOnlyCollection<PositionEval>(new PositionEval[0]);
-        }
-
-        PositionEval(Edge edge, float moveProb, ReadOnlyCollection<PositionEval> pv)
-        {
-            this.Position = edge.NextPos;
-            this.MoveProbability = moveProb;
-            this.Value = edge.Value;
-            this.PlayoutCount = edge.VisitCount;
-            this.PV = pv;
-        }
-
-        public static IEnumerable<PositionEval> EnumerateMoveEvals(Edge[] edges)
-        {
-            var visitCountSum = edges.Sum(e => e.VisitCount);
-            for (var i = 0; i < edges.Length; i++)
-                yield return new PositionEval(edges[i], (edges[i].VisitCount != 0) ? (float)edges[i].VisitCount / visitCountSum : 0.0f);
+            return this.Label switch
+            {
+                EdgeLabel.Win => 1.0,
+                EdgeLabel.Loss => 0.0,
+                EdgeLabel.Draw => 0.5,
+                _ => throw new InvalidOperationException()
+            };
         }
     }
 
-    public class GameInfo
+    class Node
+    {
+        static uint _ObjectCount = 0u;
+        public static uint ObjectCount { get { return _ObjectCount; } }
+
+        public uint VisitCount;
+        public Edge[] Edges;     
+        public Node[] ChildNodes;
+        public int ChildNum { get { return this.Edges.Length; } }
+        public bool ChildNodesAreInitialized { get { return this.ChildNodes is null; } }
+        public bool IsExpanded { get { return this.Edges is not null; } }
+
+        public double ExpReward
+        {
+            get
+            {
+                var lossCount = 0;
+                var drawCount = 0;
+                var rewardSum = 0.0;
+                var visitCount = 0u;
+                foreach (var edge in this.Edges)
+                {
+                    if (edge.IsProved)
+                    {
+                        if (edge.IsWin)
+                            return 1.0;
+                        else if (edge.IsLoss)
+                            lossCount++;
+                        else
+                        {
+                            drawCount++;
+                            rewardSum += 0.5;
+                        }
+                    }
+                    else
+                        rewardSum += edge.RewardSum;
+                    visitCount += edge.VisitCount;
+                }
+
+                if (lossCount == this.ChildNum)
+                    return 0.0f;
+
+                return (lossCount + drawCount == this.ChildNum) ? 0.5 : rewardSum / visitCount;
+            }
+        }
+
+        public Node()
+        {
+            AtomicOperations.Increment(ref _ObjectCount);
+        }
+
+        ~Node()
+        {
+            AtomicOperations.Decrement(ref _ObjectCount);
+        }
+
+        public void InitChildNodes()
+        {
+            this.ChildNodes = new Node[this.Edges.Length];
+        }
+
+        public void CreateChildNode(int idx)
+        {
+            this.ChildNodes[idx] = new Node();
+        }
+    }
+
+    class Searcher
+    {
+        public GameInfo GameInfo;
+        public BoardPosition[] Positions;
+
+        public Searcher(GameInfo gameInfo)
+        {
+            this.GameInfo = new GameInfo(gameInfo);
+            this.Positions = new BoardPosition[Board.MAX_MOVE_COUNT];
+        }
+    }
+
+    class GameInfo
     {
         public FastBoard Board;
         public BoardFeature Feature;
-        public Color SideToMove { get { return this.Board.SideToMove; } }
 
-        public GameInfo()
+        public GameInfo(FastBoard board, BoardFeature feature)
         {
-            this.Board = new FastBoard();
-            this.Feature = new BoardFeature(this.Board);
+            this.Board = new FastBoard(board);
+            this.Feature = new BoardFeature(feature);
         }
 
-        public GameInfo(FastBoard board):this()
-        {
-            board.CopyTo(this.Board);
-            this.Feature = new BoardFeature(board);
-        }
+        public GameInfo(GameInfo gameInfo) : this(gameInfo.Board, gameInfo.Feature) { }
 
         public void Update(BoardPosition pos)
         {
-            var flipped = this.Board.Update(pos);
-            this.Feature.Update(pos, flipped);
+            this.Feature.Update(pos, this.Board.Update(pos));
         }
 
-        public void CopyTo(GameInfo dest)
+        public int GetNextPositions(BoardPosition[] positions)
         {
-            this.Board.CopyTo(dest.Board);
-            this.Feature.CopyTo(dest.Feature);
+            return this.Board.GetNextPositions(positions);
+        }
+
+        public GameResult GetGameResult()
+        {
+            return this.Board.GetGameResult();
         }
     }
 
+    public class UCTOptions
+    {
+        /// <summary>
+        /// One of the UCB parameter.
+        /// </summary>
+        public float UCBFactorInit { get; set; } = 0.35f;
+
+        /// <summary>
+        /// One of the UCB parameter.
+        /// </summary>
+        public float UCBFactorBase { get; set; } = 19652.0f;
+
+        /// <summary>
+        /// The virtual loss to prevent from searching a single node by multiple threads. 
+        /// </summary>
+        public uint VirtualLoss { get; set; } = 3u;
+
+        /// <summary>
+        /// The number of search threads.
+        /// </summary>
+        public int ThreadNum { get; set; } = Environment.ProcessorCount;
+
+        /// <summary>
+        /// The limitation of Node object count.
+        /// </summary>
+        public uint NodeNumLimit { get; set; } = (uint)2.0e+7;
+
+        /// <summary>
+        /// The limitation of managed memory usage.
+        /// </summary>
+        public long ManagedMemoryLimit { get; set; } = 8L * 1024L * 1024L * 1024L;     // 8GiB
+    }
+
+    public record class MoveEvaluation(Move Move, double MoveProbability, double Value, uint RolloutCount, ReadOnlyCollection<Move> PrincipalVariation);
+
+    public record class SearchInfo(MoveEvaluation RootEvaluation, ReadOnlyCollection<MoveEvaluation> ChildEvaluations);
+
     public class UCT
     {
-        readonly int THREAD_NUM;
-        readonly int MAX_NODE_COUNT;
-        readonly BoardPosition[][] POSITIONS;
-        readonly Xorshift[] RAND;
+        const float ROOT_EXP_REWARD_INIT = 1.0f;
+        const float MIDDLE_EXP_REWARD_INIT = 0.0f;
+
         readonly float UCB_FACTOR_INIT;
         readonly float UCB_FACTOR_BASE;
+        readonly uint VIRTUAL_LOSS;
         readonly ValueFunction VALUE_FUNC;
+        readonly int THREAD_NUM;
+        readonly uint NODE_NUM_LIMIT;
+        readonly long MANAGED_MEM_LIMIT;
 
-        int virtualLoss = 3;
-        Edge edgeToRoot;
+        Board rootState;
         Node root;
-        int nodeCount = 0;
-        int edgeCount = 0;
-        int playoutCount = 0;
-        int visitedEdgeCount = 0;
-        int npsCount = 0;   // nps = node per second
-        int ppsCount = 0;   // pps = playout per second
+        Edge dummyEdge;
+        int ppsCounter;
         int searchStartTime;
         int searchEndTime;
+        CancellationTokenSource cts;
 
-        public int Depth { get; private set; } = 0;
-        public int NodeCount { get { return this.nodeCount; } }
-        public int EdgeCount { get { return this.edgeCount; } }
-        public int VisitedEdgeCount { get { return this.visitedEdgeCount; } }
-        public int PlayoutCount { get { return this.playoutCount; } }
-        public float Nps { get { return (this.SearchEllapsedTime != 0) ? this.npsCount / (this.SearchEllapsedTime * 1.0e-3f) : 0; } }
-        public float Pps { get { return (this.SearchEllapsedTime != 0) ? this.ppsCount / (this.SearchEllapsedTime * 1.0e-3f) : 0; } }
         public bool IsSearching { get; private set; }
-        public int SearchEllapsedTime { get { return (this.IsSearching) ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
+        public float Pps { get { return this.ppsCounter / (this.SearchEllapsedMilliSec * 1.0e-3f); } }
+        public int SearchEllapsedMilliSec { get { return this.IsSearching ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
 
-        public int VirtualLoss
+        public SearchInfo SearchInfo
         {
-            get { return this.virtualLoss; }
-            set { if (value >= 0) this.virtualLoss = value; else throw new ArgumentOutOfRangeException("virtual loss must be positive or zero."); }
-        }
-
-        public UCT(ValueFunction valueFunc, float ucbFactorInit, float ucbFactorBase, int maxNodeCount, int threadNum)
-        {
-            this.MAX_NODE_COUNT = maxNodeCount;
-            this.VALUE_FUNC = valueFunc;
-            this.UCB_FACTOR_INIT = ucbFactorInit;
-            this.UCB_FACTOR_BASE = ucbFactorBase;
-            this.THREAD_NUM = threadNum;
-            this.POSITIONS = (from _ in Enumerable.Range(0, threadNum) select new BoardPosition[Board.MAX_MOVE_COUNT]).ToArray();
-            this.RAND = (from i in Enumerable.Range(0, threadNum) select new Xorshift()).ToArray();
-            this.edgeToRoot.NextPos = BoardPosition.Null;
-            this.root = new Node();
-            this.nodeCount = 1;
-        }
-
-        public PositionEval GetRootNodeEvaluation()
-        {
-            if (this.root == null)
-                return new PositionEval();
-            return new PositionEval(this.edgeToRoot.NextPos, 1.0f, (this.edgeToRoot.IsProved) ? 1.0f - this.edgeToRoot.Value : this.root.Value, this.root.VisitCount);
-        }
-
-        public IEnumerable<PositionEval> GetChildNodeEvaluations()
-        {
-            if (this.root == null || this.root.Edges == null)
-                yield break;
-
-            var edges = this.root.Edges;
-            var visitCountSum = edges.Sum(e => e.VisitCount);
-            for (var i = 0; i < edges.Length; i++)
-                yield return new PositionEval(edges[i], (edges[i].VisitCount != 0) ? (float)edges[i].VisitCount / visitCountSum : 0.0f, GetPV(i));
-        }
-
-        // Looks one move ahead, and if a child node which has same position as specified one is found, sets it to root,
-        // otherwise sets new Node object to root.
-        public void SetRoot(BoardPosition pos)      
-        {
-            if (pos != BoardPosition.Null && this.edgeToRoot.NextPos == pos)
-                return;
-
-            this.edgeToRoot.NextPos = pos;
-            if (this.root != null && this.root.Edges != null)
-                for (var i = 0; i < this.root.Edges.Length; i++)
+            get
+            {
+                lock (this.root)
                 {
-                    if (pos == this.root.Edges[i].NextPos && this.root.ChildNodes != null && this.root.ChildNodes[i] != null)
+                    if (this.root is null)
+                        return null;
+
+                    var rootEval = new MoveEvaluation(Move.Null, 1.0f, this.root.ExpReward, this.root.VisitCount, new ReadOnlyCollection<Move>(new Move[0]));
+                    var childEvals = new List<MoveEvaluation>();
+                    if (this.root.IsExpanded)
+                    {
+                        var edges = this.root.Edges;
+                        var childNodes = this.root.ChildNodes;
+                        var visitCountSum = edges.Sum(e => e.VisitCount);
+                        for(var i = 0; i < edges.Length; i++)
+                        {
+                            var move = new Move(this.rootState.SideToMove, edges[i].Pos);
+                            childEvals.Add(new MoveEvaluation(move, (visitCountSum != 0) ? (float)edges[i].VisitCount / visitCountSum : 1.0f / this.root.Edges.Length,
+                                                              (edges[i].VisitCount != 0) ? edges[i].RewardSum / edges[i].VisitCount : 0.0f, edges[i].VisitCount,
+                                                              (childNodes is not null && childNodes[i] is not null) ? GetPrincipalVariation(childNodes[i], edges[i], this.rootState.Opponent)
+                                                                                                                    : new ReadOnlyCollection<Move>(new Move[] { move })));
+                        }
+                    }
+                    return new SearchInfo(rootEval, new ReadOnlyCollection<MoveEvaluation>(childEvals));
+                }
+            }
+        }
+
+        public UCT(UCTOptions options, ValueFunction valueFunc)
+        {
+            this.UCB_FACTOR_INIT = options.UCBFactorInit;
+            this.UCB_FACTOR_BASE = options.UCBFactorBase;
+            this.VIRTUAL_LOSS = options.VirtualLoss;
+            this.VALUE_FUNC = new ValueFunction(valueFunc);
+            this.THREAD_NUM = options.ThreadNum;
+            this.NODE_NUM_LIMIT = options.NodeNumLimit;
+            this.MANAGED_MEM_LIMIT = options.ManagedMemoryLimit;
+        }
+
+        public void SetRoot(Board board)
+        {
+            this.rootState = new Board(board);
+            this.root = new Node();
+            InitRootChildNodes();
+        }
+
+        public bool TransitionToRootChildNode(Move move)
+        {
+            if (move.Color != this.rootState.SideToMove)
+                return false;
+
+            if (this.root is not null && this.root.Edges != null)
+                for (var i = 0; i < this.root.Edges.Length; i++)
+                    if (move.Pos == this.root.Edges[i].Pos && this.root.ChildNodes is not null && this.root.ChildNodes[i] is not null)
                     {
                         var prevRoot = this.root;
                         this.root = prevRoot.ChildNodes[i];
-                        this.edgeToRoot = prevRoot.Edges[i];
-                        this.root.VisitCount += edgeToRoot.VisitCount;
-                        this.root.ValueSum += edgeToRoot.VisitCount - edgeToRoot.ValueSum;
+                        this.root.VisitCount += prevRoot.Edges[i].VisitCount;
+                        this.rootState.Update(move);
+                        if (this.root.Edges is null)
+                            InitRootChildNodes();
                         prevRoot.ChildNodes[i] = null;
-                        DeleteNodes(prevRoot);
-                        return;
+                        return true;
                     }
-                }
-            this.edgeToRoot = new Edge();
-            this.edgeToRoot.NextPos = pos;
-            this.root = new Node();
-            nodeCount = 1;
-            edgeCount = 0;
-            visitedEdgeCount = 0;
+            return false;
         }
 
         public void Clear()
         {
-            this.edgeToRoot = new Edge();
-            this.edgeToRoot.NextPos = BoardPosition.Null;
-            this.edgeToRoot.SetUnknown();
-            this.root = new Node();
-            nodeCount = 1;
+            this.root = null;
+            this.rootState = null;
         }
 
-        public async Task SearchAsync(Board board, int count, int timeLimit, CancellationToken ct)
+        public void Search(uint searchCount)
         {
-            await Task.Run(() => Search(board, count, timeLimit, ct)).ConfigureAwait(false);
+            Search(searchCount, int.MaxValue);
         }
 
-        public void Search(Board board, int count, int timeLimit = int.MaxValue) 
+        public void Search(uint searchCount, int timeLimit)
         {
-            Search(board, count, timeLimit, new CancellationToken(false));
-        }
-
-        public void Search(Board board, int count, int timeLimit, CancellationToken ct)
-        {
-            if (this.root == null)
+            if (this.rootState == null)
                 throw new NullReferenceException("Set root before searching.");
 
-            var rootGameInfo = new GameInfo(new FastBoard(board));
-            var gameInfo = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new GameInfo()).ToArray();
-            this.searchStartTime = Environment.TickCount;
+            var board = this.rootState.GetFastBoard();
+            this.cts = new CancellationTokenSource();
+            this.ppsCounter = 0;
+            var searchers = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new Searcher(new GameInfo(new FastBoard(board), new BoardFeature(board)))).ToArray();
             this.IsSearching = true;
-            this.playoutCount = 0;
-            this.npsCount = 0;
-            this.ppsCount = 0;
-            this.Depth = 0;
-
-#if SINGLE_THREAD
-            for(var threadID = 0; threadID < this.THREAD_NUM; threadID++)
-            {
-                var gInfo = gameInfo[threadID];
-                for (var i = 0; !stop() && i < count / this.THREAD_NUM; i++)
-                {
-                    rootGameInfo.CopyTo(gInfo);
-                    SearchKernel(this.root, ref this.edgeToRoot, gInfo, 0, threadID);
-                }
-            }
-#else
-            Parallel.For(0, this.THREAD_NUM, (threadID) =>
-            {
-                var gInfo = gameInfo[threadID];
-                for (var i = 0; !stop() && i < count / this.THREAD_NUM; i++)
-                {
-                    rootGameInfo.CopyTo(gInfo);
-                    SearchKernel(this.root, ref this.edgeToRoot, gInfo, 0, threadID);
-                    if (this.nodeCount >= this.MAX_NODE_COUNT)
-                        break;
-                }
-            });
-#endif
-            rootGameInfo.CopyTo(gameInfo[0]);
-            for (var i = 0; !stop() && i < count % this.THREAD_NUM; i++)
-            {
-                rootGameInfo.CopyTo(gameInfo[0]);
-                SearchKernel(this.root, ref this.edgeToRoot, gameInfo[0], 0, 0);
-                if (this.nodeCount >= this.MAX_NODE_COUNT)
-                    break;
-            }
+            Parallel.For(0, this.THREAD_NUM, threadID => SearchKernel(searchers[threadID], searchCount / (uint)this.THREAD_NUM, timeLimit, this.cts.Token));
+            SearchKernel(searchers[0], searchCount % (uint)this.THREAD_NUM, timeLimit, this.cts.Token);
             this.IsSearching = false;
-            this.searchEndTime = Environment.TickCount;
-
-            bool stop()
-            {
-                return ct.IsCancellationRequested || Environment.TickCount - this.searchStartTime >= timeLimit;
-            }
+            this.cts.Dispose();
+            this.cts = null;
         }
 
-        public BoardPosition SelectMaxVisitCountAndMaxValuePosition()
+        public async Task SearchAsync(uint searchCount, int timeLimit)
         {
+            await Task.Run(() => Search(searchCount, timeLimit)).ConfigureAwait(false);
+        }
+
+        public void RequestToStopSearching()
+        {
+            if (this.IsSearching)
+                this.cts.Cancel();
+        }
+
+        void InitRootChildNodes()
+        {
+            if (this.root.Edges == null)
+                ExpandNode(new Searcher(new GameInfo(this.rootState.GetFastBoard(), null)), this.root);
+
             var edges = this.root.Edges;
-            var maxIdx = 0;
-            for (var i = 1; i < edges.Length; i++)
-                if (edges[i].VisitCount > edges[maxIdx].VisitCount)
-                    maxIdx = i;
-                else if (edges[i].VisitCount == edges[maxIdx].VisitCount && edges[i].Value > edges[maxIdx].Value)
-                    maxIdx = i;
-            return edges[maxIdx].NextPos;
+            if (this.root.ChildNodes == null)
+                this.root.InitChildNodes();
+
+            var childNodes = this.root.ChildNodes;
+            for (var i = 0; i < edges.Length; i++)
+                if (childNodes[i] == null)
+                    this.root.CreateChildNode(i);
         }
 
-        public BoardPosition SelectNextPositionByMoveProbability(float temperature)
+        ReadOnlyCollection<Move> GetPrincipalVariation(Node root, Edge edgeToRoot, StoneColor rootSide)
         {
+            var pv = new List<Move>();
+            addMovesToPV(root, edgeToRoot, rootSide);
+            return new ReadOnlyCollection<Move>(pv);
+
+            void addMovesToPV(Node node, Edge edge, StoneColor side)
+            {
+                if (node.Edges is null)
+                    return;
+
+                var maxIdx = 0;
+                for (var i = 0; i < node.Edges.Length; i++)
+                    if (node.Edges[i].VisitCount > node.Edges[maxIdx].VisitCount)
+                        maxIdx = i;
+                pv.Add(new Move(side, node.Edges[maxIdx].Pos));
+                if (node.ChildNodes is not null && node.ChildNodes[maxIdx] is not null)
+                    addMovesToPV(node.ChildNodes[maxIdx], node.Edges[maxIdx], FastBoard.GetOpponentColor(side));
+            }
+        }
+
+        void SearchKernel(Searcher threadArgs, uint searchCount, int timeLimit, CancellationToken ct)
+        {
+            var startTime = Environment.TickCount;
+            for (var i = 0u; i < searchCount && !stop(); i++)
+                VisitRootNode(threadArgs);
+
+            bool stop() { return Environment.TickCount - startTime < timeLimit && !ct.IsCancellationRequested && Node.ObjectCount < this.NODE_NUM_LIMIT && Environment.WorkingSet < this.MANAGED_MEM_LIMIT; }
+        }
+
+        void VisitRootNode(Searcher searcher)
+        {
+            int childIdx;
             var edges = this.root.Edges;
-            var prob = new float[edges.Length];
-            for (var i = 0; i < prob.Length; i++)
+
+            lock (this.root)
             {
-                var n = edges[i].VisitCount;
-                if (n != 0)
-                {
-                    for (var j = 0; j < prob.Length; j++)
-                        prob[i] += MathF.Pow((float)edges[j].VisitCount / n, 1.0f / temperature);
-                    prob[i] = 1.0f / prob[i];
-                }
-                else
-                    prob[i] = 0.0f;
+                childIdx = SelectRootChildNode();
+                AddVirtualLoss(this.root, childIdx);
             }
 
-            var drawIdx = 0;
-            var lossCount = 0;
-            var drawCount = 0;
-            for (var i = 1; i < edges.Length; i++)
+            searcher.GameInfo.Update(edges[childIdx].Pos);
+            if (edges[childIdx].IsVisited)
             {
-                var edge = edges[i];
-                if (!edge.IsUnknown)
-                    if (edge.IsWin)
-                    {
-                        edgeToRoot.Label = EdgeLabel.Loss;
-                        return edge.NextPos;
-                    }
-                    else if (edge.IsLoss)
-                    {
-                        lossCount++;
-                        continue;
-                    }
-                    else
-                    {
-                        drawIdx = i;
-                        drawCount++;
-                    }
-            }
+                if (!this.root.ChildNodesAreInitialized)
+                    this.root.InitChildNodes();
 
-            if (lossCount == this.root.ChildNum)
-                this.edgeToRoot.Label = EdgeLabel.Win;
-            else if (lossCount + drawCount == this.root.ChildNum)
-            {
-                this.edgeToRoot.Label = EdgeLabel.Draw;
-                return edges[drawIdx].NextPos;
+                if (this.root.ChildNodes[childIdx] is null)
+                    this.root.CreateChildNode(childIdx);
+                UpdateResult(this.root, childIdx, VisitNode(searcher, this.root.ChildNodes[childIdx], ref this.root.Edges[childIdx]));
             }
-
-            var sum = 0.0f;
-            var arrow = this.RAND[0].NextFloat();
-            var k = -1;
-            do
-                sum += prob[++k];
-            while (sum < arrow);
-            return edges[k].NextPos;
+            else
+                UpdateResult(this.root, childIdx, Rollout(searcher.GameInfo.Feature));
         }
 
-        void DeleteNodes(Node node)
+        float VisitNode(Searcher searcher, Node currentNode, ref Edge edgeToCurrentNode)
         {
-            this.nodeCount--;
-            if (node.Edges != null)
-            {
-                foreach (var edge in node.Edges)
-                {
-                    this.edgeCount--;
-                    if (edge.VisitCount != 0)
-                        this.visitedEdgeCount--;
-                }
-            }
-            node.Edges = null;
-            if (node.ChildNodes == null)
-                return;
-            for (var i = 0; i < node.ChildNodes.Length; i++)
-            {
-                var childNode = node.ChildNodes[i];
-                if (childNode != null)
-                    DeleteNodes(childNode);
-                node.ChildNodes[i] = null;
-            }
-        }
-
-        float SearchKernel(Node currentNode, ref Edge edgeToCurrentNode, GameInfo currentGameInfo, int depth, int threadID)     // goes down to leaf node and back up to root node with updating score
-        {
-            var currentBoard = currentGameInfo.Board;
-            int childNodeIdx;
-            float value;
-
-            if (depth > this.Depth)
-                this.Depth++;
-
-            var lockTaken = false;
+            int childIdx;
+            float reward;
+            var nodeLocked = false;
             try
             {
-                Monitor.Enter(currentNode, ref lockTaken);
-                if (currentNode.Edges == null)      // not expanded
-                {
-                    var positions = this.POSITIONS[threadID];
-                    var moveNum = currentBoard.GetNextPositions(positions);
-                    currentNode.Expand(positions, moveNum);
-                    AtomicOperations.Add(ref this.edgeCount, moveNum);
-                }
+                Monitor.Enter(currentNode, ref nodeLocked);
+                if (currentNode.IsExpanded)
+                    ExpandNode(searcher, currentNode);
 
-                childNodeIdx = SelectChildNode(currentNode, ref edgeToCurrentNode);
-                AddVirtualLoss(currentNode, childNodeIdx); 
                 var edges = currentNode.Edges;
-                var edge = edges[childNodeIdx];
-                currentGameInfo.Update(edge.NextPos);
+                childIdx = SelectChildNode(currentNode, ref edgeToCurrentNode);
+                AddVirtualLoss(currentNode, childIdx);
+                searcher.GameInfo.Update(edges[childIdx].Pos);
 
-                if (!edge.IsLabeled)
+                if (!edges[childIdx].IsVisited)
+                    CheckGameResult(ref edges[childIdx], searcher.GameInfo);
+
+                var edge = edges[childIdx];
+                if (!edge.IsProved)
                 {
-                    LabelEdge(ref edges[childNodeIdx], currentBoard);
-                    edge = edges[childNodeIdx];
-                    AtomicOperations.Increment(ref this.visitedEdgeCount);
-                }
-                
-                if (edge.IsUnknown)
-                {
-                    if (edge.VisitCount >= 1)     // current node is not a leaf node 
+                    if (edge.IsVisited)    // child node is not a leaf node.
                     {
                         if (currentNode.ChildNodes == null)
                             currentNode.InitChildNodes();
-                        if (currentNode.ChildNodes[childNodeIdx] == null)
-                        {
-                            currentNode.CreateChildNode(childNodeIdx);
-                            AtomicOperations.Increment(ref this.nodeCount);
-                            AtomicOperations.Increment(ref this.npsCount);
-                        }
+
+                        if (currentNode.ChildNodes[childIdx] == null)
+                            currentNode.CreateChildNode(childIdx);
                         Monitor.Exit(currentNode);
-                        lockTaken = false;
-                        value = SearchKernel(currentNode.ChildNodes[childNodeIdx], ref edges[childNodeIdx], currentGameInfo, ++depth, threadID);
+                        nodeLocked = false;
+                        reward = VisitNode(searcher, currentNode.ChildNodes[childIdx], ref edge);
                     }
-                    else    // current node is a leaf node
+                    else    // child node is a leaf node.
                     {
                         Monitor.Exit(currentNode);
-                        lockTaken = false;
-                        value = 1.0f - this.VALUE_FUNC.F(currentGameInfo.Feature);
-                        AtomicOperations.Increment(ref this.playoutCount);
-                        AtomicOperations.Increment(ref this.ppsCount);
+                        nodeLocked = false;
+                        reward = Rollout(searcher.GameInfo.Feature);
                     }
                 }
-                else    // current node was proved
+                else    // child node is proved node.
                 {
                     Monitor.Exit(currentNode);
-                    value = currentNode.Edges[childNodeIdx].Value;
+                    nodeLocked = false;
+                    reward = (float)edge.ExpReward;
                 }
             }
             catch
             {
-                if (lockTaken)
+                if (nodeLocked)
                     Monitor.Exit(currentNode);
                 throw;
             }
 
-            UpdateResult(currentNode, childNodeIdx, value);
-            return 1.0f - value;
+            UpdateResult(currentNode, childIdx, reward);
+            return 1.0f - reward;
         }
 
-        void AddVirtualLoss(Node node, int childNodeIdx)
+        void ExpandNode(Searcher searcher, Node node)
         {
-            AtomicOperations.Add(ref node.VirtualLossSum, this.virtualLoss);
-            AtomicOperations.Add(ref node.Edges[childNodeIdx].VirtualLossSum, this.virtualLoss);
+            var positions = searcher.Positions;
+            var edges = node.Edges = new Edge[searcher.GameInfo.GetNextPositions(positions)];
+            for (var i = 0; i < edges.Length; i++)
+                edges[i].Pos = positions[i];
         }
 
-        int SelectChildNode(Node parentNode, ref Edge edgeToParentNode)
+        int SelectRootChildNode()
         {
-            // to avoid division by zero or log(0), calculates UCB score assuming lost the game at least one time.
-            var childNum = parentNode.ChildNum;
+            var edges = this.root.Edges;
             var maxIdx = 0;
             var maxScore = float.NegativeInfinity;
-            var sum = parentNode.VisitCount + parentNode.VirtualLossSum + parentNode.Edges.Length;
-            var twoLogSum = 2.0f * FastMath.Log(sum);
+            var sum = this.root.VisitCount;
+            var logSum = FastMath.Log(sum);
             var cBase = this.UCB_FACTOR_BASE;
             var c = this.UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
+            var defaultU = (sum == 0) ? 0.0f : logSum;
 
             var lossCount = 0;
             var drawCount = 0;
-            var drawEdgeIdx = 0;
-            for (var i = 0; i < childNum; i++)
+            var drawIdx = 0;
+            for(var i = 0; i < edges.Length; i++)
             {
-                if (parentNode.Edges[i].IsWin)
+                var edge = edges[i];
+                if (edge.IsWin)
+                    return i;
+                else if (edge.IsLoss)
                 {
-                    edgeToParentNode.SetLoss();
-                    return i;       // definitely select win
-                }
-                else if (parentNode.Edges[i].IsLoss)
-                {
-                    lossCount++;        // do not select loss
+                    lossCount++;
                     continue;
-                }
-                else if (parentNode.Edges[i].IsDraw)
+                }else if (edge.IsDraw)
                 {
                     drawCount++;
-                    drawEdgeIdx = i;
+                    drawIdx = i;
                 }
 
-                var edge = parentNode.Edges[i];
-                var n = edge.VisitCount + edge.VirtualLossSum + 1;
-                var q = parentNode.Edges[i].ValueSum / n;
-                var u = c * MathF.Sqrt(twoLogSum / n);
-                var score = q + u;
+                var n = edge.VisitCount;
+                float q, u;
+                if(n == 0)
+                {
+                    q = ROOT_EXP_REWARD_INIT;
+                    u = defaultU;
+                }
+                else
+                {
+                    q = (float)edge.ExpReward;
+                    u = c * MathF.Sqrt(logSum / n);
+                }
 
+                var score = q + u;
                 if (score > maxScore)
                 {
                     maxScore = score;
@@ -476,92 +510,102 @@ namespace Kalmia.MCTS
                 }
             }
 
-            if (lossCount == childNum)
-                edgeToParentNode.SetWin();
-            else if (lossCount + drawCount == childNum)
+            return (lossCount + drawCount == edges.Length) ? drawIdx : maxIdx;
+        }
+
+        int SelectChildNode(Node parentNode, ref Edge edgeToParentNode)
+        {
+            var edges = parentNode.Edges;
+            var maxIdx = 0;
+            var maxScore = float.NegativeInfinity;
+            var sum = parentNode.VisitCount;
+            var logSum = FastMath.Log(sum);
+            var cBase = this.UCB_FACTOR_BASE;
+            var c = this.UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
+            var defaultU = (sum == 0) ? 0.0f : logSum;
+
+            var lossCount = 0;
+            var drawCount = 0;
+            var drawIdx = 0;
+            for (var i = 0; i < edges.Length; i++)
             {
-                edgeToParentNode.SetDraw();
-                return drawEdgeIdx;     // when other nodes are loss, it is better to select draw.
+                var edge = edges[i];
+                if (edge.IsWin)
+                {
+                    edgeToParentNode.Label = EdgeLabel.Loss;    // when at least one child node is win, parent node is win, so edge to parent node is lose. (current player's loss means opponent player's win) 
+                    return i;   // definitely select win node
+                }
+                else if (edge.IsLoss)
+                {
+                    lossCount++;
+                    continue;   // do not select loss node
+                }
+                else if (edge.IsDraw)
+                {
+                    drawCount++;
+                    drawIdx = i;
+                }
+
+                var n = edge.VisitCount;
+                float q, u;
+                if (n == 0)
+                {
+                    q = MIDDLE_EXP_REWARD_INIT;
+                    u = defaultU;
+                }
+                else
+                {
+                    q = (float)edge.ExpReward;
+                    u = c * MathF.Sqrt(logSum / n);
+                }
+
+                var score = q + u;
+                if (score > maxScore)
+                {
+                    maxScore = score;
+                    maxIdx = i;
+                }
+            }
+
+            if (lossCount == edges.Length)
+                edgeToParentNode.Label = EdgeLabel.Win;     // when all child nodes are loss, parent node is loss, so edge to parent node is win. 
+            else if (lossCount + drawCount == edges.Length)
+            {
+                edgeToParentNode.Label = EdgeLabel.Draw;
+                return drawIdx;     // when other nodes are loss, it is better to select draw.
             }
             return maxIdx;
         }
 
-        void UpdateResult(Node node, int childNodeIdx, float value)
+        float Rollout(BoardFeature feature)
         {
-            AtomicOperations.Increment(ref node.Edges[childNodeIdx].VisitCount);
-            AtomicOperations.Add(ref node.Edges[childNodeIdx].VirtualLossSum, -this.virtualLoss);
-            AtomicOperations.Add(ref node.Edges[childNodeIdx].ValueSum, value);
-            AtomicOperations.Increment(ref node.VisitCount);
-            AtomicOperations.Add(ref node.VirtualLossSum, -this.virtualLoss);
-            AtomicOperations.Add(ref node.ValueSum, value);
+            AtomicOperations.Increment(ref this.ppsCounter);
+            return 1.0f - this.VALUE_FUNC.F(feature);
         }
 
-        static void LabelEdge(ref Edge edge, FastBoard currentBoard)
+        void UpdateResult(Node node, int childNodeIdx, float reward)
         {
-            switch (currentBoard.GetGameResult())
-            {
-                case GameResult.NotOver:
-                    edge.SetUnknown();
-                    return;
-
-                case GameResult.Win:
-                    edge.SetLoss();
-                    return;
-
-                case GameResult.Loss:
-                    edge.SetWin();
-                    return;
-
-                case GameResult.Draw:
-                    edge.SetDraw();
-                    return;
-            }
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, 1 - this.VIRTUAL_LOSS);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].RewardSum, reward);
+            AtomicOperations.Add(ref node.VisitCount, 1 - this.VIRTUAL_LOSS);
         }
 
-        static int SelectBestChildNode(Node node)   // best node means the node which has the largest visit count
+        void AddVirtualLoss(Node node, int childNodeIdx)
         {
-            var edges = node.Edges;
-            var bestEdgeIdx = 0;
-            var lossCount = 0;
-            var drawCount = 0;
-            for (var i = 1; i < edges.Length; i++)
-            {
-                var edge = edges[i];
-                if (!edge.IsUnknown)
-                    if (edge.IsWin)
-                        return i;
-                    else if (edge.IsLoss)
-                    {
-                        lossCount++;
-                        continue;
-                    }
-                    else
-                        drawCount++;
-
-                if (edge.VisitCount > edges[bestEdgeIdx].VisitCount)
-                    bestEdgeIdx = i;
-            }
-            return bestEdgeIdx;
+            node.VisitCount += this.VIRTUAL_LOSS;
+            node.Edges[childNodeIdx].VisitCount += this.VIRTUAL_LOSS;
         }
 
-        IEnumerable<PositionEval> GetPV(int childIdx)    // PV = Principal Variation
+        static void CheckGameResult(ref Edge edge, GameInfo gameInfo)
         {
-            if (this.root == null || this.root.ChildNodes == null || this.root.ChildNodes[childIdx] == null)
-                yield break;
-
-            var node = this.root.ChildNodes[childIdx];
-            while (node != null && node.Edges != null)
+            edge.Label = gameInfo.GetGameResult() switch
             {
-                var idx = SelectBestChildNode(node);
-                var edge = node.Edges[idx];
-                var vistCountSum = node.Edges.Sum(e => e.VisitCount);
-                yield return new PositionEval(edge, edge.VisitCount / vistCountSum);
-
-                if (node.ChildNodes != null && node.ChildNodes[idx] != null)
-                    node = node.ChildNodes[idx];
-                else
-                    break;
-            }
+                GameResult.NotOver => EdgeLabel.NotProved,
+                GameResult.Win => EdgeLabel.Loss,
+                GameResult.Loss => EdgeLabel.Win,
+                GameResult.Draw => EdgeLabel.Draw,
+                _ => throw new InvalidOperationException()
+            };
         }
     }
 }

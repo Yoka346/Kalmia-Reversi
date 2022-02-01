@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+using Kalmia;
 using Kalmia.Reversi;
 using static Kalmia.Reversi.Board;
 
@@ -31,6 +32,18 @@ namespace KalmiaTest
                 boardTest.Update(nextMove);
                 AssertDiscsAreEqual(boardTest, board);
             }
+        }
+
+        [TestMethod]
+        public void GetHashCode_Test()
+        {
+            var rand = new Xorshift32();
+            var p = ((ulong)rand.Next() << 32) | rand.Next();
+            var o = ((ulong)rand.Next() << 32) | rand.Next();
+            var pAndO = p & o;
+            p ^= pAndO;
+            var board = new FastBoard(Color.Black, new Bitboard(p, o));
+            Assert.AreEqual(board.GetHashCode_CPU(), board.GetHashCode());
         }
 
         void AssertMovesAreEqual(SlowBoard board, Move[] expected, Move[] actual, int moveCount)

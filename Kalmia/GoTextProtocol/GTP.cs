@@ -245,7 +245,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == Color.Empty)
+            if (color == StoneColor.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -275,7 +275,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == Color.Empty)
+            if (color == StoneColor.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -326,7 +326,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if(color == Color.Empty)
+            if(color == StoneColor.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -380,14 +380,14 @@ namespace Kalmia.GoTextProtocol
                 GTPFailure(id, "invalid option");
                 return;
             }
-            var move = new Move(Color.Black, args[0]);
+            var move = new Move(StoneColor.Black, args[0]);
             var color = Engine.GetColor(move.PosX, move.PosY);
-            if(color == Color.Empty)
+            if(color == StoneColor.Empty)
             {
                 GTPSuccess(id, "empty");
                 return;
             }
-            GTPSuccess(id, (color == Color.Black) ? "black" : "white");
+            GTPSuccess(id, (color == StoneColor.Black) ? "black" : "white");
         }
 
         static void ExecuteRegGenMoveCommand(int id, string[] args)
@@ -398,7 +398,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == Color.Empty)
+            if (color == StoneColor.Empty)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -463,7 +463,7 @@ namespace Kalmia.GoTextProtocol
 
         static void ExecuteRulesSideToMoveCommand(int id, string[] args)
         {
-            GTPSuccess(id, (Engine.GetSideToMove() == Color.Black) ? "black" : "white");
+            GTPSuccess(id, (Engine.GetSideToMove() == StoneColor.Black) ? "black" : "white");
         }
 
         static void ExecuteRulesFinalResult(int id, string[] args)
@@ -489,14 +489,14 @@ namespace Kalmia.GoTextProtocol
             return splitedCmd[cmdNameIdx];
         }
 
-        static Color ParseColor(string str)
+        static StoneColor ParseColor(string str)
         {
             str = str.ToLower();
             if (str == "b" || str == "black")
-                return Color.Black;
+                return StoneColor.Black;
             else if (str == "w" || str == "white")
-                return Color.White;
-            return Color.Empty;
+                return StoneColor.White;
+            return StoneColor.Empty;
         }
 
         static string MoveToString(Move move)

@@ -13,13 +13,13 @@ namespace Kalmia.MCTS
         Unknown
     }
 
-    public struct Edge     // This struct has some information about child node. It is based on idea that reducing direct access between parent node and child node. 
+    public struct Edge_old     // This struct has some information about child node. It is based on idea that reducing direct access between parent node and child node. 
     {
         public int VisitCount;
         public int VirtualLossSum;
         public float MoveProbability;
         public float ValueSum;
-        public BoardPosition NextPos;
+        public BoardPosition Pos;
         public EdgeLabel Label;
         public float Value { get { return (this.IsLabeled && !this.IsUnknown) ? GetValueFromEdgeLabel(this.Label) : this.ValueSum / this.VisitCount; } }
         public bool IsWin { get { return this.Label == EdgeLabel.Win; } }
@@ -66,41 +66,41 @@ namespace Kalmia.MCTS
         }
     }
 
-    public class Node
+    public class Node_old
     {
         public int VisitCount = 0;
         public int VirtualLossSum = 0;
         public float ValueSum = 0.0f;
         public float Value { get { return this.ValueSum / this.VisitCount; } }
-        public Node[] ChildNodes;
-        public Edge[] Edges;
+        public Node_old[] ChildNodes;
+        public Edge_old[] Edges;
         public int ChildNum { get { return this.Edges.Length; } }
 
         public void Expand(BoardPosition[] positions, int posNum)
         {
-            this.Edges = new Edge[posNum];
+            this.Edges = new Edge_old[posNum];
             for (var i = 0; i < this.Edges.Length; i++)
-                this.Edges[i].NextPos = positions[i];
+                this.Edges[i].Pos = positions[i];
         }
 
         public void Expand(BoardPosition[] positions, float[] moveProb, int posNum)
         {
-            this.Edges = new Edge[posNum];
+            this.Edges = new Edge_old[posNum];
             for (var i = 0; i < this.Edges.Length; i++)
             {
-                this.Edges[i].NextPos = positions[i];
+                this.Edges[i].Pos = positions[i];
                 this.Edges[i].MoveProbability = moveProb[i];
             }
         }
 
-        public void CreateChildNode(int idx)
+        public Node_old CreateChildNode(int idx)
         {
-            this.ChildNodes[idx] = new Node();
+            return this.ChildNodes[idx] = new Node_old();
         }
 
         public void InitChildNodes()
         {
-            this.ChildNodes = new Node[this.Edges.Length];
+            this.ChildNodes = new Node_old[this.Edges.Length];
         }
     }
 }

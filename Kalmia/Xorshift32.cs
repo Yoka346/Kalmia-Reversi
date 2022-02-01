@@ -2,20 +2,20 @@
 
 namespace Kalmia
 {
-    public class Xorshift
+    public class Xorshift32
     {
-        static readonly Xorshift SEED_GENERATOR = new Xorshift((uint)Environment.TickCount);
+        static readonly Xorshift32 SEED_GENERATOR = new Xorshift32((uint)Environment.TickCount);
         static readonly object LOCK_OBJ = new object();
 
         uint y;
 
-        public Xorshift()
+        public Xorshift32()
         {
             lock (LOCK_OBJ)
                 this.y = SEED_GENERATOR.Next();
         }
 
-        public Xorshift(uint seed)
+        public Xorshift32(uint seed)
         {
             this.y = seed;
         }

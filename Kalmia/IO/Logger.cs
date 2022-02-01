@@ -11,11 +11,11 @@ namespace Kalmia.IO
 
         public bool IsDisposed { get; private set; } = false;
 
-        public Logger(string path, bool outputToStdOut)
+        public Logger(string path, bool outputToStdErr)
         {
             this.logFs = new FileStream(path, FileMode.Create, FileAccess.Write);
             this.logSw = new StreamWriter(this.logFs);
-            this.outputToStdOut = outputToStdOut;
+            this.outputToStdOut = outputToStdErr;
         }
 
         public void Dispose()
@@ -23,7 +23,6 @@ namespace Kalmia.IO
             this.logSw.Close();
             this.logFs.Close();
             this.IsDisposed = true;
-            GC.SuppressFinalize(this);
         }
 
         public void WriteLine()
@@ -40,7 +39,7 @@ namespace Kalmia.IO
         {
             this.logSw.WriteLine(str);
             if (this.outputToStdOut)
-                Console.WriteLine(str);
+                Console.Error.WriteLine(str);
             this.logSw.Flush();
         }
 
@@ -48,7 +47,7 @@ namespace Kalmia.IO
         {
             this.logSw.Write(str);
             if (this.outputToStdOut)
-                Console.Write(str);
+                Console.Error.Write(str);
             this.logSw.Flush();
         }
     }

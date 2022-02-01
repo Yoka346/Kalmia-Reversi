@@ -25,9 +25,9 @@ namespace Kalmia
                 engine0.ClearBoard();
                 engine1.ClearBoard();
                 (var currentEngine, var opponentEngine) = (switchSideToMove && gameNum % 2 == 1) ? (engine1, engine0) : (engine0, engine1);
-                var board = new Board(Color.Black, InitialBoardState.Cross);
+                var board = new Board(StoneColor.Black, InitialBoardState.Cross);
                 GameResult result;
-                while((result = board.GetGameResult(Color.Black)) == GameResult.NotOver)
+                while((result = board.GetGameResult(StoneColor.Black)) == GameResult.NotOver)
                 {
                     var move = currentEngine.GenerateMove(board.SideToMove);
                     if (!board.IsLegalMove(move))
