@@ -17,7 +17,7 @@ namespace Kalmia
 
         public void Start(int count, bool switchSideToMove, string logFilePath)
         {
-            var logger = new Logger(logFilePath, true);
+            var logger = new Logger(logFilePath, System.Console.OpenStandardOutput());
             (var engine0WinCount, var engine1WinCount, var drawCount) = (0, 0, 0);
             for(var gameNum = 0; gameNum < count; gameNum++)
             {
@@ -25,9 +25,9 @@ namespace Kalmia
                 engine0.ClearBoard();
                 engine1.ClearBoard();
                 (var currentEngine, var opponentEngine) = (switchSideToMove && gameNum % 2 == 1) ? (engine1, engine0) : (engine0, engine1);
-                var board = new Board(StoneColor.Black, InitialBoardState.Cross);
+                var board = new Board(DiscColor.Black, InitialBoardState.Cross);
                 GameResult result;
-                while((result = board.GetGameResult(StoneColor.Black)) == GameResult.NotOver)
+                while((result = board.GetGameResult(DiscColor.Black)) == GameResult.NotOver)
                 {
                     var move = currentEngine.GenerateMove(board.SideToMove);
                     if (!board.IsLegalMove(move))

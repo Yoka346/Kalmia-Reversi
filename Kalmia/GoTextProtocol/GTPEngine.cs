@@ -3,6 +3,7 @@ using System.Text;
 using System.Linq;
 
 using Kalmia.Reversi;
+using Kalmia.IO;
 
 namespace Kalmia.GoTextProtocol
 {
@@ -16,7 +17,7 @@ namespace Kalmia.GoTextProtocol
         {
             this.NAME = name;
             this.VERSION = version;
-            this.board = new Board(StoneColor.Black, InitialBoardState.Cross);
+            this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
         }
 
         public abstract void Quit();
@@ -38,10 +39,10 @@ namespace Kalmia.GoTextProtocol
 
         public virtual void ClearBoard()
         {
-            this.board = new Board(StoneColor.Black, InitialBoardState.Cross);
+            this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
         }
 
-        public StoneColor GetColor(int posX, int posY)
+        public DiscColor GetColor(int posX, int posY)
         {
             return this.board.GetColor(posX, posY);
         }
@@ -63,12 +64,12 @@ namespace Kalmia.GoTextProtocol
 
         public string GetFinalScore()
         {
-            var result = this.board.GetGameResult(StoneColor.Black);
+            var result = this.board.GetGameResult(DiscColor.Black);
             if (result == GameResult.NotOver)
                 return string.Empty;
 
-            var blackCount = this.board.GetDiscCount(StoneColor.Black);
-            var whiteCount = this.board.GetDiscCount(StoneColor.White);
+            var blackCount = this.board.GetDiscCount(DiscColor.Black);
+            var whiteCount = this.board.GetDiscCount(DiscColor.White);
             if (result == GameResult.Draw)
                 return "Draw";
             else
@@ -80,13 +81,13 @@ namespace Kalmia.GoTextProtocol
 
         public virtual string GetFinalResult()
         {
-            var result = this.board.GetGameResult(StoneColor.Black);
+            var result = this.board.GetGameResult(DiscColor.Black);
             if (result == GameResult.NotOver)
                 return "Game is not over yet.";
 
             var resultMsg = new StringBuilder();
-            var blackCount = this.board.GetDiscCount(StoneColor.Black);
-            var whiteCount = this.board.GetDiscCount(StoneColor.White);
+            var blackCount = this.board.GetDiscCount(DiscColor.Black);
+            var whiteCount = this.board.GetDiscCount(DiscColor.White);
             if (result == GameResult.Draw)
                 resultMsg.Append("Draw. ");
             else
@@ -103,7 +104,7 @@ namespace Kalmia.GoTextProtocol
             return this.board.GetNextMoves().ToArray();
         }
 
-        public StoneColor GetSideToMove()
+        public DiscColor GetSideToMove()
         {
             return this.board.SideToMove;
         }
@@ -113,14 +114,64 @@ namespace Kalmia.GoTextProtocol
             return new string[0];
         }
 
+        public virtual string ExecuteOriginalCommand(string command, string[] args)
+        {
+            throw new GTPException("not supported.");
+        }
+
+        public virtual string LoadSGF(string path)
+        {
+            return LoadSGF(path, int.MaxValue, BoardPosition.Null);
+        }
+
+        public virtual string LoadSGF(string path, int posX, int posY)
+        {
+            return LoadSGF(path, int.MaxValue, (BoardPosition)(posX + posY * Board.BOARD_SIZE));
+        }
+
+        public virtual string LoadSGF(string path, int moveCount) 
+        {
+            return LoadSGF(path, moveCount, BoardPosition.Null);
+        }
+
+        string LoadSGF(string path, int moveCount, BoardPosition pos)
+        {
+            this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            var node = SGFFile.LoadSGFFile(path);
+            var currentMoveCount = 0;
+            while (true)
+            {
+                var hasMove = node.HasMove(this.board.SideToMove);
+                if (!hasMove && node.HasMove(this.board.Opponent))
+                {
+                    this.board.SwitchSideToMove();
+                    hasMove = true;
+                }
+
+                if (hasMove)
+                {
+                    if (++currentMoveCount == moveCount)
+                        break;
+
+                    var sgfCoord = node.GetMove(this.board.SideToMove);
+                    var move = new Move(this.board.SideToMove, SGFFile.SGFCoordinateToBoardPos(sgfCoord));
+                    if (move.Pos == pos)
+                        break;
+                    if (!this.board.Update(move))
+                        throw new GTPException("specified SGF file contains invalid move.");
+                }
+
+                if (node.ChildNodes.Count == 0)
+                    break;
+                node = node.ChildNodes[0];
+            }
+            return this.board.SideToMove.ToString();
+        }
+
         public abstract bool SetBoardSize(int size);
-        public abstract string LoadSGF(string path);
-        public abstract string LoadSGF(string path, int posX, int posY);
-        public abstract string LoadSGF(string path, int moveCount);
-        public abstract Move GenerateMove(StoneColor color);
-        public abstract Move RegGenerateMove(StoneColor color);
+        public abstract Move GenerateMove(DiscColor color);
+        public abstract Move RegGenerateMove(DiscColor color);
         public abstract void SetTime(int mainTime, int byoYomiTime, int byoYomiStones);
         public abstract void SendTimeLeft(int timeLeft, int byoYomiStonesLeft);
-        public abstract string ExecuteOriginalCommand(string command, string[] args);
     }
 }

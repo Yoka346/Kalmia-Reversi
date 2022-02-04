@@ -109,16 +109,16 @@ namespace Kalmia.Reversi
         }
 
         Bitboard bitboard;
-        public StoneColor SideToMove { get; private set; }
-        public StoneColor Opponent { get { return this.SideToMove ^ StoneColor.White; } }
+        public DiscColor SideToMove { get; private set; }
+        public DiscColor Opponent { get { return this.SideToMove ^ DiscColor.White; } }
         bool mobilityWasCalculated = false;
         ulong mobility;
 
-        public FastBoard():this(new Board(StoneColor.Black, InitialBoardState.Cross)) { }
+        public FastBoard():this(new Board(DiscColor.Black, InitialBoardState.Cross)) { }
 
         public FastBoard(Board board) : this(board.SideToMove, board.GetBitBoard()) { }
 
-        public FastBoard(StoneColor sideToMove, Bitboard bitboard)
+        public FastBoard(DiscColor sideToMove, Bitboard bitboard)
         {
             Init(sideToMove, bitboard);
         }
@@ -131,12 +131,12 @@ namespace Kalmia.Reversi
             this.mobility = board.mobility;
         }
 
-        public static StoneColor GetOpponentColor(StoneColor color)
+        public static DiscColor GetOpponentColor(DiscColor color)
         {
-            return color ^ StoneColor.White;
+            return color ^ DiscColor.White;
         }
 
-        public void Init(StoneColor sideToMove, Bitboard bitboard)
+        public void Init(DiscColor sideToMove, Bitboard bitboard)
         {
             this.bitboard = bitboard;
             this.SideToMove = sideToMove;
@@ -178,12 +178,12 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public StoneColor GetDiscColor(BoardPosition pos)
+        public DiscColor GetDiscColor(BoardPosition pos)
         {
             var x = (int)pos;
             var sideToMove = (ulong)this.SideToMove + 1UL;
             var color = sideToMove * ((this.bitboard.CurrentPlayer >> x) & 1) + (sideToMove ^ 3) * ((this.bitboard.OpponentPlayer >> x) & 1);
-            return (color != 0) ? (StoneColor)(color - 1) : StoneColor.Empty;
+            return (color != 0) ? (DiscColor)(color - 1) : DiscColor.Null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -251,7 +251,7 @@ namespace Kalmia.Reversi
             this.bitboard.CurrentPlayer = this.bitboard.OpponentPlayer;
             this.bitboard.OpponentPlayer = tmp;
             this.mobilityWasCalculated = false;
-            this.SideToMove ^= StoneColor.White;
+            this.SideToMove ^= DiscColor.White;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

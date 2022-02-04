@@ -211,7 +211,7 @@ namespace Kalmia.IO
         List<Move> CreateMoveRecord(Span<byte> data)
         {
             var moveRecord = new List<Move>();
-            var board = new Board(StoneColor.Black, InitialBoardState.Cross);
+            var board = new Board(DiscColor.Black, InitialBoardState.Cross);
             foreach (var d in data)
             {
                 if (d == 0)

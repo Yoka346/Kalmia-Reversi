@@ -104,6 +104,8 @@ namespace Kalmia.Evaluation
         // the number of pattern's features. e.g.) corner3x3 has 3^9(= 19683) features.
         static readonly int[] PATTERN_FEATURE_NUM = new int[] { 19683, 59049, 59049, 59049, 6561, 6561, 6561, 6561, 2187, 729, 243, 81, 1 };
 
+        static readonly int PATTERN_FEATURE_NUM_SUM = PATTERN_FEATURE_NUM.Sum(); 
+
         // the number of packed pattern's features.
         // e.g.) corner3x3 has 3^9 possible patterns, however 3^9 - 3^6 patterns are asymmetric so total is (3^9 - 3^6) / 2 + 3^6 = 10206 patterns.
         static readonly int[] PACKED_PATTERN_FEATURE_NUM = new int[] { 10206, 29889, 29646, 29646, 3321, 3321, 3321, 3321, 1134, 378, 135, 45, 1 };
@@ -118,12 +120,13 @@ namespace Kalmia.Evaluation
         public static ReadOnlySpan<int> PatternSize { get { return PATTERN_SIZE; } }
         public static ReadOnlySpan<int> PatternNum { get { return PATTERN_NUM; } }
         public static ReadOnlySpan<int> PatternFeatureNum { get { return PATTERN_FEATURE_NUM; } }
+        public static int PatternFeatureNumSum { get { return PATTERN_FEATURE_NUM_SUM; } }
         public static ReadOnlySpan<int> PackedPatternFeatureNum { get { return PACKED_PATTERN_FEATURE_NUM; } }
 
         readonly int[] FEATURES = new int[PATTERN_NUM_SUM];
         readonly Action<BoardPosition, ulong>[] UPDATE_CALLBACKS;
 
-        public StoneColor SideToMove { get; private set; }
+        public DiscColor SideToMove { get; private set; }
         public int EmptyCount { get; private set; }
         public ReadOnlySpan<int> Features { get { return this.FEATURES; } }
 
@@ -188,21 +191,7 @@ namespace Kalmia.Evaluation
                 this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
                 this.EmptyCount--;
             }
-            this.SideToMove ^= StoneColor.White;
-        }
-
-        public ulong GetHashCode(int hashTableSize)     // hashTableSize cannot be multiple of B
-        {
-            const int B = 17;
-            var hash = (ulong)((this.FEATURES[8] * B) ^ 0);
-            hash += (ulong)((this.FEATURES[9] * B) ^ 1);
-            hash += (ulong)((this.FEATURES[16] * B) ^ 2);
-            hash += (ulong)((this.FEATURES[17] * B) ^ 3);
-            hash += (ulong)((this.FEATURES[20] * B) ^ 4);
-            hash += (ulong)((this.FEATURES[21] * B) ^ 5);
-            hash += (ulong)((this.FEATURES[24] * B) ^ 6);
-            hash += (ulong)((this.FEATURES[25] * B) ^ 7);
-            return hash % (ulong)hashTableSize;
+            this.SideToMove ^= DiscColor.White;
         }
 
         public void CopyTo(BoardFeature dest)
@@ -255,11 +244,11 @@ namespace Kalmia.Evaluation
             var patternInverce = 0;
             for (var i = 0; i < patternSize; i++)
             {
-                var color = (StoneColor)((feature / FastMath.Pow3(i)) % 3);
-                if (color == StoneColor.Empty)
+                var color = (DiscColor)((feature / FastMath.Pow3(i)) % 3);
+                if (color == DiscColor.Null)
                     patternInverce += (int)color * FastMath.Pow3(i);
                 else
-                    patternInverce += (int)(color ^ StoneColor.White) * FastMath.Pow3(i);
+                    patternInverce += (int)(color ^ DiscColor.White) * FastMath.Pow3(i);
             }
             return patternInverce;
         }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 
 using Kalmia.Reversi;
+using Kalmia.IO;
 
 namespace Kalmia.GoTextProtocol
 {
@@ -37,11 +38,11 @@ namespace Kalmia.GoTextProtocol
         const string VERSION = "2.0";
         const GTPCoordinateRule DEFAULT_COORDINATE_RULE = GTPCoordinateRule.Chess;
 
-        static GTPCoordinateRule CoordinateRule;
+        public static GTPCoordinateRule CoordinateRule { get; private set; }
         static GTPEngine Engine;
         static readonly ReadOnlyDictionary<string, Action<int, string[]>> COMMANDS;
         static bool Quit = false;
-        static StreamWriter Logger;
+        static Logger Logger;
 
         static GTP()
         {
@@ -90,12 +91,12 @@ namespace Kalmia.GoTextProtocol
 
         public static void Mainloop(GTPEngine engine)
         {
-            Mainloop(engine, null);
+            Mainloop(engine, string.Empty);
         }
 
         public static void Mainloop(GTPEngine engine, GTPCoordinateRule coordRule)
         {
-            Mainloop(engine, coordRule, null);
+            Mainloop(engine, coordRule, string.Empty);
         }
 
         public static void Mainloop(GTPEngine engine, string logFilePath)
@@ -107,12 +108,7 @@ namespace Kalmia.GoTextProtocol
         {
             CoordinateRule = coordRule;
             Engine = engine;
-            if (logFilePath != null)
-            {
-                Logger = new StreamWriter(logFilePath);
-            }
-            else
-                Logger = new StreamWriter(Stream.Null);
+            Logger = new Logger(logFilePath, Console.OpenStandardError());
 
             int id = 0;
             while (!Quit)
@@ -123,9 +119,8 @@ namespace Kalmia.GoTextProtocol
                 {
                     var input = Console.ReadLine();
                     Logger.WriteLine($"[{DateTime.Now}] Input: {input}");
-                    Logger.Flush();
                     cmdName = ParseCommand(input, out id, out args);
-                    COMMANDS[cmdName](id, args); 
+                    COMMANDS[cmdName](id, args);
                 }
                 catch (KeyNotFoundException)
                 {
@@ -134,10 +129,40 @@ namespace Kalmia.GoTextProtocol
                     else
                         GTPFailure(id, "unknown command");
                 }
+                catch (GTPException ex)
+                {
+                    GTPFailure(id, ex.Message);
+                }
+#if RELEASE
+                catch (Exception ex)
+                {
+                    GTPFailure(id, ex.Message);
+                    Logger.WriteLine($"[ERROR_DETAIL]\n{ex}\n");
+                    Logger.Flush();
+                }
+#endif
+                Logger.Flush();
             }
             Quit = false;
             Engine = null;
-            Logger.Close();
+            Logger.Dispose();
+        }
+
+        public static Move ConvertCoordinateRule(Move move)
+        {
+            if (move == Move.Null)
+                return move;
+            return new Move(move.Color, ConvertCoordinateRule(move.Pos));
+        }
+
+        public static BoardPosition ConvertCoordinateRule(BoardPosition pos)
+        {
+            if (pos == BoardPosition.Pass || pos == BoardPosition.Null)
+                return pos;
+
+            (var posX, var posY) = ((int)pos % Board.BOARD_SIZE, (int)pos / Board.BOARD_SIZE);
+            posY = (Board.BOARD_SIZE - 1) - posY;
+            return (BoardPosition)(posX + posY * Board.BOARD_SIZE);
         }
 
         static void GTPSuccess(int id, string msg = "")
@@ -147,7 +172,6 @@ namespace Kalmia.GoTextProtocol
             Logger.WriteLine($"[{DateTime.Now}] Status: Success  Output: {output}");
             Console.Write($"={output}\n\n");
             Console.Out.Flush();
-            Logger.Flush();
         }
 
         static void GTPFailure(int id, string msg)
@@ -157,7 +181,6 @@ namespace Kalmia.GoTextProtocol
             Logger.WriteLine($"[{DateTime.Now}] Status: Failed  Output: {output}");
             Console.Write($"?{output}\n\n");
             Console.Out.Flush();
-            Logger.Flush();
         }
 
         static void ExecuteProtocolVersionCommand(int id, string[] args)
@@ -245,7 +268,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == StoneColor.Empty)
+            if (color == DiscColor.Null)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -275,7 +298,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == StoneColor.Empty)
+            if (color == DiscColor.Null)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -326,7 +349,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if(color == StoneColor.Empty)
+            if(color == DiscColor.Null)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -380,14 +403,14 @@ namespace Kalmia.GoTextProtocol
                 GTPFailure(id, "invalid option");
                 return;
             }
-            var move = new Move(StoneColor.Black, args[0]);
+            var move = new Move(DiscColor.Black, args[0]);
             var color = Engine.GetColor(move.PosX, move.PosY);
-            if(color == StoneColor.Empty)
+            if(color == DiscColor.Null)
             {
                 GTPSuccess(id, "empty");
                 return;
             }
-            GTPSuccess(id, (color == StoneColor.Black) ? "black" : "white");
+            GTPSuccess(id, (color == DiscColor.Black) ? "black" : "white");
         }
 
         static void ExecuteRegGenMoveCommand(int id, string[] args)
@@ -398,7 +421,7 @@ namespace Kalmia.GoTextProtocol
             }
 
             var color = ParseColor(args[0]);
-            if (color == StoneColor.Empty)
+            if (color == DiscColor.Null)
             {
                 GTPFailure(id, "invalid color");
                 return;
@@ -457,13 +480,17 @@ namespace Kalmia.GoTextProtocol
         {
             var sb = new StringBuilder();
             foreach (var move in Engine.GetLegalMoves())
-                sb.Append($"{move} ");
+                if (CoordinateRule == GTPCoordinateRule.Othello)
+                    sb.Append($"{move} ");
+                else
+                    sb.Append($"{ConvertCoordinateRule(move)} ");
+
             GTPSuccess(id, sb.ToString());
         }
 
         static void ExecuteRulesSideToMoveCommand(int id, string[] args)
         {
-            GTPSuccess(id, (Engine.GetSideToMove() == StoneColor.Black) ? "black" : "white");
+            GTPSuccess(id, (Engine.GetSideToMove() == DiscColor.Black) ? "black" : "white");
         }
 
         static void ExecuteRulesFinalResult(int id, string[] args)
@@ -489,14 +516,14 @@ namespace Kalmia.GoTextProtocol
             return splitedCmd[cmdNameIdx];
         }
 
-        static StoneColor ParseColor(string str)
+        static DiscColor ParseColor(string str)
         {
             str = str.ToLower();
             if (str == "b" || str == "black")
-                return StoneColor.Black;
+                return DiscColor.Black;
             else if (str == "w" || str == "white")
-                return StoneColor.White;
-            return StoneColor.Empty;
+                return DiscColor.White;
+            return DiscColor.Null;
         }
 
         static string MoveToString(Move move)

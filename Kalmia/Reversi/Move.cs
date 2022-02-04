@@ -4,10 +4,10 @@ using static Kalmia.Reversi.Board;
 
 namespace Kalmia.Reversi
 {
-    public enum StoneColor : sbyte
+    public enum DiscColor : sbyte
     {
         Black = 0,
-        Empty = 2,
+        Null = 2,
         White = 1
     }
 
@@ -26,21 +26,21 @@ namespace Kalmia.Reversi
 
     public struct Move
     {
-        public static Move Null { get; } = new Move(StoneColor.Empty, BoardPosition.Null);
+        public static Move Null { get; } = new Move(DiscColor.Null, BoardPosition.Null);
 
-        public StoneColor Color;
+        public DiscColor Color;
         public BoardPosition Pos;
 
         public int PosX { get { return (byte)this.Pos % BOARD_SIZE; } }
         public int PosY { get { return (byte)this.Pos / BOARD_SIZE; } }
 
-        public Move(StoneColor color, string pos) : this(color, StringToPosition(pos)) { }
+        public Move(DiscColor color, string pos) : this(color, StringToPosition(pos)) { }
 
-        public Move(StoneColor color, (int posX, int posY) coord) : this(color, coord.posX, coord.posY) { }
+        public Move(DiscColor color, (int posX, int posY) coord) : this(color, coord.posX, coord.posY) { }
 
-        public Move(StoneColor color, int posX, int posY) : this(color, (BoardPosition)(posX + posY * BOARD_SIZE)) { }
+        public Move(DiscColor color, int posX, int posY) : this(color, (BoardPosition)(posX + posY * BOARD_SIZE)) { }
 
-        public Move(StoneColor color, BoardPosition pos)
+        public Move(DiscColor color, BoardPosition pos)
         {
             this.Color = color;
             this.Pos = pos;

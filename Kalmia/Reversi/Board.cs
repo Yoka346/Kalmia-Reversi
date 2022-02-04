@@ -28,10 +28,10 @@ namespace Kalmia.Reversi
         FastBoard fastBoard;
         Stack<Bitboard> boardHistory = new Stack<Bitboard>(BOARD_HISTORY_STACK_SIZE);
 
-        public StoneColor SideToMove { get { return fastBoard.SideToMove; } }
-        public StoneColor Opponent { get { return fastBoard.Opponent; } }
+        public DiscColor SideToMove { get { return fastBoard.SideToMove; } }
+        public DiscColor Opponent { get { return fastBoard.Opponent; } }
 
-        public Board(StoneColor sideToMove, InitialBoardState initState) : this(sideToMove, 0UL, 0UL)
+        public Board(DiscColor sideToMove, InitialBoardState initState) : this(sideToMove, 0UL, 0UL)
         {
             if(initState == InitialBoardState.Cross)
             {
@@ -49,9 +49,9 @@ namespace Kalmia.Reversi
             }
         }
 
-        public Board(StoneColor sideToMove, Bitboard bitboard):this(sideToMove, bitboard.CurrentPlayer, bitboard.OpponentPlayer) { }
+        public Board(DiscColor sideToMove, Bitboard bitboard):this(sideToMove, bitboard.CurrentPlayer, bitboard.OpponentPlayer) { }
 
-        public Board(StoneColor sideToMove, ulong currentPlayerBoard, ulong opponentPlayerBoard)
+        public Board(DiscColor sideToMove, ulong currentPlayerBoard, ulong opponentPlayerBoard)
         {
             this.fastBoard = new FastBoard(sideToMove, new Bitboard(currentPlayerBoard, opponentPlayerBoard));
         }
@@ -62,7 +62,7 @@ namespace Kalmia.Reversi
             this.boardHistory = board.boardHistory.Copy();
         }
 
-        public void Init(StoneColor sideToMove, Bitboard bitboard)
+        public void Init(DiscColor sideToMove, Bitboard bitboard)
         {
             this.fastBoard = new FastBoard(sideToMove, bitboard);
         }
@@ -72,7 +72,7 @@ namespace Kalmia.Reversi
             return new FastBoard(this.fastBoard);
         }
 
-        public ulong GetBitboard(StoneColor color)
+        public ulong GetBitboard(DiscColor color)
         {
             var bitboard = this.fastBoard.GetBitboard();
             return (this.SideToMove == color) ? bitboard.CurrentPlayer : bitboard.OpponentPlayer;
@@ -83,7 +83,7 @@ namespace Kalmia.Reversi
             return this.fastBoard.GetBitboard();
         }
 
-        public int GetDiscCount(StoneColor color)
+        public int GetDiscCount(DiscColor color)
         {
             return (this.SideToMove == color) ? this.fastBoard.GetCurrentPlayerDiscCount() : this.fastBoard.GetOpponentPlayerDiscCount();
         }
@@ -93,24 +93,24 @@ namespace Kalmia.Reversi
             return this.fastBoard.GetEmptyCount();
         }
 
-        public StoneColor GetColor(int posX, int posY)
+        public DiscColor GetColor(int posX, int posY)
         {
             return GetDiscColor((BoardPosition)(posX + posY * BOARD_SIZE));
         }
 
-        public StoneColor GetDiscColor(BoardPosition pos)
+        public DiscColor GetDiscColor(BoardPosition pos)
         {
             return this.fastBoard.GetDiscColor(pos);
         }
 
-        public StoneColor[,] GetDiscsArray()
+        public DiscColor[,] GetDiscsArray()
         {
-            var discs = new StoneColor[BOARD_SIZE, BOARD_SIZE];
+            var discs = new DiscColor[BOARD_SIZE, BOARD_SIZE];
             for (var i = 0; i < discs.GetLength(0); i++)
                 for (var j = 0; j < discs.GetLength(1); j++)
-                    discs[i, j] = StoneColor.Empty;
+                    discs[i, j] = DiscColor.Null;
             var currentPlayer = this.SideToMove;
-            var opponentPlayer = this.SideToMove ^ StoneColor.White;
+            var opponentPlayer = this.SideToMove ^ DiscColor.White;
             var bitboard = this.fastBoard.GetBitboard();
             var p = bitboard.CurrentPlayer;
             var o = bitboard.OpponentPlayer;
@@ -133,17 +133,17 @@ namespace Kalmia.Reversi
             this.fastBoard.SwitchSideToMove();
         }
 
-        public void Put(StoneColor color, string pos)
+        public void Put(DiscColor color, string pos)
         {
             Put(color, StringToPos(pos));
         }
 
-        public void Put(StoneColor color, int posX, int posY)
+        public void Put(DiscColor color, int posX, int posY)
         {
             Put(color, (BoardPosition)(posX + posY * BOARD_SIZE));
         }
 
-        public void Put(StoneColor color, BoardPosition pos)
+        public void Put(DiscColor color, BoardPosition pos)
         {
             this.boardHistory.Push(this.fastBoard.GetBitboard());
             if (color == this.SideToMove)
@@ -184,7 +184,7 @@ namespace Kalmia.Reversi
             return (from pos in positions[..count] select new Move(this.SideToMove, pos)).ToArray();
         }
 
-        public GameResult GetGameResult(StoneColor color)
+        public GameResult GetGameResult(DiscColor color)
         {
             var result = this.fastBoard.GetGameResult();
             if (result == GameResult.NotOver)
@@ -209,9 +209,9 @@ namespace Kalmia.Reversi
                 for (var x = 0; x < BOARD_SIZE; x++)
                 {
                     if ((p & mask) != 0)
-                        sb.Append((this.SideToMove == StoneColor.Black) ? "X " : "O ");
+                        sb.Append((this.SideToMove == DiscColor.Black) ? "X " : "O ");
                     else if ((o & mask) != 0)
-                        sb.Append((this.SideToMove != StoneColor.Black) ? "X " : "O ");    
+                        sb.Append((this.SideToMove != DiscColor.Black) ? "X " : "O ");    
                     else
                         sb.Append(". ");
                     mask <<= 1;

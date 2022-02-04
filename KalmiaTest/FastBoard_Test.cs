@@ -16,7 +16,7 @@ namespace KalmiaTest
         public void CalculateMobilityAndFlipped_Test()
         {
             var board = new FastBoard();
-            var boardTest = new SlowBoard(Color.Black, InitialBoardState.Cross);
+            var boardTest = new SlowBoard(DiscColor.Black, InitialBoardState.Cross);
             var positons = new BoardPosition[SQUARE_NUM];
             var moves = new Move[SQUARE_NUM];
             var rand = new Random();
@@ -42,7 +42,7 @@ namespace KalmiaTest
             var o = ((ulong)rand.Next() << 32) | rand.Next();
             var pAndO = p & o;
             p ^= pAndO;
-            var board = new FastBoard(Color.Black, new Bitboard(p, o));
+            var board = new FastBoard(DiscColor.Black, new Bitboard(p, o));
             Assert.AreEqual(board.GetHashCode_CPU(), board.GetHashCode());
         }
 
@@ -54,7 +54,7 @@ namespace KalmiaTest
                 if (idx == -1 || idx >= moveCount)
                     Assert.Fail($"Expected to contain move {expected[i]}, but it was not found." +
                                 $"\nexpected = {MoveArrayToString(expected, moveCount)}\nactual = {MoveArrayToString(actual, moveCount)}" +
-                                $"\n{DiscsToString((from n in Enumerable.Range(0, SQUARE_NUM) select board.GetColor(n % BOARD_SIZE, n / BOARD_SIZE)).ToArray())}");
+                                $"\n{DiscsToString((from n in Enumerable.Range(0, SQUARE_NUM) select board.GetDiscColor(n % BOARD_SIZE, n / BOARD_SIZE)).ToArray())}");
             }
         }
 
@@ -63,7 +63,7 @@ namespace KalmiaTest
             bool equal = true;
             for(var x = 0; x < BOARD_SIZE; x++)
                 for(var y = 0; y < BOARD_SIZE; y++)
-                    if(expected.GetColor(x, y) != actual.GetDiscColor((BoardPosition)(x + y * BOARD_SIZE)))
+                    if(expected.GetDiscColor(x, y) != actual.GetDiscColor((BoardPosition)(x + y * BOARD_SIZE)))
                     {
                         equal = false;
                         break;
@@ -81,16 +81,16 @@ namespace KalmiaTest
             return sb.ToString();
         }
 
-        string DiscsToString(Color[] discs)
+        string DiscsToString(DiscColor[] discs)
         {
             var sb = new StringBuilder();
             for (var y = 0; y < BOARD_SIZE; y++)
             {
                 for (var x = 0; x < BOARD_SIZE; x++)
                 {
-                    if (discs[x + y * BOARD_SIZE] == Color.Black)
+                    if (discs[x + y * BOARD_SIZE] == DiscColor.Black)
                         sb.Append(" X");
-                    else if (discs[x + y * BOARD_SIZE] == Color.White)
+                    else if (discs[x + y * BOARD_SIZE] == DiscColor.White)
                         sb.Append(" O");
                     else
                         sb.Append(" .");
