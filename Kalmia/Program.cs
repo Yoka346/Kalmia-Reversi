@@ -4,6 +4,8 @@ using System.Reflection;
 
 using Kalmia.Engines;
 using Kalmia.GoTextProtocol;
+using Kalmia.Evaluation;
+using Kalmia.Reversi;
 
 namespace Kalmia
 {
@@ -14,6 +16,36 @@ namespace Kalmia
         const string THOUGHT_LOG_FILE_NAME = "thought_log{0}.txt";
 
         static void Main()
+        {
+            var valueFunc = new LatentFactorValueFunction("LatentFactorTest", 0, 4);
+            valueFunc.InitVectorsAtRandom();
+
+            var random = new Random();
+            for (var stage = 0; stage < valueFunc.Params[0].Length; stage++)
+                for (var feature = 0; feature < valueFunc.Params[(int)DiscColor.Black][stage].Length; feature++)
+                {
+                    var symmetricFeature = LatentFactorValueFunction.ToSymmetricFeatureIdx[feature];
+                    if (feature <= symmetricFeature)
+                        valueFunc.Params[(int)DiscColor.Black][stage][feature].Weight = random.NextSingle();
+                    else
+                        valueFunc.Params[(int)DiscColor.Black][stage][feature].Weight = valueFunc.Params[(int)DiscColor.Black][stage][symmetricFeature].Weight;
+                }
+            valueFunc.CopyBlackParamsToWhiteParams();
+
+            for (var color = 0; color < 2; color++)
+                for (var stage = 0; stage < valueFunc.Params[0].Length; stage++)
+                    for (var feature = 0; feature < valueFunc.Params[(int)DiscColor.Black][stage].Length; feature++)
+                    {
+                        var symmetricFeature = LatentFactorValueFunction.ToSymmetricFeatureIdx[feature];
+                        if (valueFunc.Params[color][stage][feature].FeatureID != valueFunc.Params[color][stage][symmetricFeature].FeatureID)
+                        {
+                            Console.WriteLine("Error!!");
+                            return;
+                        }
+                    }
+        }
+
+        static void StartEngine()
         {
             var config = new KalmiaConfig();
             config.SearchCount = 300000;

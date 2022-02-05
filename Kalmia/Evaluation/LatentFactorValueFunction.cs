@@ -8,9 +8,32 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
 using Kalmia.Reversi;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kalmia.Evaluation
 {
+    public struct ValueFuncParam
+    {
+        public int FeatureID { get; set; }
+        public float Weight { get; set; }
+        public Vector256<float> Vector { get; set; }
+
+        public static bool operator ==(ValueFuncParam left, ValueFuncParam right)
+        {
+            return left.FeatureID == right.FeatureID && left.Weight == right.Weight && left.Vector.Equals(right.Vector);
+        }
+
+        public static bool operator!=(ValueFuncParam left, ValueFuncParam right)
+        {
+            return !(left == right);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("ValueFuncParam {0} FeatureID = {1}, Weight = {2}, Vector = {3} {4}", "{", this.FeatureID, this.Weight, this.Vector, "}");
+        }
+    }
+
     public class LatentFactorValueFunction
     {
         const int INTERACTION_VEC_LEN = 8;
@@ -24,8 +47,7 @@ namespace Kalmia.Evaluation
         public static ReadOnlySpan<int> ToOpponentFeatureIdx { get { return TO_OPPONENT_FEATURE_IDX; } }
         public static ReadOnlySpan<int> ToSymmetricFeatureIdx { get { return TO_SYMMETRIC_FEATURE_IDX; } }
 
-        public float[][][] Weight { get; }      // Weight[Color][Stage][Feature]
-        public Vector256<float>[][][] InteractionVector { get; }    // InteractionVector[Color][Stage][Feature]
+        public ValueFuncParam[][][] Params { get; }      // Weight[Color][Stage][Feature]
 
         public EvalParamsFileHeader Header { get; private set; }
         public int StageNum { get; private set; }
@@ -44,8 +66,8 @@ namespace Kalmia.Evaluation
             }
             BIAS_IDX = FEATURE_IDX_OFFSET[^1];
 
-            TO_OPPONENT_FEATURE_IDX = new int[BoardFeature.PatternFeatureNum.Sum()];
-            TO_SYMMETRIC_FEATURE_IDX = new int[BoardFeature.PatternFeatureNum.Sum()];
+            TO_OPPONENT_FEATURE_IDX = new int[BoardFeature.PatternFeatureNumSum];
+            TO_SYMMETRIC_FEATURE_IDX = new int[BoardFeature.PatternFeatureNumSum];
             offset = 0;
             for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM; patternType++)
             {
@@ -64,19 +86,23 @@ namespace Kalmia.Evaluation
             this.Header = new EvalParamsFileHeader(label, version, DateTime.Now);
             this.MoveCountPerStage = moveCountPerStage;
             this.StageNum = ((Board.SQUARE_NUM - 4) / moveCountPerStage) + 1;
-            this.Weight = new float[2][][];
-            this.InteractionVector = new Vector256<float>[2][][];
-            for (var color = 0; color < 2; color++)
+            this.Params = new ValueFuncParam[2][][];
+
+            var blackParams = this.Params[(int)DiscColor.Black] = new ValueFuncParam[this.StageNum][];
+            for (var stage = 0; stage < this.StageNum; stage++)
             {
-                this.Weight[color] = new float[this.StageNum][];
-                this.InteractionVector[color] = new Vector256<float>[this.StageNum][];
-                for (var stage = 0; stage < this.StageNum; stage++)
+                var paramsPerStage = blackParams[stage] = new ValueFuncParam[BoardFeature.PatternFeatureNumSum];
+                for (var featureIdx = 0; featureIdx < paramsPerStage.Length; featureIdx++)
                 {
-                    var len = BoardFeature.PatternFeatureNum.Sum();
-                    this.Weight[color][stage] = new float[len];
-                    this.InteractionVector[color][stage] = new Vector256<float>[len - 1];
+                    var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
+                    paramsPerStage[featureIdx].FeatureID = (featureIdx < symmetricFeatureIdx) ? featureIdx : symmetricFeatureIdx;
                 }
             }
+
+            var whiteParams = this.Params[(int)DiscColor.White] = new ValueFuncParam[this.StageNum][];
+            for (var stage = 0; stage < this.StageNum; stage++)
+                whiteParams[stage] = new ValueFuncParam[BoardFeature.PatternFeatureNumSum];
+            CopyBlackParamsToWhiteParams();
         }
 
         public LatentFactorValueFunction(string path)
@@ -84,23 +110,16 @@ namespace Kalmia.Evaluation
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             this.Header = new EvalParamsFileHeader(fs);
             var packedParams = LoadPackedParams(fs);
-            this.StageNum = packedParams.weight.Length;
+            this.StageNum = packedParams.Length;
             this.MoveCountPerStage = Board.SQUARE_NUM / (this.StageNum - 1);
-            this.Weight = new float[2][][];
-            this.InteractionVector = new Vector256<float>[2][][];
+            this.Params = new ValueFuncParam[2][][];
             for (var color = 0; color < 2; color++)
             {
-                this.Weight[color] = new float[this.StageNum][];
-                this.InteractionVector[color] = new Vector256<float>[2][];
+                this.Params[color] = new ValueFuncParam[this.StageNum][];
                 for (var stage = 0; stage < this.StageNum; stage++)
-                {
-                    var len = BoardFeature.PatternFeatureNum.Sum();
-                    this.Weight[color][stage] = new float[len];
-                    this.InteractionVector[color][stage] = new Vector256<float>[len - 1];
-                }
+                    this.Params[color][stage] = new ValueFuncParam[BoardFeature.PatternFeatureNumSum];
             }
-            ExpandPackedWeight(packedParams.weight);
-            ExpandPackedInteractionVector(packedParams.interactionVec);
+            ExpandPackedParams(packedParams);
         }
 
         public LatentFactorValueFunction(LatentFactorValueFunction valueFunc)
@@ -108,25 +127,91 @@ namespace Kalmia.Evaluation
             this.Header = valueFunc.Header;
             this.StageNum = valueFunc.StageNum;
             this.MoveCountPerStage = valueFunc.MoveCountPerStage;
-            this.Weight = new float[2][][];
-            this.InteractionVector = new Vector256<float>[2][][];
+            this.Params = new ValueFuncParam[2][][];
             for (var color = 0; color < 2; color++)
             {
-                var srcWeight = valueFunc.Weight[color];
-                var destWeight = this.Weight[color] = new float[this.StageNum][];
-                var srcVec = valueFunc.InteractionVector[color];
-                var destVec = this.InteractionVector[color] = new Vector256<float>[this.StageNum][];
+                var srcParams = valueFunc.Params[color];
+                var destParams = this.Params[color] = new ValueFuncParam[this.StageNum][];
                 for (var stage = 0; stage < this.StageNum; stage++)
                 {
-                    var sw = srcWeight[stage];
-                    var dw = destWeight[stage] = new float[BoardFeature.PatternFeatureNumSum];
-                    Buffer.BlockCopy(sw, 0, dw, 0, sizeof(float) * dw.Length);
-
-                    var sv = srcVec[stage];
-                    var dv = destVec[stage] = new Vector256<float>[BoardFeature.PatternFeatureNumSum - 1];
-                    Array.Copy(sv, 0, dv, 0, dv.Length);
+                    var sp = srcParams[stage];
+                    var dp = destParams[stage] = new ValueFuncParam[BoardFeature.PatternFeatureNumSum];
+                    Array.Copy(sp, 0, dp, 0, dp.Length);
                 }
             }
+        }
+
+        public void InitVectorsAtRandom()
+        {
+            InitVectorsAtRandom(0.0f, 0.01f);
+        }
+
+        public unsafe void InitVectorsAtRandom(float mu, float sigma)
+        {
+            var rand = new NormalRandom(mu, sigma);
+            var buffer = stackalloc float[INTERACTION_VEC_LEN];
+            var blackParams = this.Params[(int)DiscColor.Black];
+            for (var stage = 0; stage < blackParams.Length; stage++)
+            {
+                var blackParamsPerStage = blackParams[stage];
+                for (var feature = 0; feature < blackParamsPerStage.Length - 1; feature++)
+                {
+                    var symmetricFeature = TO_SYMMETRIC_FEATURE_IDX[feature];
+                    if (symmetricFeature < feature)
+                        blackParamsPerStage[feature] = blackParamsPerStage[symmetricFeature];
+                    else
+                    {
+                        for (var i = 0; i < INTERACTION_VEC_LEN; i++)
+                            buffer[i] = rand.NextSingle();
+                        blackParamsPerStage[feature].Vector = Avx.LoadVector256(buffer);
+                    }
+                }
+            }
+            CopyBlackParamsToWhiteParams();
+        }
+
+        public void CopyBlackParamsToWhiteParams()
+        {
+            var blackParams = this.Params[(int)DiscColor.Black];
+            var whiteParams = this.Params[(int)DiscColor.White];
+            for (var stage = 0; stage < blackParams.Length; stage++)
+            {
+                var blackParamsPerStage = blackParams[stage];
+                var whiteParamsPerStage = whiteParams[stage];
+                for (var feature = 0; feature < blackParamsPerStage.Length; feature++)
+                    whiteParamsPerStage[TO_OPPONENT_FEATURE_IDX[feature]] = blackParamsPerStage[feature];
+            }
+        }
+
+        public float F(BoardFeature board)
+        {
+            return F((Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveCountPerStage, board);
+        }
+
+        // ToDo: Finish implementing of F method.
+        public unsafe float F(int stage, BoardFeature board)
+        {
+            var value = 0.0f;
+            var features = board.Features;
+            var color = (int)board.SideToMove;
+
+            fixed (ValueFuncParam* parameters = this.Params[color][stage])
+            {
+                var requiredParams = stackalloc ValueFuncParam*[BoardFeature.PATTERN_NUM_SUM];
+                for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
+                {
+                    requiredParams[i] = &parameters[features[i] + FEATURE_IDX_OFFSET[i]];
+                    value += (*requiredParams[i]).Weight;
+                }
+
+                for(var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
+                    for(var j = i + 1; j < BoardFeature.PATTERN_NUM_SUM; j++)
+                    {
+                        Avx.Multiply()
+                    }
+            }
+            value = MathFunctions.StdSigmoid(value);
+            return value;
         }
 
         public void SaveToFile(string path)
@@ -135,52 +220,57 @@ namespace Kalmia.Evaluation
             SaveToFile(fs);
         }
 
-        public void SaveToFile(FileStream fs)
+        public unsafe void SaveToFile(FileStream fs)
         {
+            const int VEC_BUFFER_SIZE = sizeof(float) * INTERACTION_VEC_LEN;
+
             this.Header.WriteToStream(fs);
-            
+            var packedParams = PackParams();
+            fs.WriteByte((byte)this.StageNum);
+            var vecBuffer = stackalloc byte[VEC_BUFFER_SIZE];
+            var vecBufferSpan = new Span<byte>(vecBuffer, VEC_BUFFER_SIZE);
+
+            for (var stage = 0; stage < this.StageNum; stage++)
+                for (var patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM; patternType++) 
+                {
+                    var packedP = packedParams[stage][patternType];
+                    for (var i = 0; i < BoardFeature.PackedPatternFeatureNum[patternType]; i++)
+                    {
+                        fs.Write(BitConverter.GetBytes(packedP[i].Weight), 0, sizeof(float));
+                        Avx.Store(vecBuffer, packedP[i].Vector.AsByte());
+                        fs.Write(vecBufferSpan);
+                    }
+                }
         }
 
-        unsafe (float[][][] weight, Vector256<float>[][][] interactionVec) LoadPackedParams(FileStream fs)
+        unsafe ValueFuncParam[][][] LoadPackedParams(FileStream fs)
         {
-            const int INTERACTION_VEC_BUFFER_SIZE = sizeof(float) * INTERACTION_VEC_LEN;
+            const int BUFFER_SIZE = sizeof(float) * (INTERACTION_VEC_LEN + 1);
 
             fs.Seek(EvalParamsFileHeader.HEADER_SIZE, SeekOrigin.Begin);
             var stageNum = fs.ReadByte();
-            var weight = new float[stageNum][][];
-            var interactionVec = new Vector256<float>[stageNum][][];
-            var weightBuffer = new byte[sizeof(float)];
-            var interactionVecBuffer = stackalloc byte[INTERACTION_VEC_BUFFER_SIZE];
-            var interactionVecBufferSpan = new Span<byte>(interactionVecBuffer, INTERACTION_VEC_BUFFER_SIZE);
+            var packedParams = new ValueFuncParam[stageNum][][];
+            var buffer = stackalloc byte[BUFFER_SIZE];
+            var bufferSpan = new Span<byte>(buffer, BUFFER_SIZE);
 
-            for (var stage = 0; stage < weight.Length; stage++)
+            for (var stage = 0; stage < packedParams.Length; stage++)
             {
-                weight[stage] = new float[BoardFeature.PATTERN_TYPE_NUM][];
-                for (var patternType = 0; patternType < weight[stage].Length; patternType++)
+                packedParams[stage] = new ValueFuncParam[BoardFeature.PATTERN_TYPE_NUM][];
+                for (var patternType = 0; patternType < packedParams[stage].Length; patternType++)
                 {
-                    weight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
-                    for (var i = 0; i < weight[stage][patternType].Length; i++)
+                    packedParams[stage][patternType] = new ValueFuncParam[BoardFeature.PackedPatternFeatureNum[patternType]];
+                    for (var i = 0; i < packedParams[stage][patternType].Length; i++)
                     {
-                        fs.Read(weightBuffer, 0, weightBuffer.Length);
-                        weight[stage][patternType][i] = BitConverter.ToSingle(weightBuffer);
-                    }
-                }
-
-                interactionVec[stage] = new Vector256<float>[BoardFeature.PATTERN_TYPE_NUM - 1][];
-                for (var patternType = 0; patternType < interactionVec[stage].Length; patternType++)
-                {
-                    interactionVec[stage][patternType] = new Vector256<float>[BoardFeature.PackedPatternFeatureNum[patternType]];
-                    for (var i = 0; i < interactionVec[stage][patternType].Length; i++)
-                    {
-                        fs.Read(interactionVecBufferSpan);
-                        interactionVec[stage][patternType][i] = Avx.LoadVector256(interactionVecBuffer).AsSingle();
+                        fs.Read(bufferSpan);
+                        packedParams[stage][patternType][i].Weight = BitConverter.ToSingle(bufferSpan);
+                        packedParams[stage][patternType][i].Vector = Avx.LoadVector256(buffer + sizeof(float)).AsSingle();
                     }
                 }
             }
-            return (weight, interactionVec);
+            return packedParams;
         }
 
-        void ExpandPackedWeight(float[][][] packedWeight)
+        void ExpandPackedParams(ValueFuncParam[][][] packedParams)
         {
             int i;
             for (var stage = 0; stage < this.StageNum; stage++)
@@ -194,94 +284,63 @@ namespace Kalmia.Evaluation
                         var featureIdx = feature + offset;
                         var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
                         if (symmetricFeatureIdx < featureIdx)
-                            this.Weight[(int)DiscColor.Black][stage][featureIdx] = this.Weight[(int)DiscColor.Black][stage][symmetricFeatureIdx];
+                            this.Params[(int)DiscColor.Black][stage][featureIdx] = this.Params[(int)DiscColor.Black][stage][symmetricFeatureIdx];
                         else
-                            this.Weight[(int)DiscColor.Black][stage][featureIdx] = packedWeight[stage][patternType][i++];
-                        this.Weight[(int)DiscColor.White][stage][TO_OPPONENT_FEATURE_IDX[featureIdx]] = this.Weight[(int)DiscColor.Black][stage][featureIdx];
+                        {
+                            this.Params[(int)DiscColor.Black][stage][featureIdx] = packedParams[stage][patternType][i++];
+                            this.Params[(int)DiscColor.Black][stage][featureIdx].FeatureID = featureIdx;
+                        }
                     }
                     offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
-                this.Weight[(int)DiscColor.Black][stage][offset] = packedWeight[stage][patternType][0];
-                this.Weight[(int)DiscColor.White][stage][offset] = packedWeight[stage][patternType][0];
+                this.Params[(int)DiscColor.Black][stage][offset] = packedParams[stage][patternType][0];
+                this.Params[(int)DiscColor.Black][stage][offset].FeatureID = offset;
             }
+            CopyBlackParamsToWhiteParams();
         }
 
-        void ExpandPackedInteractionVector(Vector256<float>[][][] packedInteractionVec)
+        ValueFuncParam[][][] PackParams()
         {
-            int i;
-            for (var stage = 0; stage < this.StageNum; stage++)
-            {
-                int patternType;
-                var offset = 0;
-                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM - 1; patternType++)
-                {
-                    for (var feature = i = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
-                    {
-                        var featureIdx = feature + offset;
-                        var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
-                        if (symmetricFeatureIdx < featureIdx)
-                            this.InteractionVector[(int)DiscColor.Black][stage][featureIdx] = this.InteractionVector[(int)DiscColor.Black][stage][symmetricFeatureIdx];
-                        else
-                            this.InteractionVector[(int)DiscColor.Black][stage][featureIdx] = packedInteractionVec[stage][patternType][i++];
-                        this.InteractionVector[(int)DiscColor.White][stage][TO_OPPONENT_FEATURE_IDX[featureIdx]] = this.InteractionVector[(int)DiscColor.Black][stage][featureIdx];
-                    }
-                    offset += BoardFeature.PatternFeatureNum[patternType];
-                }
-            }
-        }
-
-        float[][][] PackWeight()
-        {
-            var packedWeight = new float[this.StageNum][][];
+            var packedParams = new ValueFuncParam[this.StageNum][][];
             int packedWIdx;
             for (var stage = 0; stage < this.StageNum; stage++)
             {
-                packedWeight[stage] = new float[BoardFeature.PATTERN_TYPE_NUM][];
+                packedParams[stage] = new ValueFuncParam[BoardFeature.PATTERN_TYPE_NUM][];
                 int patternType;
                 var offset = 0;
                 for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM - 1; patternType++)
                 {
-                    packedWeight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
+                    packedParams[stage][patternType] = new ValueFuncParam[BoardFeature.PackedPatternFeatureNum[patternType]];
                     for (var feature = packedWIdx = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
                     {
                         var symmetricalPattern = BoardFeature.FlipFeature(patternType, feature);
                         if (feature <= symmetricalPattern)
-                            packedWeight[stage][patternType][packedWIdx++] = this.Weight[(int)DiscColor.Black][stage][offset + feature];
+                            packedParams[stage][patternType][packedWIdx++] = this.Params[(int)DiscColor.Black][stage][offset + feature];
                     }
                     offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
-                packedWeight[stage][patternType] = new float[BoardFeature.PackedPatternFeatureNum[patternType]];
-                packedWeight[stage][patternType][0] = this.Weight[(int)DiscColor.Black][stage][offset];
+                packedParams[stage][patternType] = new ValueFuncParam[BoardFeature.PackedPatternFeatureNum[patternType]];
+                packedParams[stage][patternType][0] = this.Params[(int)DiscColor.Black][stage][offset];
             }
-            return packedWeight;
+            return packedParams;
         }
 
-        Vector256<float>[][][] PackInteractionVector()
+        static float Dot(ref Vector256<float> left, ref Vector256<float> right)
         {
-            var packedInteractionVec = new Vector256<float>[this.StageNum][][];
-            int packedWIdx;
-            for (var stage = 0; stage < this.StageNum; stage++)
-            {
-                packedInteractionVec[stage] = new Vector256<float>[BoardFeature.PATTERN_TYPE_NUM][];
-                int patternType;
-                var offset = 0;
-                for (patternType = 0; patternType < BoardFeature.PATTERN_TYPE_NUM - 1; patternType++)
-                {
-                    packedInteractionVec[stage][patternType] = new Vector256<float>[BoardFeature.PackedPatternFeatureNum[patternType]];
-                    for (var feature = packedWIdx = 0; feature < BoardFeature.PatternFeatureNum[patternType]; feature++)
-                    {
-                        var symmetricalPattern = BoardFeature.FlipFeature(patternType, feature);
-                        if (feature <= symmetricalPattern)
-                            packedInteractionVec[stage][patternType][packedWIdx++] = this.InteractionVector[(int)DiscColor.Black][stage][offset + feature];
-                    }
-                    offset += BoardFeature.PatternFeatureNum[patternType];
-                }
-            }
-            return packedInteractionVec;
+            var product = Avx.Multiply(left, right);
+            var productHi = Avx.ExtractVector128(product, 1);
+            var productLow = Avx.ExtractVector128(product, 0);
+            var quadSum = Sse.Add(productLow, productHi);
+            var dualSumLow = quadSum;
+            var dualSumHi = Sse.MoveHighToLow(quadSum, quadSum);
+            var dualSum = Sse.Add(dualSumLow, dualSumHi);
+            var sumLow = dualSum;
+            var sumHi = Sse.Shuffle(dualSum, dualSum, 0x1);
+            return Sse.Add(sumLow, sumHi).GetElement(0);
         }
     }
 }
