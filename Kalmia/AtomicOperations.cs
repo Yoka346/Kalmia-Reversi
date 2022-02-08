@@ -18,6 +18,9 @@ namespace Kalmia
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Add(ref float target, float value)
         {
+            if (float.IsNaN(target) || float.IsNaN(value))
+                return;
+
             float expected;
             do
                 expected = target;

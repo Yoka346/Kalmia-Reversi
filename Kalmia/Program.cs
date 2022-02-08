@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Diagnostics;
 
 using Kalmia.Engines;
 using Kalmia.GoTextProtocol;
 using Kalmia.Evaluation;
+using Kalmia.Learning;
 using Kalmia.Reversi;
 
 namespace Kalmia
@@ -17,32 +19,16 @@ namespace Kalmia
 
         static void Main()
         {
-            var valueFunc = new LatentFactorValueFunction("LatentFactorTest", 0, 4);
+            var valueFunc = new LatentFactorValueFunction("Kalmia", 1, 4);
             valueFunc.InitVectorsAtRandom();
+            var optimizer = new LatentFactorValueFuncOptimizer(valueFunc);
 
-            var random = new Random();
-            for (var stage = 0; stage < valueFunc.Params[0].Length; stage++)
-                for (var feature = 0; feature < valueFunc.Params[(int)DiscColor.Black][stage].Length; feature++)
-                {
-                    var symmetricFeature = LatentFactorValueFunction.ToSymmetricFeatureIdx[feature];
-                    if (feature <= symmetricFeature)
-                        valueFunc.Params[(int)DiscColor.Black][stage][feature].Weight = random.NextSingle();
-                    else
-                        valueFunc.Params[(int)DiscColor.Black][stage][feature].Weight = valueFunc.Params[(int)DiscColor.Black][stage][symmetricFeature].Weight;
-                }
-            valueFunc.CopyBlackParamsToWhiteParams();
+            Console.WriteLine("Loading data set.");
+            optimizer.LoadTrainData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\train_data.csv", false);
+            optimizer.LoadTestData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\test_data.csv");
+            Console.WriteLine("done.");
 
-            for (var color = 0; color < 2; color++)
-                for (var stage = 0; stage < valueFunc.Params[0].Length; stage++)
-                    for (var feature = 0; feature < valueFunc.Params[(int)DiscColor.Black][stage].Length; feature++)
-                    {
-                        var symmetricFeature = LatentFactorValueFunction.ToSymmetricFeatureIdx[feature];
-                        if (valueFunc.Params[color][stage][feature].FeatureID != valueFunc.Params[color][stage][symmetricFeature].FeatureID)
-                        {
-                            Console.WriteLine("Error!!");
-                            return;
-                        }
-                    }
+            optimizer.StartOptimization(100000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor");
         }
 
         static void StartEngine()

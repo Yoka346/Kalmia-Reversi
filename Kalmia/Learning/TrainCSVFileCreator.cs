@@ -10,7 +10,7 @@ using Kalmia.Reversi;
 
 namespace Kalmia.Learning
 {
-    public static class TrainDataCSVFileCreator
+    public static class TrainDataCSVFile
     {
         /// <summary>
         /// Creates training data and test data from game record which is written by WTHOR format. 

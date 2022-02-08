@@ -22,7 +22,7 @@ namespace Kalmia.Reversi
     {
         public const int BOARD_SIZE = 8;
         public const int SQUARE_NUM = BOARD_SIZE * BOARD_SIZE;
-        public const int MAX_MOVE_COUNT = 46;
+        public const int MAX_MOVE_CANDIDATE_COUNT = 46;
         const int BOARD_HISTORY_STACK_SIZE = 96;
 
         FastBoard fastBoard;
@@ -179,7 +179,7 @@ namespace Kalmia.Reversi
 
         public Move[] GetNextMoves()
         {
-            var positions = new BoardPosition[MAX_MOVE_COUNT];
+            var positions = new BoardPosition[MAX_MOVE_CANDIDATE_COUNT];
             var count = this.fastBoard.GetNextPositions(positions);
             return (from pos in positions[..count] select new Move(this.SideToMove, pos)).ToArray();
         }

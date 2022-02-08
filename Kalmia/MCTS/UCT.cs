@@ -1,11 +1,12 @@
-﻿using Kalmia.Evaluation;
-using Kalmia.Reversi;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Kalmia.Evaluation;
+using Kalmia.Reversi;
 
 namespace Kalmia.MCTS
 {
@@ -122,7 +123,7 @@ namespace Kalmia.MCTS
         public Searcher(GameInfo gameInfo)
         {
             this.GameInfo = new GameInfo(gameInfo);
-            this.Positions = new BoardPosition[Board.MAX_MOVE_COUNT];
+            this.Positions = new BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
         }
     }
 
@@ -206,7 +207,7 @@ namespace Kalmia.MCTS
         readonly float UCB_FACTOR_INIT;
         readonly float UCB_FACTOR_BASE;
         readonly uint VIRTUAL_LOSS;
-        readonly ValueFunction VALUE_FUNC;
+        readonly IValueFunction VALUE_FUNC;
         readonly int THREAD_NUM;
         readonly uint NODE_NUM_LIMIT;
         readonly long MANAGED_MEM_LIMIT;
@@ -252,12 +253,12 @@ namespace Kalmia.MCTS
             }
         }
 
-        public UCT(UCTOptions options, ValueFunction valueFunc)
+        public UCT(UCTOptions options, IValueFunction valueFunc)
         {
             this.UCB_FACTOR_INIT = options.UCBFactorInit;
             this.UCB_FACTOR_BASE = options.UCBFactorBase;
             this.VIRTUAL_LOSS = options.VirtualLoss;
-            this.VALUE_FUNC = new ValueFunction(valueFunc);
+            this.VALUE_FUNC = valueFunc;
             this.THREAD_NUM = options.ThreadNum;
             this.NODE_NUM_LIMIT = options.NodeNumLimit;
             this.MANAGED_MEM_LIMIT = options.ManagedMemoryLimit;

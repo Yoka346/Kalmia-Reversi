@@ -7,7 +7,7 @@ using Kalmia.Reversi;
 
 namespace Kalmia.Evaluation
 {
-    public class ValueFunction
+    public class ValueFunction : IValueFunction
     {
         static readonly int[] FEATURE_IDX_OFFSET;
         static readonly int[] TO_OPPONENT_FEATURE_IDX;
@@ -100,6 +100,30 @@ namespace Kalmia.Evaluation
                     Buffer.BlockCopy(sw, 0, dw, 0, sizeof(float) * dw.Length);
                 }
             }
+        }
+
+        public void InitWeightsAtRandom()
+        {
+            InitWeightsAtRandom(0.0f, 0.01f);
+        }
+
+        public void InitWeightsAtRandom(float mu, float sigma)
+        {
+            var rand = new NormalRandom(mu, sigma);
+            var blackWeight = this.Weight[(int)DiscColor.Black];
+            for (var stage = 0; stage < blackWeight.Length; stage++)
+            {
+                var blackParamsPerStage = blackWeight[stage];
+                for (var feature = 0; feature < blackParamsPerStage.Length - 1; feature++)
+                {
+                    var symmetricFeature = TO_SYMMETRIC_FEATURE_IDX[feature];
+                    if (symmetricFeature < feature)
+                        blackParamsPerStage[feature] = blackParamsPerStage[symmetricFeature];
+                    else
+                        blackParamsPerStage[feature] = rand.NextSingle();
+                }
+            }
+            CopyBlackWeightToWhiteWeight();
         }
 
         float[][][] LoadPackedWeight(FileStream fs)
