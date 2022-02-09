@@ -11,6 +11,9 @@ using Kalmia.GoTextProtocol;
 using Kalmia.IO;
 using Kalmia.Reversi;
 
+
+// ToDo: 線形評価関数の最適化プログラムの実装
+//       確率的な着手の実装
 namespace Kalmia.Engines
 {
     /// <summary>
@@ -69,7 +72,7 @@ namespace Kalmia.Engines
     /// </summary>
     public class KalmiaEngine : GTPEngine
     {
-        const string _NAME = "Kalmia";
+        const string _NAME = "Kalmia_LTF";
         const string _VERSION = "1.0";
 
         readonly Random RAND = new(Random.Shared.Next());
@@ -92,7 +95,8 @@ namespace Kalmia.Engines
         public KalmiaEngine(KalmiaConfig config, string logFilePath):base(_NAME, _VERSION)
         {
             this.Config = config;
-            this.tree = new UCT(config.TreeOptions, new ValueFunction(config.ValueFuncParamFile));
+            this.tree = new UCT(config.TreeOptions, new LatentFactorValueFunction(config.ValueFuncParamFile));
+            //this.tree = new UCT(config.TreeOptions, new ValueFunction(config.ValueFuncParamFile));
             this.thoughtLog = new Logger(logFilePath, Console.OpenStandardError());
             ClearBoard();
         }

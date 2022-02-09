@@ -19,24 +19,35 @@ namespace Kalmia
 
         static void Main()
         {
-            var valueFunc = new LatentFactorValueFunction("Kalmia", 1, 4);
-            valueFunc.InitVectorsAtRandom();
-            var optimizer = new LatentFactorValueFuncOptimizer(valueFunc);
-
-            Console.WriteLine("Loading data set.");
-            optimizer.LoadTrainData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\train_data.csv", false);
-            optimizer.LoadTestData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\test_data.csv");
-            Console.WriteLine("done.");
-
-            optimizer.StartOptimization(100000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor");
+            // StartEngine();
+            StartLearning();
         }
 
         static void StartEngine()
         {
             var config = new KalmiaConfig();
             config.SearchCount = 300000;
-            config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\Params\kalmia_value_func.dat";
+            //config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\Linear\optimized_param.dat";
+            config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor\optimized_param.dat";
+            //config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\Params\kalmia_value_func.dat";
             GTP.Mainloop(new KalmiaEngine(config), GTPCoordinateRule.Chess);
+        }
+
+        static void StartLearning()
+        {
+            var valueFunc = new LatentFactorValueFunction("Kalmia", 1, 4);
+            valueFunc.InitVectorsAtRandom();
+            var optimizer = new LatentFactorValueFuncOptimizer(valueFunc);
+            //var valueFunc = new ValueFunction("Kalmia", 1, 4);
+            //var optimizer = new ValueFuncOptimizer(valueFunc);
+
+            Console.WriteLine("Loading data set.");
+            optimizer.LoadTrainData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\train_data.csv", false);
+            optimizer.LoadTestData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\test_data.csv");
+            Console.WriteLine("done.");
+
+            optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor");
+            //optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\Linear");
         }
 
         //static void Main(string[] args)

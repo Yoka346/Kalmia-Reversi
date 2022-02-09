@@ -15,13 +15,12 @@ namespace Kalmia.Evaluation
 {
     public struct ValueFuncParam
     {
-        public int FeatureID;
         public float Weight;
         public Vector256<float> Vector;
 
         public static bool operator ==(ValueFuncParam left, ValueFuncParam right)
         {
-            return left.FeatureID == right.FeatureID && left.Weight == right.Weight && left.Vector.Equals(right.Vector);
+            return left.Weight == right.Weight && left.Vector.Equals(right.Vector);
         }
 
         public static bool operator!=(ValueFuncParam left, ValueFuncParam right)
@@ -31,7 +30,7 @@ namespace Kalmia.Evaluation
 
         public override string ToString()
         {
-            return string.Format("ValueFuncParam {0} FeatureID = {1}, Weight = {2}, Vector = {3} {4}", "{", this.FeatureID, this.Weight, this.Vector, "}");
+            return string.Format("ValueFuncParam {0} Weight = {2}, Vector = {3} {4}", "{", this.Weight, this.Vector, "}");
         }
     }
 
@@ -93,14 +92,7 @@ namespace Kalmia.Evaluation
 
             var blackParams = this.Params[(int)DiscColor.Black] = new ValueFuncParam[this.StageNum][];
             for (var stage = 0; stage < this.StageNum; stage++)
-            {
-                var paramsPerStage = blackParams[stage] = new ValueFuncParam[BoardFeature.PatternFeatureNumSum];
-                for (var featureIdx = 0; featureIdx < paramsPerStage.Length; featureIdx++)
-                {
-                    var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
-                    paramsPerStage[featureIdx].FeatureID = (featureIdx < symmetricFeatureIdx) ? featureIdx : symmetricFeatureIdx;
-                }
-            }
+                blackParams[stage] = new ValueFuncParam[BoardFeature.PatternFeatureNumSum];
 
             var whiteParams = this.Params[(int)DiscColor.White] = new ValueFuncParam[this.StageNum][];
             for (var stage = 0; stage < this.StageNum; stage++)
@@ -246,6 +238,7 @@ namespace Kalmia.Evaluation
                     value += (*requiredParams[i]).Weight;
                 }
 
+                var tmp = value;
                 for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM - 1; i++)
                     for (var j = i + 1; j < BoardFeature.PATTERN_NUM_SUM - 1; j++)
                         value += VectorOperator.Dot(ref (*requiredParams[i]).Vector, ref (*requiredParams[j]).Vector);
@@ -357,17 +350,13 @@ namespace Kalmia.Evaluation
                         if (symmetricFeatureIdx < featureIdx)
                             this.Params[(int)DiscColor.Black][stage][featureIdx] = this.Params[(int)DiscColor.Black][stage][symmetricFeatureIdx];
                         else
-                        {
                             this.Params[(int)DiscColor.Black][stage][featureIdx] = packedParams[stage][patternType][i++];
-                            this.Params[(int)DiscColor.Black][stage][featureIdx].FeatureID = featureIdx;
-                        }
                     }
                     offset += BoardFeature.PatternFeatureNum[patternType];
                 }
 
                 // bias
                 this.Params[(int)DiscColor.Black][stage][offset] = packedParams[stage][patternType][0];
-                this.Params[(int)DiscColor.Black][stage][offset].FeatureID = offset;
             }
             CopyBlackParamsToWhiteParams();
         }

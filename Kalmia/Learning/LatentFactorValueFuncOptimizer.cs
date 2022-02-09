@@ -32,8 +32,8 @@ namespace Kalmia.Learning
         public int Pacience { get; set; } = 5;
         public float LearningRate { get; set; } = 0.1f;
         public float LearningRateDecay { get; set; } = 0.5f;
-        public float L2FactorForWeight { get; set; } = 1.0e-3f;
-        public float L2FactorForVector { get; set; } = 2.0e-3f;
+        public float L2FactorForWeight { get; set; } = 0.0f;
+        public float L2FactorForVector { get; set; } = 0.0f;
         public float Tolerance { get; set; } = 1.0e-4f;
 
         public LatentFactorValueFuncOptimizer(LatentFactorValueFunction valueFunc)
@@ -253,7 +253,8 @@ namespace Kalmia.Learning
                         var otherFeatureParam = blackParams[Math.Min(otherFeatureIdx, otherSymmetricFeatureIdx)];
                         vecSum = Avx.Add(vecSum, otherFeatureParam.Vector);
                     }
-                    Avx.Store(vecBuffer, vecSum);
+                    var grad = Avx.Multiply(Avx.BroadcastScalarToVector256(&delta), vecSum);
+                    Avx.Store(vecBuffer, grad);
 
                     var vecGrad = vectorGrad[featureIdx];
                     for (var j = 0; j < InteractionVectorLen; j++)

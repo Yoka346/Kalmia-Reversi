@@ -126,6 +126,34 @@ namespace Kalmia.Evaluation
             CopyBlackWeightToWhiteWeight();
         }
 
+        public void CopyBlackParamsToSymmetricFeatureIdx()
+        {
+            var blackWeight = this.Weight[(int)DiscColor.Black];
+            for (var stage = 0; stage < blackWeight.Length; stage++)
+            {
+                var blackParamsPerStage = blackWeight[stage];
+                for (var featureIdx = 0; featureIdx < blackParamsPerStage.Length; featureIdx++)
+                {
+                    var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
+                    if (symmetricFeatureIdx > featureIdx)
+                        blackParamsPerStage[symmetricFeatureIdx] = blackParamsPerStage[featureIdx];
+                }
+            }
+        }
+
+        public void CopyBlackParamsToWhiteParams()
+        {
+            var blackWeight = this.Weight[(int)DiscColor.Black];
+            var whiteWeight = this.Weight[(int)DiscColor.White];
+            for (var stage = 0; stage < blackWeight.Length; stage++)
+            {
+                var blackParamsPerStage = blackWeight[stage];
+                var whiteParamsPerStage = whiteWeight[stage];
+                for (var feature = 0; feature < blackParamsPerStage.Length; feature++)
+                    whiteParamsPerStage[TO_OPPONENT_FEATURE_IDX[feature]] = blackParamsPerStage[feature];
+            }
+        }
+
         float[][][] LoadPackedWeight(FileStream fs)
         {
             fs.Seek(EvalParamsFileHeader.HEADER_SIZE, SeekOrigin.Begin);
@@ -206,6 +234,26 @@ namespace Kalmia.Evaluation
             var weight = this.Weight[color][stage];
             for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
                 value += weight[features[i] + FEATURE_IDX_OFFSET[i]];
+            value = MathFunctions.StdSigmoid(value);
+            return value;
+        }
+
+        public float F_ForOptimizing(BoardFeature board)
+        {
+            return F_ForOptimizing((Board.SQUARE_NUM - 4 - board.EmptyCount) / this.MoveCountPerStage, board);
+        }
+
+        public unsafe float F_ForOptimizing(int stage, BoardFeature board)
+        {
+            var value = 0.0f;
+            var features = board.Features;
+            var weight = this.Weight[(int)DiscColor.Black][stage];
+            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
+            {
+                var featureIdx = features[i] + FEATURE_IDX_OFFSET[i];
+                var symmetricFeatureIdx = TO_SYMMETRIC_FEATURE_IDX[featureIdx];
+                value += weight[(featureIdx < symmetricFeatureIdx) ? featureIdx : symmetricFeatureIdx];
+            }
             value = MathFunctions.StdSigmoid(value);
             return value;
         }
