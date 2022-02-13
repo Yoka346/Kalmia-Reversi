@@ -108,11 +108,6 @@ namespace Kalmia.MCTS
         {
             this.ChildNodes = new Node[this.Edges.Length];
         }
-
-        public void CreateChildNode(int idx)
-        {
-            this.ChildNodes[idx] = new Node();
-        }
     }
 
     class Searcher
@@ -195,7 +190,7 @@ namespace Kalmia.MCTS
         public long ManagedMemoryLimit { get; set; } = long.MaxValue;
     }
 
-    public record class MoveEvaluation(Move Move, double MoveProbability, double Value, uint RolloutCount, ReadOnlyCollection<Move> PrincipalVariation);
+    public record class MoveEvaluation(Move Move, double MoveProbability, double Value, bool IsProved, uint PlayoutCount, ReadOnlyCollection<Move> PrincipalVariation);
 
     public record class SearchInfo(MoveEvaluation RootEvaluation, ReadOnlyCollection<MoveEvaluation> ChildEvaluations);
 
@@ -207,7 +202,7 @@ namespace Kalmia.MCTS
         readonly float UCB_FACTOR_INIT;
         readonly float UCB_FACTOR_BASE;
         readonly uint VIRTUAL_LOSS;
-        readonly IValueFunction VALUE_FUNC;
+        readonly ValueFunction VALUE_FUNC;
         readonly int THREAD_NUM;
         readonly uint NODE_NUM_LIMIT;
         readonly long MANAGED_MEM_LIMIT;
@@ -232,7 +227,8 @@ namespace Kalmia.MCTS
                     if (this.root is null)
                         return null;
 
-                    var rootEval = new MoveEvaluation(Move.Null, 1.0f, this.root.ExpReward, this.root.VisitCount, new ReadOnlyCollection<Move>(new Move[0]));
+                    var rootIsProved = this.root.Edges.Any(e => e.IsProved);
+                    var rootEval = new MoveEvaluation(Move.Null, 1.0f, this.root.ExpReward, rootIsProved, this.root.VisitCount, new ReadOnlyCollection<Move>(new Move[0]));
                     var childEvals = new List<MoveEvaluation>();
                     if (this.root.IsExpanded)
                     {
@@ -243,7 +239,7 @@ namespace Kalmia.MCTS
                         {
                             var move = new Move(this.rootState.SideToMove, edges[i].Pos);
                             childEvals.Add(new MoveEvaluation(move, (visitCountSum != 0) ? (float)edges[i].VisitCount / visitCountSum : 1.0f / this.root.Edges.Length,
-                                                              (edges[i].VisitCount != 0) ? edges[i].RewardSum / edges[i].VisitCount : 0.0f, edges[i].VisitCount,
+                                                              edges[i].ExpReward, edges[i].IsProved, edges[i].VisitCount,
                                                               (childNodes is not null && childNodes[i] is not null) ? GetPrincipalVariation(childNodes[i], edges[i], this.rootState.Opponent)
                                                                                                                     : new ReadOnlyCollection<Move>(new Move[] { move })));
                         }
@@ -253,7 +249,7 @@ namespace Kalmia.MCTS
             }
         }
 
-        public UCT(UCTOptions options, IValueFunction valueFunc)
+        public UCT(UCTOptions options, ValueFunction valueFunc)
         {
             this.UCB_FACTOR_INIT = options.UCBFactorInit;
             this.UCB_FACTOR_BASE = options.UCBFactorBase;
@@ -351,7 +347,7 @@ namespace Kalmia.MCTS
             var childNodes = this.root.ChildNodes;
             for (var i = 0; i < edges.Length; i++)
                 if (childNodes[i] is null)
-                    this.root.CreateChildNode(i);
+                    childNodes[i] = new Node();
         }
 
         ReadOnlyCollection<Move> GetPrincipalVariation(Node root, Edge edgeToRoot, DiscColor rootSide)
@@ -404,7 +400,7 @@ namespace Kalmia.MCTS
             else
             {
                 edges[childIdx].Label = EdgeLabel.Evaluated;
-                UpdateResult(this.root, childIdx, Rollout(searcher.GameInfo.Feature));
+                UpdateResult(this.root, childIdx, EstimateReward(searcher.GameInfo.Feature));
             }
         }
 
@@ -413,6 +409,7 @@ namespace Kalmia.MCTS
             int childIdx;
             float reward;
             var nodeLocked = false;
+
             try
             {
                 Monitor.Enter(currentNode, ref nodeLocked);
@@ -432,11 +429,11 @@ namespace Kalmia.MCTS
                 {
                     if (edges[childIdx].IsVisited)    // child node is not a leaf node.
                     {
-                        if (currentNode.ChildNodes == null)
+                        if (currentNode.ChildNodes is null)
                             currentNode.InitChildNodes();
 
-                        if (currentNode.ChildNodes[childIdx] == null)
-                            currentNode.CreateChildNode(childIdx);
+                        if (currentNode.ChildNodes[childIdx] is null)
+                            currentNode.ChildNodes[childIdx] = new Node();
                         Monitor.Exit(currentNode);
                         nodeLocked = false;
                         reward = VisitNode(searcher, currentNode.ChildNodes[childIdx], ref edge);
@@ -446,7 +443,7 @@ namespace Kalmia.MCTS
                         Monitor.Exit(currentNode);
                         nodeLocked = false;
                         edges[childIdx].Label = EdgeLabel.Evaluated;
-                        reward = Rollout(searcher.GameInfo.Feature);
+                        reward = EstimateReward(searcher.GameInfo.Feature);
                     }
                 }
                 else    // child node is proved node.
@@ -592,7 +589,7 @@ namespace Kalmia.MCTS
             return maxIdx;
         }
 
-        float Rollout(BoardFeature feature)
+        float EstimateReward(BoardFeature feature)
         {
             AtomicOperations.Increment(ref this.ppsCounter);
             return 1.0f - this.VALUE_FUNC.F(feature);

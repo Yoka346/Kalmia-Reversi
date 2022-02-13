@@ -172,6 +172,6 @@ namespace Kalmia.GoTextProtocol
         public abstract Move GenerateMove(DiscColor color);
         public abstract Move RegGenerateMove(DiscColor color);
         public abstract void SetTime(int mainTime, int byoYomiTime, int byoYomiStones);
-        public abstract void SendTimeLeft(int timeLeft, int byoYomiStonesLeft);
+        public abstract void SendTimeLeft(DiscColor color, int timeLeft, int byoYomiStonesLeft);
     }
 }

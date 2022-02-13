@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -96,15 +97,12 @@ namespace Kalmia.Reversi
 
         static FastBoard()
         {
-            HASH_RANK = new ulong[HASH_RANK_DIM_0_LEN * HASH_RANK_DIM_1_LEN];     
-            var rand = new Xorshift32();
+            HASH_RANK = new ulong[HASH_RANK_DIM_0_LEN * HASH_RANK_DIM_1_LEN];
+            var rand = new Random();
             for(var i = 0; i < HASH_RANK_DIM_0_LEN; i++)
             {
-                for(var j = 0; j < HASH_RANK_DIM_1_LEN; j++)
-                {
-                    var r = (ulong)rand.Next();
-                    HASH_RANK[i * HASH_RANK_DIM_0_LEN + j] = (r << 32) | rand.Next();
-                }
+                for (var j = 0; j < HASH_RANK_DIM_1_LEN; j++)
+                    HASH_RANK[i * HASH_RANK_DIM_0_LEN + j] = (ulong)rand.NextInt64();
             }
         }
 
@@ -254,8 +252,10 @@ namespace Kalmia.Reversi
             this.SideToMove ^= DiscColor.White;
         }
 
+        public int GetNextPositions(BoardPosition[] positions) => GetNextPositionCandidates(positions.AsSpan());
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetNextPositions(BoardPosition[] positions)
+        public int GetNextPositionCandidates(Span<BoardPosition> positions)
         {
             var mobility = GetCurrentPlayerMobility();
             var posCount = (int)PopCount(mobility);
@@ -274,6 +274,16 @@ namespace Kalmia.Reversi
                 mask <<= 1;
             }
             return posCount;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetNextPositionsCandidatesNumAfter(BoardPosition pos)
+        {
+            var bitboard = this.bitboard;
+            var flipped = CalculateFlippedDiscs((int)pos);
+            bitboard.CurrentPlayer |= (flipped | (1UL << (int)pos));
+            bitboard.OpponentPlayer ^= flipped;
+            return (int)PopCount(CalculateMobility(bitboard.OpponentPlayer, bitboard.CurrentPlayer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

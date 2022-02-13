@@ -19,25 +19,26 @@ namespace Kalmia
 
         static void Main()
         {
-            // StartEngine();
-            StartLearning();
+            StartEngine();
+            //StartLearning();
         }
 
         static void StartEngine()
         {
             var config = new KalmiaConfig();
-            config.SearchCount = 300000;
-            //config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\Linear\optimized_param.dat";
-            config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor\optimized_param.dat";
-            //config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\Params\kalmia_value_func.dat";
+            config.SearchCount = 300000000;
+            config.LatencyCentiSec = 2;
+            config.SelectMoveStochastically = false;
+            config.OpenningMoveNum = 15;
+            config.UseMaxTimeForMove = false;
+            config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\Params\kalmia_value_func.dat";
             GTP.Mainloop(new KalmiaEngine(config), GTPCoordinateRule.Chess);
         }
 
         static void StartLearning()
         {
-            var valueFunc = new LatentFactorValueFunction("Kalmia", 1, 4);
-            valueFunc.InitVectorsAtRandom();
-            var optimizer = new LatentFactorValueFuncOptimizer(valueFunc);
+            var valueFunc = new ValueFunction("Kalmia", 1, 4);
+            var optimizer = new ValueFuncOptimizer(valueFunc);
             //var valueFunc = new ValueFunction("Kalmia", 1, 4);
             //var optimizer = new ValueFuncOptimizer(valueFunc);
 

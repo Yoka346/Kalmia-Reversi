@@ -12,7 +12,7 @@ namespace Kalmia.GoTextProtocol
 {
     public enum GTPCoordinateRule
     {
-        Chess,  //  A B C D E F G H         Chess style
+        Chess,  //   A B C D E F G H         Chess style
                 // 8 . . . . . . . . 
                 // 7 . . . . . . . . 
                 // 6 . . . . . . . . 
@@ -367,7 +367,8 @@ namespace Kalmia.GoTextProtocol
                 GTPFailure(id, "time and byo yomi stones must be integer");
                 return;
             }
-            Engine.SendTimeLeft(timeLeft, byoYomiStonesLeft);
+            Engine.SendTimeLeft(color, timeLeft, byoYomiStonesLeft);
+            GTPSuccess(id);
         }
 
         static void ExecuteSetGameCommand(int id, string[] args)

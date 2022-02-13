@@ -7,11 +7,11 @@ using System.Linq;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
-using static Kalmia.Evaluation.LatentFactorValueFunction;
+
+using static Kalmia.Evaluation.ValueFunction;
 
 namespace Kalmia.Learning
 {
-
     public class ValueFuncOptimizer
     {
         const float FEATURES_COUNT_INVERSE_MAX = 1.0e-2f;
@@ -52,7 +52,6 @@ namespace Kalmia.Learning
             var bestModel = new ValueFunction(this.currentModel);
             var stageNum = this.currentModel.StageNum;
             var weightGrad = new float[BiasIdx + 1];
-            var vectorGrad = (from _ in Enumerable.Range(0, BiasIdx + 1) select new float[InteractionVectorLen]).ToArray();
 
             try
             {
@@ -77,10 +76,10 @@ namespace Kalmia.Learning
                     for (var epoch = 0; epoch < maxEpoch; epoch++)
                     {
                         logger.WriteLine($"epoch = {epoch + 1} / {maxEpoch}");
-                        var trainLoss = CalculateBlackGradient(stage, trainBatch, weightGrad, vectorGrad);
+                        var trainLoss = CalculateBlackGradient(stage, trainBatch, weightGrad);
                         logger.WriteLine($"train_loss: {prevTrainLoss} -> {trainLoss}");
                         prevTrainLoss = trainLoss;
-                        ApplyBlackGradientToCurrentModel(stage, featuresCount, weightGrad, vectorGrad, learningRate, featuresCountInverse, this.L2FactorForWeight);
+                        ApplyBlackGradientToCurrentModel(stage, featuresCount, weightGrad, learningRate, featuresCountInverse, this.L2FactorForWeight);
 
                         if ((epoch + 1) % this.CheckPointInterval == 0)
                         {
@@ -110,8 +109,6 @@ namespace Kalmia.Learning
                         }
 
                         Array.Clear(weightGrad);
-                        foreach (var g in vectorGrad)
-                            Array.Clear(g);
 
                         logger.WriteLine();
                         logger.Flush();
@@ -197,7 +194,7 @@ namespace Kalmia.Learning
             return (from n in trainData select n.ToArray()).ToArray();
         }
 
-        unsafe float CalculateBlackGradient(int stage, (BoardFeature board, float output)[] batch, float[] weightGrad, float[][] vectorGrad)
+        unsafe float CalculateBlackGradient(int stage, (BoardFeature board, float output)[] batch, float[] weightGrad)
         {
             var loss = 0.0f;
             var valueFunc = this.currentModel;
@@ -235,7 +232,7 @@ namespace Kalmia.Learning
             return loss / batch.Length;
         }
 
-        unsafe void ApplyBlackGradientToCurrentModel(int stage, int[] featuresCount, float[] weightGrad, float[][] vectorGrad, float rate, float[] featureNumInverse, float l2FactorForWeight)
+        unsafe void ApplyBlackGradientToCurrentModel(int stage, int[] featuresCount, float[] weightGrad, float rate, float[] featureNumInverse, float l2FactorForWeight)
         {
             var blackWeight = this.currentModel.Weight[(int)DiscColor.Black][stage];
 

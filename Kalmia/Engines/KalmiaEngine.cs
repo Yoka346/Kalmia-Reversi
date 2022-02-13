@@ -11,9 +11,6 @@ using Kalmia.GoTextProtocol;
 using Kalmia.IO;
 using Kalmia.Reversi;
 
-
-// ToDo: 線形評価関数の最適化プログラムの実装
-//       確率的な着手の実装
 namespace Kalmia.Engines
 {
     /// <summary>
@@ -27,19 +24,29 @@ namespace Kalmia.Engines
         public uint SearchCount { get; set; } = 300000;
 
         /// <summary>
-        /// The time limit for one move. 
+        /// If true, uses maximum time for move, else uses time for move wisely.
         /// </summary>
-        public int MilliSecPerMove { get; set; } = int.MaxValue;
+        public bool UseMaxTimeForMove { get; set; } = false;
 
         /// <summary>
         /// Time limit will be decreased by this value.
         /// </summary>
-        public int TimeLimitDelayMilliSec { get; set; } = 100;
+        public int LatencyCentiSec { get; set; } = 100;
+
+        /// <summary>
+        /// The number of opening moves. When the move number is within this value, Kalmia does not spend the maximum time for move. 
+        /// </summary>
+        public int OpenningMoveNum { get; set; } = 15;
 
         /// <summary>
         /// Whether selects next move stochastically or not.
         /// </summary>
         public bool SelectMoveStochastically { get; set; }
+
+        /// <summary>
+        /// The number of stochastic move. After the number of move would be this value, Kalmia plays best move.
+        /// </summary>
+        public int StochasticMoveNum { get; set; } = int.MaxValue;
 
         /// <summary>
         /// The softmax temperature when selecting next move stochastically.
@@ -65,6 +72,16 @@ namespace Kalmia.Engines
         /// The search options.
         /// </summary>
         public UCTOptions TreeOptions { get; set; } = new();
+
+        /// <summary>
+        /// The size of memory for end game solver's transposition table.
+        /// </summary>
+        public ulong EndSolverMemorySize { get; set; } = 256 * 1024 * 1024; // 256MiB
+
+        /// <summary>
+        /// The number of empty squares when starting to solve the winner.
+        /// </summary>
+        public ulong EmptyNumForMateSolver { get; set; } = 20;
     }
 
     /// <summary>
@@ -72,7 +89,7 @@ namespace Kalmia.Engines
     /// </summary>
     public class KalmiaEngine : GTPEngine
     {
-        const string _NAME = "Kalmia_LTF";
+        const string _NAME = "Kalmia";
         const string _VERSION = "1.0";
 
         readonly Random RAND = new(Random.Shared.Next());
@@ -80,8 +97,8 @@ namespace Kalmia.Engines
         UCT tree;
         Task searchTask;
         Logger thoughtLog;
+        TimeController timeController;
         SearchInfo lastGenMoveSearchInfo;
-        bool timeControlEnabled;
         int remainingTime;
         int byoYomiTime;
         bool quitFlag;
@@ -90,13 +107,15 @@ namespace Kalmia.Engines
         public int SearchEllapsedMilliSec { get { return this.tree.SearchEllapsedMilliSec; } }
         public SearchInfo SearchInfo { get { return this.tree.IsSearching ? this.tree.SearchInfo : this.lastGenMoveSearchInfo; } }
 
+        bool timeControlEnabled { get { return this.timeController is not null; } set { if (!value) this.timeController = null; } }
+
         public KalmiaEngine(KalmiaConfig config):this(config, string.Empty) { }
 
         public KalmiaEngine(KalmiaConfig config, string logFilePath):base(_NAME, _VERSION)
         {
             this.Config = config;
-            this.tree = new UCT(config.TreeOptions, new LatentFactorValueFunction(config.ValueFuncParamFile));
-            //this.tree = new UCT(config.TreeOptions, new ValueFunction(config.ValueFuncParamFile));
+            this.tree = new UCT(config.TreeOptions, new ValueFunction(config.ValueFuncParamFile));
+            this.timeController = new TimeController(0, 1, 0, 0, config.LatencyCentiSec);
             this.thoughtLog = new Logger(logFilePath, Console.OpenStandardError());
             ClearBoard();
         }
@@ -116,6 +135,7 @@ namespace Kalmia.Engines
         {
             base.ClearBoard();
             this.tree.SetRoot(this.board);
+            this.timeController.Reset();
             this.thoughtLog.WriteLine("Tree was initialized.\n");
         }
 
@@ -182,54 +202,33 @@ namespace Kalmia.Engines
                 this.thoughtLog.WriteLine("Tree was initialized\n");
             }
 
-            var timeLimit = timeControlEnabled ? this.remainingTime / this.board.GetEmptyCount() + this.byoYomiTime : this.Config.MilliSecPerMove;
-            if(timeLimit - this.Config.TimeLimitDelayMilliSec > 0)
-                timeLimit -= this.Config.TimeLimitDelayMilliSec;
-            this.tree.Search(this.Config.SearchCount, timeLimit);
+            var nextMoves = this.board.GetNextMoves();
+            if (nextMoves.Length == 1)
+                return nextMoves[0];
+
+            var timeLimit = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount()) * 10;
+            this.timeController.Start(color);
+            this.tree.Search(this.Config.SearchCount, this.Config.UseMaxTimeForMove || this.timeController.InByoYomi(color) ? timeLimit : timeLimit / 2);
             var searchInfo = this.tree.SearchInfo;
             this.lastGenMoveSearchInfo = searchInfo;
 
-            bool additionalSearchRequired;
-            var move = this.Config.SelectMoveStochastically ? SelectMoveStochastically(searchInfo, out additionalSearchRequired)
-                                                            : SelectBestMove(searchInfo, out additionalSearchRequired);
+            var moveNum = Board.SQUARE_NUM - this.board.GetEmptyCount();
+            var move = this.Config.SelectMoveStochastically && (Board.SQUARE_NUM - this.board.GetEmptyCount()) < this.Config.StochasticMoveNum  
+                       ? SelectMoveStochastically(searchInfo, out bool additionalSearchRequired)
+                       : SelectBestMove(searchInfo, out additionalSearchRequired);
 
-            this.remainingTime -= this.tree.SearchEllapsedMilliSec;
-            var byoYomiRest = this.byoYomiTime;
-            if (this.remainingTime < 0)
+            if(additionalSearchRequired && !this.Config.UseMaxTimeForMove && !this.timeController.InByoYomi(color) && moveNum >= this.Config.OpenningMoveNum)
             {
-                byoYomiRest += this.remainingTime;
-                if (byoYomiRest < 0)
-                    byoYomiRest = 0;
-                this.remainingTime = 0;
+                this.thoughtLog.WriteLine("Additional search is required.");
+                this.thoughtLog.Flush();
+                this.tree.Search(this.Config.SearchCount, timeLimit / 2);
+                searchInfo = this.tree.SearchInfo;
+                this.lastGenMoveSearchInfo = searchInfo;
+                move = this.Config.SelectMoveStochastically && moveNum < this.Config.StochasticMoveNum
+                       ? SelectMoveStochastically(searchInfo, out _)
+                       : SelectBestMove(searchInfo, out _);
             }
-
-            if(additionalSearchRequired && timeControlEnabled && timeLimit * 1.5 < this.remainingTime + byoYomiRest)
-            {
-                int additionalTimeLimit;
-                if (timeLimit * 1.5 < this.remainingTime)
-                    additionalTimeLimit = timeLimit;
-                else if (byoYomiRest > 0)
-                {
-                    if (timeLimit <= this.remainingTime)
-                        additionalTimeLimit = timeLimit;
-                    else
-                        additionalTimeLimit = this.remainingTime + byoYomiRest;
-                }
-                else
-                    additionalTimeLimit = 0;
-
-                additionalTimeLimit -= this.Config.TimeLimitDelayMilliSec;
-                if (additionalTimeLimit > 0)
-                {
-                    this.thoughtLog.WriteLine("Additional thought is required.\n");
-                    this.tree.Search(this.Config.SearchCount, timeLimit);
-                    searchInfo = this.SearchInfo;
-                    this.lastGenMoveSearchInfo = searchInfo;
-                    this.remainingTime -= additionalTimeLimit;
-                    if (this.remainingTime < 0)
-                        this.remainingTime = 0;
-                }
-            }
+            this.timeController.Stop(color);
 
             this.thoughtLog.WriteLine(GetSearchInfoString());
             this.thoughtLog.Flush();
@@ -243,16 +242,15 @@ namespace Kalmia.Engines
                 this.timeControlEnabled = false;
                 return;
             }
-
-            this.remainingTime = mainTime * 1000;
-            this.byoYomiTime = byoYomiTime * 1000;
-            this.timeControlEnabled = true;
+            this.timeController = new TimeController(mainTime, byoYomiTime, byoYomiStones, 0, this.Config.LatencyCentiSec / 10);
         }
 
-        public override void SendTimeLeft(int timeLeft, int byoYomiStonesLeft)
+        public override void SendTimeLeft(DiscColor color, int timeLeft, int byoYomiStonesLeft)
         {
-            this.remainingTime = timeLeft * 1000;
-            this.timeControlEnabled = true;
+            if (this.timeControlEnabled)
+                this.timeController.AdjustTime(color, timeLeft, byoYomiStonesLeft);
+            else
+                throw new GTPException("Set main time before adjusting time left.");
         }
 
         public override string LoadSGF(string path)
@@ -297,9 +295,9 @@ namespace Kalmia.Engines
                 additionalSearchIsRequired = false;
                 return searchInfo.ChildEvaluations[0].Move;
             }
-            var childEvals = searchInfo.ChildEvaluations.OrderByDescending(key => key.RolloutCount).ToArray();
+            var childEvals = searchInfo.ChildEvaluations.OrderByDescending(key => key.PlayoutCount).ToArray();
             (var first, var second) = (childEvals[0], childEvals[1]);
-            additionalSearchIsRequired = second.Value > first.Value || second.RolloutCount < first.RolloutCount * 1.5;
+            additionalSearchIsRequired = !first.IsProved && (second.Value > first.Value || first.PlayoutCount < second.PlayoutCount * 1.5);
             return first.Move;
         }
 
@@ -316,9 +314,9 @@ namespace Kalmia.Engines
             var i = -1;
             while ((sum += searchInfo.ChildEvaluations[++i].MoveProbability) < arrow) ;
 
-            var childEvals = searchInfo.ChildEvaluations.OrderByDescending(key => key.RolloutCount).ToArray();
+            var childEvals = searchInfo.ChildEvaluations.OrderByDescending(key => key.PlayoutCount).ToArray();
             (var first, var second) = (childEvals[0], childEvals[1]);
-            additionalSearchIsRequired = second.Value > first.Value || second.RolloutCount < first.RolloutCount * 1.5;
+            additionalSearchIsRequired = second.Value > first.Value || second.PlayoutCount < first.PlayoutCount * 1.5;
 
             return searchInfo.ChildEvaluations[i].Move;
         }
@@ -326,12 +324,12 @@ namespace Kalmia.Engines
         string GetSearchInfoString()
         {
             var searchInfo = this.SearchInfo;
-            var sb = new StringBuilder($"ellapsed={this.SearchEllapsedMilliSec}[ms] {searchInfo.RootEvaluation.RolloutCount}[playouts] {this.tree.Pps}[pps] winning_rate={searchInfo.RootEvaluation.Value * 100.0f:f2}%\n");
+            var sb = new StringBuilder($"ellapsed={this.SearchEllapsedMilliSec}[ms] {searchInfo.RootEvaluation.PlayoutCount}[playouts] {this.tree.Pps}[pps] winning_rate={searchInfo.RootEvaluation.Value * 100.0f:f2}%\n");
             sb.AppendLine("|move|search_count|winnning_rate|probability|depth|pv");
-            foreach(var childEval in searchInfo.ChildEvaluations.OrderByDescending(n => n.RolloutCount))
+            foreach(var childEval in searchInfo.ChildEvaluations.OrderByDescending(n => n.PlayoutCount))
             {
                 var m = (GTP.CoordinateRule != GTPCoordinateRule.Othello) ? GTP.ConvertCoordinateRule(childEval.Move) : childEval.Move;
-                sb.Append($"| {m} |{childEval.RolloutCount,12}|{childEval.Value * 100.0f,12:f2}%|{childEval.MoveProbability * 100.0f,10:f2}%|{childEval.PrincipalVariation.Count,5}|");
+                sb.Append($"| {m} |{childEval.PlayoutCount,12}|{childEval.Value * 100.0f,12:f2}%|{childEval.MoveProbability * 100.0f,10:f2}%|{childEval.PrincipalVariation.Count,5}|");
                 foreach (var move in childEval.PrincipalVariation) 
                 {
                     if (GTP.CoordinateRule != GTPCoordinateRule.Othello)

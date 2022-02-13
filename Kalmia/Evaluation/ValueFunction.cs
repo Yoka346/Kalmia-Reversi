@@ -7,7 +7,7 @@ using Kalmia.Reversi;
 
 namespace Kalmia.Evaluation
 {
-    public class ValueFunction : IValueFunction
+    public class ValueFunction
     {
         static readonly int[] FEATURE_IDX_OFFSET;
         static readonly int[] TO_OPPONENT_FEATURE_IDX;
@@ -17,6 +17,7 @@ namespace Kalmia.Evaluation
         public static ReadOnlySpan<int> FeatureIdxOffset { get { return FEATURE_IDX_OFFSET; } }
         public static ReadOnlySpan<int> ToOpponentFeatureIdx { get { return TO_OPPONENT_FEATURE_IDX; } }
         public static ReadOnlySpan<int> ToSymmetricFeatureIdx { get { return TO_SYMMETRIC_FEATURE_IDX; } }
+        public static int BiasIdx { get { return BIAS_IDX; } }
 
         public float[][][] Weight { get; }      // WEIGHT[Color][Stage][Feature]
 
