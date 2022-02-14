@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 using Kalmia.Reversi;
 
@@ -50,7 +51,7 @@ namespace Kalmia.EndGameSolver
 
         static ulong CalcTableLength(ulong maxSize)
         {
-            var entrySize = Marshal.SizeOf<TTEntry<T>>();
+            var entrySize = Unsafe.SizeOf<TTEntry<T>>();
             var exp = Math.ILogB((double)maxSize / entrySize);
             return Enumerable.Repeat(2UL, exp).Aggregate((x, y) => x * y);
         }

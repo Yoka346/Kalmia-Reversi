@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace Kalmia.EndGameSolver
 {
     /// <summary>
-    /// Provides reversi mate solver(Solves win sequence not max discs difference.)
+    /// Provides reversi mate solver(Solves winner not max discs difference.)
     /// </summary>
     internal class MateSolver
     {
@@ -13,13 +13,13 @@ namespace Kalmia.EndGameSolver
         const int STOP_TRANSPOSITION_THRESHOLD = 6;
 
         TranspositionTable<GameResult> transpositionTable;
-        int npsCounter;
+        ulong npsCounter;
         int searchStartTime;
         int searchEndTime;
 
         public bool IsSearching { get; private set; }
         public int SearchEllapsedMilliSec { get { return this.IsSearching ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
-        public float Nps { get { return (float)this.npsCounter / (this.SearchEllapsedMilliSec * 1.0e-3f); } }
+        public float Nps { get { return this.npsCounter / (this.SearchEllapsedMilliSec * 1.0e-3f); } }
 
         public MateSolver(ulong maxMemorySize)
         {
@@ -48,12 +48,20 @@ namespace Kalmia.EndGameSolver
 
             var bestPos = positions[0];
             var bestScore = GameResult.Loss;
-            var startTime = Environment.TickCount;
+            this.searchStartTime = Environment.TickCount;
             timeout = false;
+            this.IsSearching = true;
             for(var i = 0; i < posNum; i++)
             {
                 board.Update(positions[i]);
-                var score = (GameResult)(-(int)Search(board, GameResult.Loss, (GameResult)(-(int)bestScore), startTime, timeLimit, out timeout));
+                var score = (GameResult)(-(int)Search(board, GameResult.Loss, (GameResult)(-(int)bestScore), timeLimit, out timeout));
+                if (timeout)
+                {
+                    this.IsSearching = false;
+                    this.searchEndTime = Environment.TickCount;
+                    result = bestScore;
+                    return bestPos;
+                }
                 board.SetBitboard(bitboard);
 
                 if(score == GameResult.Win)
@@ -69,14 +77,16 @@ namespace Kalmia.EndGameSolver
                 }
             }
 
+            this.IsSearching = false;
+            this.searchEndTime = Environment.TickCount;
             result = bestScore;
             return bestPos;
         }
 
         [SkipLocalsInit]
-        unsafe GameResult Search(FastBoard board, GameResult lowerBound, GameResult upperBound, int startTime, int timeLimit, out bool timeout)
+        unsafe GameResult Search(FastBoard board, GameResult lowerBound, GameResult upperBound, int timeLimit, out bool timeout)
         {
-            if(Environment.TickCount - startTime >= timeLimit)
+            if(this.SearchEllapsedMilliSec >= timeLimit)
             {
                 timeout = true;
                 return 0.0f;
@@ -117,6 +127,7 @@ namespace Kalmia.EndGameSolver
                 var score = result;
                 if(enableTransposition)
                     this.transpositionTable.SetEntry(hashCode, score, score);
+                return score;
             }
 
             var bitboard = board.GetBitboard();
@@ -130,12 +141,12 @@ namespace Kalmia.EndGameSolver
                 var pos = positions[i];
                 board.Update(pos);
                 this.npsCounter++;
-                var score = (GameResult)(-(int)Search(board, (GameResult)(-(int)upperBound), (GameResult)(-(int)lowerBound), startTime, timeLimit, out timeout));
+                var score = (GameResult)(-(int)Search(board, (GameResult)(-(int)upperBound), (GameResult)(-(int)lowerBound), timeLimit, out timeout));
                 board.SetBitboard(bitboard);
 
                 if (score > lowerBound)
                     lowerBound = score;
-                if (lowerBound > upperBound)
+                if (lowerBound >= upperBound)
                 {
                     if (enableTransposition)
                         this.transpositionTable.SetEntry(hashCode, lowerBound, GameResult.Win);

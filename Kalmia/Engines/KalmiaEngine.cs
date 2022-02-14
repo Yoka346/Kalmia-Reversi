@@ -7,6 +7,7 @@ using System.Diagnostics;
 
 using Kalmia.MCTS;
 using Kalmia.Evaluation;
+using Kalmia.EndGameSolver;
 using Kalmia.GoTextProtocol;
 using Kalmia.IO;
 using Kalmia.Reversi;
@@ -34,9 +35,14 @@ namespace Kalmia.Engines
         public int LatencyCentiSec { get; set; } = 100;
 
         /// <summary>
-        /// The number of opening moves. When the move number is within this value, Kalmia does not spend the maximum time for move. 
+        /// The number of opening moves. When the number of moves is within this value, Kalmia plays moves fastly.
         /// </summary>
         public int OpenningMoveNum { get; set; } = 15;
+
+        /// <summary>
+        /// The empty count of the board when mate solver would be executed.
+        /// </summary>
+        public int MateSolverMoveNum { get; set; } = 22;
 
         /// <summary>
         /// Whether selects next move stochastically or not.
@@ -76,12 +82,7 @@ namespace Kalmia.Engines
         /// <summary>
         /// The size of memory for end game solver's transposition table.
         /// </summary>
-        public ulong EndSolverMemorySize { get; set; } = 256 * 1024 * 1024; // 256MiB
-
-        /// <summary>
-        /// The number of empty squares when starting to solve the winner.
-        /// </summary>
-        public ulong EmptyNumForMateSolver { get; set; } = 20;
+        public ulong MateSolverMemorySize { get; set; } = 256 * 1024 * 1024; // 256MiB
     }
 
     /// <summary>
@@ -93,14 +94,14 @@ namespace Kalmia.Engines
         const string _VERSION = "1.0";
 
         readonly Random RAND = new(Random.Shared.Next());
+        readonly ValueFunction VALUE_FUNC;
 
         UCT tree;
         Task searchTask;
+        MateSolver mateSolver;
         Logger thoughtLog;
         TimeController timeController;
         SearchInfo lastGenMoveSearchInfo;
-        int remainingTime;
-        int byoYomiTime;
         bool quitFlag;
 
         public KalmiaConfig Config { get; }
@@ -114,7 +115,8 @@ namespace Kalmia.Engines
         public KalmiaEngine(KalmiaConfig config, string logFilePath):base(_NAME, _VERSION)
         {
             this.Config = config;
-            this.tree = new UCT(config.TreeOptions, new ValueFunction(config.ValueFuncParamFile));
+            this.tree = new UCT(config.TreeOptions, this.VALUE_FUNC = new ValueFunction(config.ValueFuncParamFile));
+            this.mateSolver = new MateSolver(this.Config.MateSolverMemorySize);
             this.timeController = new TimeController(0, 1, 0, 0, config.LatencyCentiSec);
             this.thoughtLog = new Logger(logFilePath, Console.OpenStandardError());
             ClearBoard();
@@ -135,6 +137,7 @@ namespace Kalmia.Engines
         {
             base.ClearBoard();
             this.tree.SetRoot(this.board);
+            this.mateSolver.ClearSearchResults();
             this.timeController.Reset();
             this.thoughtLog.WriteLine("Tree was initialized.\n");
         }
@@ -170,6 +173,7 @@ namespace Kalmia.Engines
                 StopPondering();
 
             this.tree.SetRoot(this.board);
+            this.mateSolver.ClearSearchResults();
             this.thoughtLog.WriteLine("Undo\n");
             this.thoughtLog.WriteLine("Tree was cleared.\n");
             return true;
@@ -206,33 +210,10 @@ namespace Kalmia.Engines
             if (nextMoves.Length == 1)
                 return nextMoves[0];
 
-            var timeLimit = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount()) * 10;
-            this.timeController.Start(color);
-            this.tree.Search(this.Config.SearchCount, this.Config.UseMaxTimeForMove || this.timeController.InByoYomi(color) ? timeLimit : timeLimit / 2);
-            var searchInfo = this.tree.SearchInfo;
-            this.lastGenMoveSearchInfo = searchInfo;
+            if (this.board.GetEmptyCount() > this.Config.MateSolverMoveNum)
+                return GenerateMidGameMove(color);
+            return GenerateEndGameMove(color);
 
-            var moveNum = Board.SQUARE_NUM - this.board.GetEmptyCount();
-            var move = this.Config.SelectMoveStochastically && (Board.SQUARE_NUM - this.board.GetEmptyCount()) < this.Config.StochasticMoveNum  
-                       ? SelectMoveStochastically(searchInfo, out bool additionalSearchRequired)
-                       : SelectBestMove(searchInfo, out additionalSearchRequired);
-
-            if(additionalSearchRequired && !this.Config.UseMaxTimeForMove && !this.timeController.InByoYomi(color) && moveNum >= this.Config.OpenningMoveNum)
-            {
-                this.thoughtLog.WriteLine("Additional search is required.");
-                this.thoughtLog.Flush();
-                this.tree.Search(this.Config.SearchCount, timeLimit / 2);
-                searchInfo = this.tree.SearchInfo;
-                this.lastGenMoveSearchInfo = searchInfo;
-                move = this.Config.SelectMoveStochastically && moveNum < this.Config.StochasticMoveNum
-                       ? SelectMoveStochastically(searchInfo, out _)
-                       : SelectBestMove(searchInfo, out _);
-            }
-            this.timeController.Stop(color);
-
-            this.thoughtLog.WriteLine(GetSearchInfoString());
-            this.thoughtLog.Flush();
-            return move;
         }
 
         public override void SetTime(int mainTime, int byoYomiTime, int byoYomiStones)
@@ -288,7 +269,66 @@ namespace Kalmia.Engines
             this.searchTask.Wait();
         }
 
-        public Move SelectBestMove(SearchInfo searchInfo, out bool additionalSearchIsRequired)
+        Move GenerateMidGameMove(DiscColor color)
+        {
+            this.timeController.Start(color);
+            var timeLimit = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount()) * 10;
+            this.tree.Search(this.Config.SearchCount, this.Config.UseMaxTimeForMove || this.timeController.InByoYomi(color) ? timeLimit : timeLimit / 2);
+            var searchInfo = this.tree.SearchInfo;
+            this.lastGenMoveSearchInfo = searchInfo;
+
+            var moveNum = Board.SQUARE_NUM - this.board.GetEmptyCount();
+            var move = this.Config.SelectMoveStochastically && (Board.SQUARE_NUM - this.board.GetEmptyCount()) < this.Config.StochasticMoveNum
+                       ? SelectMoveStochastically(searchInfo, out bool additionalSearchRequired)
+                       : SelectBestMove(searchInfo, out additionalSearchRequired);
+
+            if (additionalSearchRequired && !this.Config.UseMaxTimeForMove && !this.timeController.InByoYomi(color) && moveNum >= this.Config.OpenningMoveNum)
+            {
+                this.thoughtLog.WriteLine("Additional search is required.");
+                this.thoughtLog.Flush();
+                this.tree.Search(this.Config.SearchCount, timeLimit / 2);
+                searchInfo = this.tree.SearchInfo;
+                this.lastGenMoveSearchInfo = searchInfo;
+                move = this.Config.SelectMoveStochastically && moveNum < this.Config.StochasticMoveNum
+                       ? SelectMoveStochastically(searchInfo, out _)
+                       : SelectBestMove(searchInfo, out _);
+            }
+            this.timeController.Stop(color);
+
+            this.thoughtLog.WriteLine(GetSearchInfoString());
+            this.thoughtLog.Flush();
+            return move;
+        }
+
+        Move GenerateEndGameMove(DiscColor color)
+        {
+            this.timeController.Start(color);
+
+            this.thoughtLog.WriteLine("Execute mate solver.");
+            this.thoughtLog.Flush();
+
+           var timeLimit = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount()) * 10;   // ToDo: This is not enough time. considers the other way.
+            var movePos = this.mateSolver.SolveBestMove(this.board.GetFastBoard(), timeLimit, out GameResult result, out bool timeout);
+
+            Move move;
+            if (timeout)     // if timeout, selects the maximum value move with value function.
+            {
+                this.thoughtLog.WriteLine("timeout!!");
+                this.thoughtLog.WriteLine("Select move by one move ahead search.");
+                move = GenerateMoveByOneMoveAheadSearch();
+            }
+            else
+            {
+                this.thoughtLog.WriteLine($"ellapsed = {this.mateSolver.SearchEllapsedMilliSec}[ms]   nps = {this.mateSolver.Nps}[nps]");
+                this.thoughtLog.WriteLine($"Final result is {result}.");
+                move = new Move(this.board.SideToMove, movePos);
+            }
+            this.thoughtLog.Flush();
+            this.timeController.Stop(color);
+            return move;
+        }
+
+        Move SelectBestMove(SearchInfo searchInfo, out bool additionalSearchIsRequired)
         {
             if (searchInfo.ChildEvaluations.Count == 1)
             {
@@ -301,7 +341,7 @@ namespace Kalmia.Engines
             return first.Move;
         }
 
-        public Move SelectMoveStochastically(SearchInfo searchInfo, out bool additionalSearchIsRequired)
+        Move SelectMoveStochastically(SearchInfo searchInfo, out bool additionalSearchIsRequired)
         {
             if (searchInfo.ChildEvaluations.Count == 1)
             {
@@ -319,6 +359,32 @@ namespace Kalmia.Engines
             additionalSearchIsRequired = second.Value > first.Value || second.PlayoutCount < first.PlayoutCount * 1.5;
 
             return searchInfo.ChildEvaluations[i].Move;
+        }
+
+        Move GenerateMoveByOneMoveAheadSearch()
+        {
+            var board = this.board.GetFastBoard();
+            Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            var posNum = board.GetNextPositionCandidates(positions);
+            var evals = new (BoardPosition pos, float value)[posNum];
+
+            for(var i = 0; i < posNum; i++)
+            {
+                var bitboard = board.GetBitboard();
+                board.Update(positions[i]);
+                evals[i] = (positions[i], this.VALUE_FUNC.F(new BoardFeature(board)));
+                board.SetBitboard(bitboard);
+            }
+
+            evals = evals.OrderByDescending(e => e.value).ToArray();
+            var sb = new StringBuilder("|move|winning_rate");
+            foreach (var eval in evals)
+            {
+                var pos = (GTP.CoordinateRule != GTPCoordinateRule.Othello) ? GTP.ConvertCoordinateRule(eval.pos) : eval.pos;
+                sb.AppendLine($"| {pos} |{eval.value * 100.0f,12:f2}%");
+            }
+            this.thoughtLog.WriteLine(sb.ToString());
+            return new Move(this.board.SideToMove, evals[0].pos);
         }
 
         string GetSearchInfoString()
