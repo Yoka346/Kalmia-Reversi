@@ -208,6 +208,24 @@ namespace Kalmia.Reversi
             return (PopCount(mobility) == 0 && pos == BoardPosition.Pass) || (mobility & x) != 0UL;
         }
 
+        public void PutStoneWithoutFlip(DiscColor color, BoardPosition pos)
+        {
+            if (this.SideToMove == color)
+            {
+                var mask = 1UL << (int)pos;
+                this.bitboard.CurrentPlayer |= mask;
+                if ((this.bitboard.OpponentPlayer & mask) != 0)
+                    this.bitboard.OpponentPlayer ^= mask;
+            }
+            else
+            {
+                var mask = 1UL << (int)pos;
+                this.bitboard.OpponentPlayer |= mask;
+                if ((this.bitboard.CurrentPlayer & mask) != 0)
+                    this.bitboard.CurrentPlayer ^= mask;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong Update(BoardPosition pos)
         {
@@ -280,9 +298,12 @@ namespace Kalmia.Reversi
         public int GetNextPositionsCandidatesNumAfter(BoardPosition pos)
         {
             var bitboard = this.bitboard;
-            var flipped = CalculateFlippedDiscs((int)pos);
-            bitboard.CurrentPlayer |= (flipped | (1UL << (int)pos));
-            bitboard.OpponentPlayer ^= flipped;
+            if (pos != BoardPosition.Pass)
+            {
+                var flipped = CalculateFlippedDiscs((int)pos);
+                bitboard.CurrentPlayer |= (flipped | (1UL << (int)pos));
+                bitboard.OpponentPlayer ^= flipped;
+            }
             return (int)PopCount(CalculateMobility(bitboard.OpponentPlayer, bitboard.CurrentPlayer));
         }
 

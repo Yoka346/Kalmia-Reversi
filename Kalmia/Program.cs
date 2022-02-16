@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Diagnostics;
 
 using Kalmia.Engines;
+using Kalmia.EndGameSolver;
 using Kalmia.GoTextProtocol;
 using Kalmia.Evaluation;
 using Kalmia.Learning;
@@ -19,8 +20,9 @@ namespace Kalmia
 
         static void Main()
         {
-            StartEngine();
-            //StartLearning();
+            // StartEngine();
+            // StartLearning();
+            StartEndGameBenchmark();
         }
 
         static void StartEngine()
@@ -49,6 +51,12 @@ namespace Kalmia
 
             optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor");
             //optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\Linear");
+        }
+
+        static void StartEndGameBenchmark()
+        {
+            var solver = new MateSolver(256 * 1024 * 1024);
+            EndGameBenchmark.TestMateSolver(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end43.pos");
         }
 
         //static void Main(string[] args)

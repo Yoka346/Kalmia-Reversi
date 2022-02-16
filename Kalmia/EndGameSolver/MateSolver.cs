@@ -7,19 +7,19 @@ namespace Kalmia.EndGameSolver
     /// <summary>
     /// Provides reversi mate solver(Solves winner not max discs difference.)
     /// </summary>
-    internal class MateSolver
+    public class MateSolver
     {
-        const int STOP_MOVE_ORDERING_THRESHOLD = 6;
-        const int STOP_TRANSPOSITION_THRESHOLD = 6;
+        const int FAST_SEARCH_THRESHOLD = 6;
 
         TranspositionTable<GameResult> transpositionTable;
-        ulong npsCounter;
         int searchStartTime;
         int searchEndTime;
 
+        public ulong InternalNodeCount { get; private set; }
+        public ulong LeafNodeCount { get; private set; }
         public bool IsSearching { get; private set; }
         public int SearchEllapsedMilliSec { get { return this.IsSearching ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
-        public float Nps { get { return this.npsCounter / (this.SearchEllapsedMilliSec * 1.0e-3f); } }
+        public float Nps { get { return (this.InternalNodeCount + this.LeafNodeCount) / (this.SearchEllapsedMilliSec * 1.0e-3f); } }
 
         public MateSolver(ulong maxMemorySize)
         {
@@ -48,13 +48,15 @@ namespace Kalmia.EndGameSolver
 
             var bestPos = positions[0];
             var bestScore = GameResult.Loss;
+            this.InternalNodeCount = 0UL;
+            this.LeafNodeCount = 0UL;
             this.searchStartTime = Environment.TickCount;
             timeout = false;
             this.IsSearching = true;
             for(var i = 0; i < posNum; i++)
             {
                 board.Update(positions[i]);
-                var score = (GameResult)(-(int)Search(board, GameResult.Loss, (GameResult)(-(int)bestScore), timeLimit, out timeout));
+                var score = (GameResult)(-(int)SearchWithTranspositionTable(board, GameResult.Loss, (GameResult)(-(int)bestScore), timeLimit, out timeout));
                 if (timeout)
                 {
                     this.IsSearching = false;
@@ -84,9 +86,9 @@ namespace Kalmia.EndGameSolver
         }
 
         [SkipLocalsInit]
-        unsafe GameResult Search(FastBoard board, GameResult lowerBound, GameResult upperBound, int timeLimit, out bool timeout)
+        unsafe GameResult SearchWithTranspositionTable(FastBoard board, GameResult alpha, GameResult beta, int timeLimit, out bool timeout)
         {
-            if(this.SearchEllapsedMilliSec >= timeLimit)
+            if (this.SearchEllapsedMilliSec >= timeLimit)
             {
                 timeout = true;
                 return 0.0f;
@@ -94,68 +96,123 @@ namespace Kalmia.EndGameSolver
             timeout = false;
 
             TTEntry<GameResult>? ttEntry = null;
-            var emptyCount = board.GetEmptyCount();
-            var enableTransposition = emptyCount > STOP_TRANSPOSITION_THRESHOLD;
-            var hashCode = 0UL;
-            if (enableTransposition)
-            {
-                hashCode = board.GetHashCode();
-                ttEntry = this.transpositionTable.GetEntry(hashCode);
-            }
+            var hashCode = board.GetHashCode();
+            ttEntry = this.transpositionTable.GetEntry(hashCode);
 
             if (ttEntry.HasValue)   // hash hit
             {
-                if (upperBound <= ttEntry.Value.LowerBound)
+                if (beta <= ttEntry.Value.LowerBound)
                     return ttEntry.Value.LowerBound;
 
-                if (lowerBound >= ttEntry.Value.UpperBound)
+                if (alpha >= ttEntry.Value.UpperBound)
                     return ttEntry.Value.UpperBound;
 
                 if (ttEntry.Value.UpperBound == ttEntry.Value.LowerBound)
                     return ttEntry.Value.LowerBound;
 
-                if (ttEntry.Value.LowerBound > lowerBound)
-                    lowerBound = ttEntry.Value.LowerBound;
+                if (ttEntry.Value.LowerBound > alpha)
+                    alpha = ttEntry.Value.LowerBound;
 
-                if (ttEntry.Value.UpperBound < upperBound)
-                    upperBound = ttEntry.Value.UpperBound;
+                if (ttEntry.Value.UpperBound < beta)
+                    beta = ttEntry.Value.UpperBound;
             }
 
-            GameResult result;
-            if ((result = board.GetGameResult()) != GameResult.NotOver)
-            {
-                var score = result;
-                if(enableTransposition)
-                    this.transpositionTable.SetEntry(hashCode, score, score);
-                return score;
-            }
-
-            var bitboard = board.GetBitboard();
             Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
             var posNum = board.GetNextPositionCandidates(positions);
-            if (emptyCount > STOP_MOVE_ORDERING_THRESHOLD)
-                SortPositions(board, positions, posNum);
+            if (posNum == 1 && positions[0] == BoardPosition.Pass && board.GetNextPositionsCandidatesNumAfter(BoardPosition.Pass) == 0)  // gameover
+            {
+                this.LeafNodeCount++;
+                var playerCount = board.GetCurrentPlayerDiscCount();
+                var opponentCount = board.GetOpponentPlayerDiscCount();
+                GameResult result;
+                if (playerCount == opponentCount)
+                    result = GameResult.Draw;
+                else
+                    result = (playerCount > opponentCount) ? GameResult.Win : GameResult.Loss;
+                this.transpositionTable.SetEntry(hashCode, result, result);
+                return result;
+            }
 
-            for(var i = 0; i < posNum; i++)
+            this.InternalNodeCount++;
+            var bitboard = board.GetBitboard();
+            var emptyCount = board.GetEmptyCount();
+            var enableNextTransposition = (emptyCount - 1) > FAST_SEARCH_THRESHOLD;
+            SortPositions(board, positions, posNum);
+            var newAlpha = alpha;
+            var bestScore = GameResult.Loss;
+            for (var i = 0; i < posNum; i++)
             {
                 var pos = positions[i];
                 board.Update(pos);
-                this.npsCounter++;
-                var score = (GameResult)(-(int)Search(board, (GameResult)(-(int)upperBound), (GameResult)(-(int)lowerBound), timeLimit, out timeout));
+                GameResult score;
+                if (enableNextTransposition)
+                    score = (GameResult)(-(int)SearchWithTranspositionTable(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimit, out timeout));
+                else
+                    score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimit, out timeout));
+                board.SetBitboard(bitboard);
+
+                if (score > bestScore)
+                {
+                    if (score > newAlpha)
+                        newAlpha = score;
+                    bestScore = score;
+                }
+                if (bestScore >= beta)
+                {
+                    this.transpositionTable.SetEntry(hashCode, alpha, GameResult.Win);
+                    return bestScore;
+                }
+            }
+
+            if (bestScore > alpha)
+                this.transpositionTable.SetEntry(hashCode, bestScore, bestScore);
+            else
+                this.transpositionTable.SetEntry(hashCode, GameResult.Loss, bestScore);
+
+            return bestScore;
+        }
+
+        [SkipLocalsInit]
+        unsafe GameResult SearchFastly(FastBoard board, GameResult lowerBound, GameResult upperBound, int timeLimit, out bool timeout)
+        {
+            if (this.SearchEllapsedMilliSec >= timeLimit)
+            {
+                timeout = true;
+                return 0.0f;
+            }
+            timeout = false;
+
+            Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            var posNum = board.GetNextPositionCandidates(positions);
+            if (posNum == 1 && positions[0] == BoardPosition.Pass && board.GetNextPositionsCandidatesNumAfter(BoardPosition.Pass) == 0)  // gameover
+            {
+                this.LeafNodeCount++;
+                var playerCount = board.GetCurrentPlayerDiscCount();
+                var opponentCount = board.GetOpponentPlayerDiscCount();
+                GameResult result;
+                if (playerCount == opponentCount)
+                    result = GameResult.Draw;
+                else
+                    result = (playerCount > opponentCount) ? GameResult.Win : GameResult.Loss;
+                return result;
+            }
+
+            this.InternalNodeCount++;
+            var bitboard = board.GetBitboard();
+            var emptyCount = board.GetEmptyCount();
+            for (var i = 0; i < posNum; i++)
+            {
+                var pos = positions[i];
+                board.Update(pos);
+                GameResult score;
+                score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)upperBound), (GameResult)(-(int)lowerBound), timeLimit, out timeout));
                 board.SetBitboard(bitboard);
 
                 if (score > lowerBound)
                     lowerBound = score;
                 if (lowerBound >= upperBound)
-                {
-                    if (enableTransposition)
-                        this.transpositionTable.SetEntry(hashCode, lowerBound, GameResult.Win);
                     return lowerBound;
-                }
             }
-
-            if(enableTransposition)
-                this.transpositionTable.SetEntry(hashCode, lowerBound, upperBound);
 
             return lowerBound;
         }
