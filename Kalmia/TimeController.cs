@@ -27,6 +27,8 @@ namespace Kalmia
         /// </summary>
         public int LatencyCentiSec { get; set; }
 
+        public ReadOnlySpan<int> RemainingTimeCentiSec { get { return this.remainingTimeCentiSec; } }
+
         public TimeController(int mainTimeSec, int byoYomiTimeSec, int byoYomiStone, int byoYomiPeriods, int latencyCentiSec)
         {
             this.mainTimeCentiSec = mainTimeSec * 100;
@@ -35,6 +37,11 @@ namespace Kalmia
             this.byoYomiPeriods = byoYomiPeriods;
             this.LatencyCentiSec = latencyCentiSec;
             Reset();
+        }
+
+        public int GetEllapsedCentiSec(DiscColor color)
+        {
+            return (int)this.stopWatch[(int)color].ElapsedMilliseconds / 10;
         }
 
         public bool InByoYomi(DiscColor color)

@@ -13,33 +13,56 @@ namespace KalmiaTest
     public class FastBoard_Test
     {
         [TestMethod]
-        public void CalculateMobilityAndFlipped_Test()
+        public void CalculateMobilityAndFlip_Test()
         {
-            var board = new FastBoard();
-            var boardTest = new SlowBoard(DiscColor.Black, InitialBoardState.Cross);
-            var positons = new BoardPosition[SQUARE_NUM];
-            var moves = new Move[SQUARE_NUM];
-            var rand = new Random();
-
-            while (!boardTest.IsGameover())
+            const int SAMPLE_NUM = 1000;
+            for (var i = 0; i < SAMPLE_NUM; i++)
             {
-                var moveCount = board.GetNextPositions(positons);
-                var moveCountTest = boardTest.GetNextMoves(moves);
-                Assert.AreEqual(moveCountTest, moveCount);
-                AssertMovesAreEqual(boardTest, moves, positons.Select(p=>new Move(board.SideToMove, p)).ToArray(), moveCount);
-                var nextMove = moves[rand.Next(moveCount)];
-                board.Update(nextMove.Pos);
-                boardTest.Update(nextMove);
-                AssertDiscsAreEqual(boardTest, board);
+                var board = new FastBoard();
+                var boardTest = new SlowBoard(DiscColor.Black, InitialBoardState.Cross);
+                var positons = new BoardPosition[SQUARE_NUM];
+                var rand = new Random();
+
+                while (!boardTest.IsGameover())
+                {
+                    var moveCount = board.GetNextPositionCandidates(positons);
+                    var moves = boardTest.GetNextMoves();
+                    Assert.AreEqual(moves.Length, moveCount);
+                    AssertMovesAreEqual(boardTest, moves, positons.Select(p => new Move(board.SideToMove, p)).ToArray(), moveCount);
+                    var nextMove = moves[rand.Next(moveCount)];
+                    board.Update(nextMove.Pos);
+                    boardTest.Update(nextMove);
+                    AssertDiscsAreEqual(boardTest, board);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void CountLastFlip_Test()
+        {
+            const int SAMPLE_NUM = 1000;
+            var rand = new Random();
+            var pos = new BoardPosition[1];
+            for (var i = 0; i < SAMPLE_NUM; i++)
+            {
+                var board = CreateRandomBoard(rand, 1);
+                var num = board.GetNextPositionCandidates((Span<BoardPosition>)pos);
+                if (num == 0 || pos[0] == BoardPosition.Pass)
+                    continue;
+                var actual = board.GetLastFlippedDiscDoubleCount(pos[0]) / 2;
+                var discCount = board.GetOpponentPlayerDiscCount();
+                board.Update(pos[0]);
+                var expected = Math.Abs(board.GetCurrentPlayerDiscCount() - discCount);
+                Assert.AreEqual(expected, actual);
             }
         }
 
         [TestMethod]
         public void GetHashCode_Test()
         {
-            var rand = new Xorshift32();
-            var p = ((ulong)rand.Next() << 32) | rand.Next();
-            var o = ((ulong)rand.Next() << 32) | rand.Next();
+            var rand = new Random();
+            var p = (ulong)rand.NextInt64();
+            var o = (ulong)rand.NextInt64();
             var pAndO = p & o;
             p ^= pAndO;
             var board = new FastBoard(DiscColor.Black, new Bitboard(p, o));
@@ -98,6 +121,18 @@ namespace KalmiaTest
                 sb.Append("\n");
             }
             return sb.ToString();
+        }
+
+        FastBoard CreateRandomBoard(Random rand, int emptyCount)
+        {
+            var board = new FastBoard();
+            Span<BoardPosition> positions = stackalloc BoardPosition[MAX_MOVE_CANDIDATE_COUNT];
+            while(board.GetEmptyCount() != emptyCount && board.GetGameResult() == GameResult.NotOver)
+            {
+                var num = board.GetNextPositionCandidates(positions);
+                board.Update(positions[rand.Next(num)]);
+            }
+            return board;
         }
     }
 }

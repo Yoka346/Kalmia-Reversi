@@ -180,7 +180,7 @@ namespace Kalmia.Reversi
         public Move[] GetNextMoves()
         {
             var positions = new BoardPosition[MAX_MOVE_CANDIDATE_COUNT];
-            var count = this.fastBoard.GetNextPositions(positions);
+            var count = this.fastBoard.GetNextPositionCandidates(positions);
             return (from pos in positions[..count] select new Move(this.SideToMove, pos)).ToArray();
         }
 

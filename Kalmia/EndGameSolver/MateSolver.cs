@@ -1,13 +1,15 @@
-﻿using Kalmia.Reversi;
-using System;
+﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
+
+using Kalmia.Reversi;
 
 namespace Kalmia.EndGameSolver
 {
     /// <summary>
     /// Provides reversi mate solver(Solves winner not max discs difference.)
     /// </summary>
-    public class MateSolver
+    public class MateSolver : IEndGameSolver
     {
         const int FAST_SEARCH_THRESHOLD = 6;
 
@@ -39,7 +41,7 @@ namespace Kalmia.EndGameSolver
             var posNum = board.GetNextPositionCandidates(positions);
             SortPositions(board, positions, posNum);
 
-            if(posNum == 0)
+            if (posNum == 0)
             {
                 result = board.GetGameResult();
                 timeout = false;
@@ -53,7 +55,7 @@ namespace Kalmia.EndGameSolver
             this.searchStartTime = Environment.TickCount;
             timeout = false;
             this.IsSearching = true;
-            for(var i = 0; i < posNum; i++)
+            for (var i = 0; i < posNum; i++)
             {
                 board.Update(positions[i]);
                 var score = (GameResult)(-(int)SearchWithTranspositionTable(board, GameResult.Loss, (GameResult)(-(int)bestScore), timeLimit, out timeout));
@@ -66,7 +68,7 @@ namespace Kalmia.EndGameSolver
                 }
                 board.SetBitboard(bitboard);
 
-                if(score == GameResult.Win)
+                if (score == GameResult.Win)
                 {
                     result = GameResult.Win;
                     return positions[i];
@@ -124,13 +126,13 @@ namespace Kalmia.EndGameSolver
                 this.LeafNodeCount++;
                 var playerCount = board.GetCurrentPlayerDiscCount();
                 var opponentCount = board.GetOpponentPlayerDiscCount();
-                GameResult result;
+                GameResult score;
                 if (playerCount == opponentCount)
-                    result = GameResult.Draw;
+                    score = GameResult.Draw;
                 else
-                    result = (playerCount > opponentCount) ? GameResult.Win : GameResult.Loss;
-                this.transpositionTable.SetEntry(hashCode, result, result);
-                return result;
+                    score = (playerCount > opponentCount) ? GameResult.Win : GameResult.Loss;
+                this.transpositionTable.SetEntry(hashCode, score, score);
+                return score;
             }
 
             this.InternalNodeCount++;
@@ -151,29 +153,29 @@ namespace Kalmia.EndGameSolver
                     score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimit, out timeout));
                 board.SetBitboard(bitboard);
 
+                if (score >= beta)   // beta cut
+                {
+                    this.transpositionTable.SetEntry(hashCode, score, GameResult.Win);
+                    return score;
+                }
+
                 if (score > bestScore)
                 {
-                    if (score > newAlpha)
+                    if (score > newAlpha)   // shrinks window
                         newAlpha = score;
                     bestScore = score;
                 }
-                if (bestScore >= beta)
-                {
-                    this.transpositionTable.SetEntry(hashCode, alpha, GameResult.Win);
-                    return bestScore;
-                }
             }
 
-            if (bestScore > alpha)
+            if (bestScore > alpha)  // Found best score in the search window([alpha, beta]), so best score is true score.
                 this.transpositionTable.SetEntry(hashCode, bestScore, bestScore);
-            else
+            else    // Found best score out of the search window.
                 this.transpositionTable.SetEntry(hashCode, GameResult.Loss, bestScore);
 
             return bestScore;
         }
 
-        [SkipLocalsInit]
-        unsafe GameResult SearchFastly(FastBoard board, GameResult lowerBound, GameResult upperBound, int timeLimit, out bool timeout)
+        GameResult SearchFastly(FastBoard board, GameResult alpha, GameResult beta, int timeLimit, out bool timeout)
         {
             if (this.SearchEllapsedMilliSec >= timeLimit)
             {
@@ -182,39 +184,53 @@ namespace Kalmia.EndGameSolver
             }
             timeout = false;
 
-            Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
-            var posNum = board.GetNextPositionCandidates(positions);
-            if (posNum == 1 && positions[0] == BoardPosition.Pass && board.GetNextPositionsCandidatesNumAfter(BoardPosition.Pass) == 0)  // gameover
+            var mobility = board.GetCurrentPlayerMobility(out int mobilityNum);
+            if (mobilityNum == 0)
             {
-                this.LeafNodeCount++;
-                var playerCount = board.GetCurrentPlayerDiscCount();
-                var opponentCount = board.GetOpponentPlayerDiscCount();
-                GameResult result;
-                if (playerCount == opponentCount)
-                    result = GameResult.Draw;
-                else
-                    result = (playerCount > opponentCount) ? GameResult.Win : GameResult.Loss;
-                return result;
+                if (board.GetNextPositionsCandidatesNumAfter(BoardPosition.Pass) == 0)  // gameover
+                {
+                    this.LeafNodeCount++;
+                    var playerCount = board.GetCurrentPlayerDiscCount();
+                    var opponentCount = board.GetOpponentPlayerDiscCount();
+                    GameResult result;
+                    if (playerCount == opponentCount)
+                        result = GameResult.Draw;
+                    else
+                        result = (playerCount > opponentCount) ? GameResult.Win : GameResult.Loss;
+                    return result;
+                }
+                else    // pass
+                {
+                    board.SwitchSideToMove();
+                    var score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)beta), (GameResult)(-(int)alpha), timeLimit, out timeout));
+                    board.SwitchSideToMove();
+                    return (score > alpha) ? score : alpha;
+                }
             }
 
             this.InternalNodeCount++;
             var bitboard = board.GetBitboard();
-            var emptyCount = board.GetEmptyCount();
-            for (var i = 0; i < posNum; i++)
+            var posCount = 0;
+            var mask = 1UL;
+            for (var pos = BoardPosition.A1; posCount < mobilityNum; pos++)
             {
-                var pos = positions[i];
-                board.Update(pos);
-                GameResult score;
-                score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)upperBound), (GameResult)(-(int)lowerBound), timeLimit, out timeout));
-                board.SetBitboard(bitboard);
+                if ((mobility & mask) != 0)
+                {
+                    board.Update(pos);
+                    GameResult score;
+                    score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)beta), (GameResult)(-(int)alpha), timeLimit, out timeout));
+                    board.SetBitboard(bitboard);
 
-                if (score > lowerBound)
-                    lowerBound = score;
-                if (lowerBound >= upperBound)
-                    return lowerBound;
+                    if (score > alpha)
+                        alpha = score;
+                    if (alpha >= beta)
+                        return alpha;
+                    posCount++;
+                }
+                mask <<= 1;
             }
 
-            return lowerBound;
+            return alpha;
         }
 
         [SkipLocalsInit]
@@ -225,9 +241,9 @@ namespace Kalmia.EndGameSolver
             for (var i = 0; i < nextPosNums.Length; i++)
                 nextPosNums[i] = board.GetNextPositionsCandidatesNumAfter(positions[i]);
 
-            for(var i = 1; i < nextPosNums.Length; i++)
+            for (var i = 1; i < nextPosNums.Length; i++)
             {
-                if(nextPosNums[i - 1] > nextPosNums[i])
+                if (nextPosNums[i - 1] > nextPosNums[i])
                 {
                     var j = i;
                     var tmpPos = positions[i];

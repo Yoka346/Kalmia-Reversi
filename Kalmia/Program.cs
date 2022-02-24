@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
-using System.Diagnostics;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 using Kalmia.Engines;
 using Kalmia.EndGameSolver;
 using Kalmia.GoTextProtocol;
 using Kalmia.Evaluation;
 using Kalmia.Learning;
-using Kalmia.Reversi;
 
 namespace Kalmia
 {
@@ -18,23 +18,130 @@ namespace Kalmia
         const string GTP_LOG_FILE_NAME = "gtp{0}.txt";
         const string THOUGHT_LOG_FILE_NAME = "thought_log{0}.txt";
 
-        static void Main()
+        static void Main(string[] args)
         {
-            // StartEngine();
-            // StartLearning();
-            StartEndGameBenchmark();
+            var options = ExtractOptions(args);
+            KalmiaConfig config;
+            if (options.ContainsKey("configfile"))
+            {
+                if (options["configfile"].Length == 0)
+                {
+                    Console.WriteLine("Error: Specify config file path.");
+                    return;
+                }
+
+                var path = options["configfile"][0];
+                if (!File.Exists(path))
+                {
+                    Console.WriteLine($"Error: File \"{path}\" does not exist. If the specified path contains some spaces, close it by \" \".");
+                    return;
+                }
+
+                config = JsonSerializer.Deserialize<KalmiaConfig>(File.ReadAllText(options["configfile"][0]));
+            }
+            else
+                config = new KalmiaConfig();
+
+            GTPCoordinateRule coordRule;
+            if (options.ContainsKey("coordrule"))
+            {
+                if (options["coordrule"].Length == 0)
+                {
+                    Console.WriteLine("Error: Specify coordinate rule. The coordinate rule is \"go\" or \"othello\"");
+                    return;
+                }
+
+                var coordRuleStr = options["coordrule"][0];
+                if (coordRuleStr == "go")
+                    coordRule = GTPCoordinateRule.Go;
+                else if (coordRuleStr == "othello")
+                    coordRule = GTPCoordinateRule.Othello;
+                else
+                {
+                    Console.WriteLine("Error: Specify valid coordinate rule. The available coordinate rules are \"go\" or \"othello\"");
+                    return;
+                }
+            }
+            else
+                coordRule = GTPCoordinateRule.Go;
+
+            if (options.ContainsKey("mode"))
+            {
+                if(options["mode"].Length == 0)
+                {
+                    Console.WriteLine("Error: Specify program mode.");
+                    return;
+                }
+
+                var modeStr = options["mode"][0];
+                switch (modeStr)
+                {
+                    case "gtp":
+                        var kalmiaLogPath = string.Empty;
+                        if (options.ContainsKey("kalmialogpath"))
+                            if (options["kalmialogpath"].Length == 0)
+                            {
+                                Console.WriteLine("Error: Specify Kalmia's log file path.");
+                                return;
+                            }
+                        StartEngine(config, coordRule, kalmiaLogPath);
+                        return;
+
+                    case "matesolverbenchmark":
+                        if (options.ContainsKey("matesolverbenchmark"))
+                        {
+                            if (options["matesolverbenchmark"].Length == 0)
+                            {
+                                Console.WriteLine("Error: Specify end game problems directory path.");
+                                return;
+                            }
+
+                            var mateSolver = new MateSolver(config.EndgameSolverMemorySize);
+                            StartEndGameBenchmark(mateSolver, options["matesolverbenchmark"][0]);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Error: Specify end game problems directory path by \"matesolverbenchmark\" option");
+                            return;
+                        }
+                        return;
+                }
+            }
         }
 
-        static void StartEngine()
+        static Dictionary<string, string[]> ExtractOptions(string[] args)
         {
-            var config = new KalmiaConfig();
-            config.SearchCount = 300000000;
-            config.LatencyCentiSec = 2;
-            config.SelectMoveStochastically = false;
-            config.OpenningMoveNum = 15;
-            config.UseMaxTimeForMove = false;
-            config.ValueFuncParamFile = @"C:\Users\admin\source\repos\Kalmia\Params\kalmia_value_func.dat";
-            GTP.Mainloop(new KalmiaEngine(config), GTPCoordinateRule.Chess);
+            var options = new Dictionary<string, string[]>();
+            for (var i = 0; i < args.Length; i++)
+                if (Regex.IsMatch(args[i], "^--"))
+                {
+                    var key = args[i].Remove(0, 2).ToLower();
+                    var value = new List<string>();
+                    int j;
+                    for (j = i + 1; j < args.Length; j++)
+                        if (!Regex.IsMatch(args[j], "^--"))
+                            value.Add(args[j].ToLower());
+                        else
+                            break;
+                    options.Add(key, value.ToArray());
+                    i = j - 1;
+                }
+            return options;
+        }
+
+        static void StartEngine(KalmiaConfig config, GTPCoordinateRule coordRule, string logFilePath)
+        {
+            if(logFilePath == string.Empty)
+                GTP.Mainloop(new KalmiaEngine(config), coordRule);
+            else
+            {
+                if (!File.Exists(logFilePath))
+                {
+                    Console.WriteLine($"Error: File \"{logFilePath}\" does not exist. If the specified path contains some spaces, close it by \" \".");
+                    return;
+                }
+                GTP.Mainloop(new KalmiaEngine(config, logFilePath), coordRule);
+            }
         }
 
         static void StartLearning()
@@ -53,66 +160,10 @@ namespace Kalmia
             //optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\Linear");
         }
 
-        static void StartEndGameBenchmark()
+        static void StartEndGameBenchmark(IEndGameSolver solver, string problemsPath)
         {
-            var solver = new MateSolver(256 * 1024 * 1024);
-            EndGameBenchmark.TestMateSolver(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end43.pos");
+            
+            EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end41.pos");
         }
-
-        //static void Main(string[] args)
-        //{
-        //    SetCurrentDirectry();
-        //    if (args.Length == 0)
-        //        args = new string[] { "--level", "5" };
-
-        //    if (args.Length != 2 || args[0] != "--level")
-        //    {
-        //        Console.WriteLine("invalid option.");
-        //        return;
-        //    }
-
-        //    var config = SelectLevel(args[1]);
-        //    if (config == null)
-        //        return;
-        //    (var gtpLogPath, var thoughtLogPath) = CreateFiles();
-        //    var engine = new KalmiaEngine_Old(config.Value, thoughtLogPath);
-        //    GTP.Mainloop(engine, GTPCoordinateRule.Chess, gtpLogPath);
-        //}
-
-        //static void SetCurrentDirectry()
-        //{
-        //    var assembly = Assembly.GetEntryAssembly();
-        //    Directory.SetCurrentDirectory(Path.GetDirectoryName(assembly.Location));
-        //}
-
-        //static (string gtpLogPath, string thoughtLogPath) CreateFiles()
-        //{
-        //    if (!Directory.Exists(LOG_DIR_PATH))
-        //        Directory.CreateDirectory(LOG_DIR_PATH);
-
-        //    var gtpLogPath = LOG_DIR_PATH + GTP_LOG_FILE_NAME;
-        //    var i = 0;
-        //    while (File.Exists(string.Format(gtpLogPath, i)))
-        //        i++;
-        //    gtpLogPath = string.Format(gtpLogPath, i);
-
-        //    var thoughtLogPath = LOG_DIR_PATH + THOUGHT_LOG_FILE_NAME;
-        //    i = 0;
-        //    while (File.Exists(string.Format(thoughtLogPath, i)))
-        //        i++;
-        //    thoughtLogPath = string.Format(thoughtLogPath, i);
-        //    return (gtpLogPath, thoughtLogPath);
-        //}
-
-        //static KalmiaConfig? SelectLevel(string level)
-        //{
-        //    const string LEVEL_CONFIG_DIR = "level_config/";
-
-        //    var path = $"{LEVEL_CONFIG_DIR}level{level}.json";
-        //    if (File.Exists(path))
-        //        return new KalmiaConfig(File.ReadAllText(path));
-        //    Console.WriteLine("invalid level.");
-        //    return null;
-        //}
     }
 }

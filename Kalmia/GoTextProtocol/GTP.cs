@@ -12,7 +12,7 @@ namespace Kalmia.GoTextProtocol
 {
     public enum GTPCoordinateRule
     {
-        Chess,  //   A B C D E F G H         Chess style
+        Go,     //   A B C D E F G H         Go(Chinese game) style
                 // 8 . . . . . . . . 
                 // 7 . . . . . . . . 
                 // 6 . . . . . . . . 
@@ -36,7 +36,7 @@ namespace Kalmia.GoTextProtocol
     public static class GTP
     {
         const string VERSION = "2.0";
-        const GTPCoordinateRule DEFAULT_COORDINATE_RULE = GTPCoordinateRule.Chess;
+        const GTPCoordinateRule DEFAULT_COORDINATE_RULE = GTPCoordinateRule.Go;
 
         public static GTPCoordinateRule CoordinateRule { get; private set; }
         static GTPEngine Engine;
@@ -549,7 +549,7 @@ namespace Kalmia.GoTextProtocol
             coord.posX = str[0] - 'a';
             var isInt = int.TryParse(str[1].ToString(), out coord.posY);
             coord.posY -= 1;
-            if (CoordinateRule == GTPCoordinateRule.Chess)
+            if (CoordinateRule == GTPCoordinateRule.Go)
                 coord.posY = (Board.BOARD_SIZE - 1) - coord.posY;
             return isInt;
         }

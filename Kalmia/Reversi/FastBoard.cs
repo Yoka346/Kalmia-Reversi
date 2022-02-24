@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
@@ -13,6 +14,7 @@ namespace Kalmia.Reversi
     {
         public ulong CurrentPlayer { get; set; }
         public ulong OpponentPlayer { get; set; }
+        public ulong Empty { get { return ~(this.CurrentPlayer | this.OpponentPlayer); } }
 
         public Bitboard(ulong currentPlayer, ulong opponentPlayer)
         {
@@ -83,28 +85,96 @@ namespace Kalmia.Reversi
         }
     }
 
-    // see also get_moves(p, o) in https://github.com/okuhara/edax-reversi-AVX/blob/master/src/board_sse.c
+    /// <summary>
+    /// Provides fast reversi board for searching.
+    /// Source code reference: https://github.com/okuhara/edax-reversi-AVX/blob/master/src/board_sse.c
+    /// See also: http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm (Japanese document)
+    /// </summary>
     public class FastBoard     // board for searching
     {
-        static readonly Vector256<ulong> SHIFT_1897 = Vector256.Create(1UL, 8UL, 9UL, 7UL);
-        static readonly Vector256<ulong> SHIFT_1897_2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
-        static readonly Vector256<ulong> FLIP_MASK = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
-        static readonly Vector128<ulong> ZEROS_128 = Vector128.Create(0UL, 0UL);
-        static readonly Vector256<ulong> ZEROS_256 = Vector256.Create(0UL, 0UL, 0UL, 0UL);
         static readonly ulong[] HASH_RANK;
         const int HASH_RANK_DIM_0_LEN = Board.BOARD_SIZE * 2;
         const int HASH_RANK_DIM_1_LEN = 256;
 
-        static FastBoard()
+        // The index 0 represents square where player plays, the index 1 represents player's discs pattern on the line,
+        // and the element represents twice the number of discs flipped when there are no empty squares except for a square where a disc put.
+        // Why double ? The final discs diffrence is brought by following formula:
+        // final_disc_diff = (current_player_disc_count + last_flipped_disc_count + 1) - (current_opponent_disc_count - last_flipped_disc_count)
+        // When rearranging this formula:
+        // final_disc_diff = (currrent_player_disc_count - current_opponent_disc_count) + 2 * last_flipped_disc_count + 1
+        // that's why, this table has double last flipped discs count.
+        static byte[][] LAST_FLIP_DISC_DOUBLE_COUNT;
+
+        // The index 0 represents square position(A1 ~ H8), the each element reprensents mask of diagonal line, vertical line, and all lines which contain specified square(index 0).
+        // These masks are from the following source code.
+        // https://github.com/okuhara/edax-reversi-AVX/blob/master/src/count_last_flip_bmi2.c
+        static ulong[][] LINE_MASK = new ulong[64][]
         {
-            HASH_RANK = new ulong[HASH_RANK_DIM_0_LEN * HASH_RANK_DIM_1_LEN];
-            var rand = new Random();
-            for(var i = 0; i < HASH_RANK_DIM_0_LEN; i++)
-            {
-                for (var j = 0; j < HASH_RANK_DIM_1_LEN; j++)
-                    HASH_RANK[i * HASH_RANK_DIM_0_LEN + j] = (ulong)rand.NextInt64();
-            }
-        }
+            new ulong[4] { 0x0000000000000001UL, 0x8040201008040201UL, 0x0101010101010101UL, 0x81412111090503ffUL },
+            new ulong[4] { 0x0000000000000102UL, 0x0080402010080402UL, 0x0202020202020202UL, 0x02824222120a07ffUL },
+            new ulong[4] { 0x0000000000010204UL, 0x0000804020100804UL, 0x0404040404040404UL, 0x0404844424150effUL },
+            new ulong[4] { 0x0000000001020408UL, 0x0000008040201008UL, 0x0808080808080808UL, 0x08080888492a1cffUL },
+            new ulong[4] { 0x0000000102040810UL, 0x0000000080402010UL, 0x1010101010101010UL, 0x10101011925438ffUL },
+            new ulong[4] { 0x0000010204081020UL, 0x0000000000804020UL, 0x2020202020202020UL, 0x2020212224a870ffUL },
+            new ulong[4] { 0x0001020408102040UL, 0x0000000000008040UL, 0x4040404040404040UL, 0x404142444850e0ffUL },
+            new ulong[4] { 0x0102040810204080UL, 0x0000000000000080UL, 0x8080808080808080UL, 0x8182848890a0c0ffUL },
+            new ulong[4] { 0x0000000000000102UL, 0x4020100804020104UL, 0x0101010101010101UL, 0x412111090503ff03UL },
+            new ulong[4] { 0x0000000000010204UL, 0x8040201008040201UL, 0x0202020202020202UL, 0x824222120a07ff07UL },
+            new ulong[4] { 0x0000000001020408UL, 0x0080402010080402UL, 0x0404040404040404UL, 0x04844424150eff0eUL },
+            new ulong[4] { 0x0000000102040810UL, 0x0000804020100804UL, 0x0808080808080808UL, 0x080888492a1cff1cUL },
+            new ulong[4] { 0x0000010204081020UL, 0x0000008040201008UL, 0x1010101010101010UL, 0x101011925438ff38UL },
+            new ulong[4] { 0x0001020408102040UL, 0x0000000080402010UL, 0x2020202020202020UL, 0x20212224a870ff70UL },
+            new ulong[4] { 0x0102040810204080UL, 0x0000000000804020UL, 0x4040404040404040UL, 0x4142444850e0ffe0UL },
+            new ulong[4] { 0x0204081020408001UL, 0x0000000000008040UL, 0x8080808080808080UL, 0x82848890a0c0ffc0UL },
+            new ulong[4] { 0x0000000000010204UL, 0x201008040201000aUL, 0x0101010101010101UL, 0x2111090503ff0305UL },
+            new ulong[4] { 0x0000000001020408UL, 0x4020100804020101UL, 0x0202020202020202UL, 0x4222120a07ff070aUL },
+            new ulong[4] { 0x0000000102040810UL, 0x8040201008040201UL, 0x0404040404040404UL, 0x844424150eff0e15UL },
+            new ulong[4] { 0x0000010204081020UL, 0x0080402010080402UL, 0x0808080808080808UL, 0x0888492a1cff1c2aUL },
+            new ulong[4] { 0x0001020408102040UL, 0x0000804020100804UL, 0x1010101010101010UL, 0x1011925438ff3854UL },
+            new ulong[4] { 0x0102040810204080UL, 0x0000008040201008UL, 0x2020202020202020UL, 0x212224a870ff70a8UL },
+            new ulong[4] { 0x0204081020408001UL, 0x0000000080402010UL, 0x4040404040404040UL, 0x42444850e0ffe050UL },
+            new ulong[4] { 0x0408102040800003UL, 0x0000000000804020UL, 0x8080808080808080UL, 0x848890a0c0ffc0a0UL },
+            new ulong[4] { 0x0000000001020408UL, 0x1008040201000016UL, 0x0101010101010101UL, 0x11090503ff030509UL },
+            new ulong[4] { 0x0000000102040810UL, 0x2010080402010005UL, 0x0202020202020202UL, 0x22120a07ff070a12UL },
+            new ulong[4] { 0x0000010204081020UL, 0x4020100804020101UL, 0x0404040404040404UL, 0x4424150eff0e1524UL },
+            new ulong[4] { 0x0001020408102040UL, 0x8040201008040201UL, 0x0808080808080808UL, 0x88492a1cff1c2a49UL },
+            new ulong[4] { 0x0102040810204080UL, 0x0080402010080402UL, 0x1010101010101010UL, 0x11925438ff385492UL },
+            new ulong[4] { 0x0204081020408001UL, 0x0000804020100804UL, 0x2020202020202020UL, 0x2224a870ff70a824UL },
+            new ulong[4] { 0x0408102040800003UL, 0x0000008040201008UL, 0x4040404040404040UL, 0x444850e0ffe05048UL },
+            new ulong[4] { 0x0810204080000007UL, 0x0000000080402010UL, 0x8080808080808080UL, 0x8890a0c0ffc0a090UL },
+            new ulong[4] { 0x0000000102040810UL, 0x080402010000002eUL, 0x0101010101010101UL, 0x090503ff03050911UL },
+            new ulong[4] { 0x0000010204081020UL, 0x100804020100000dUL, 0x0202020202020202UL, 0x120a07ff070a1222UL },
+            new ulong[4] { 0x0001020408102040UL, 0x2010080402010003UL, 0x0404040404040404UL, 0x24150eff0e152444UL },
+            new ulong[4] { 0x0102040810204080UL, 0x4020100804020101UL, 0x0808080808080808UL, 0x492a1cff1c2a4988UL },
+            new ulong[4] { 0x0204081020408002UL, 0x8040201008040201UL, 0x1010101010101010UL, 0x925438ff38549211UL },
+            new ulong[4] { 0x0408102040800005UL, 0x0080402010080402UL, 0x2020202020202020UL, 0x24a870ff70a82422UL },
+            new ulong[4] { 0x081020408000000bUL, 0x0000804020100804UL, 0x4040404040404040UL, 0x4850e0ffe0504844UL },
+            new ulong[4] { 0x1020408000000017UL, 0x0000008040201008UL, 0x8080808080808080UL, 0x90a0c0ffc0a09088UL },
+            new ulong[4] { 0x0000010204081020UL, 0x040201000000005eUL, 0x0101010101010101UL, 0x0503ff0305091121UL },
+            new ulong[4] { 0x0001020408102040UL, 0x080402010000001dUL, 0x0202020202020202UL, 0x0a07ff070a122242UL },
+            new ulong[4] { 0x0102040810204080UL, 0x100804020100000bUL, 0x0404040404040404UL, 0x150eff0e15244484UL },
+            new ulong[4] { 0x0204081020408001UL, 0x2010080402010003UL, 0x0808080808080808UL, 0x2a1cff1c2a498808UL },
+            new ulong[4] { 0x0408102040800003UL, 0x4020100804020101UL, 0x1010101010101010UL, 0x5438ff3854921110UL },
+            new ulong[4] { 0x081020408000000eUL, 0x8040201008040201UL, 0x2020202020202020UL, 0xa870ff70a8242221UL },
+            new ulong[4] { 0x102040800000001dUL, 0x0080402010080402UL, 0x4040404040404040UL, 0x50e0ffe050484442UL },
+            new ulong[4] { 0x204080000000003bUL, 0x0000804020100804UL, 0x8080808080808080UL, 0xa0c0ffc0a0908884UL },
+            new ulong[4] { 0x0001020408102040UL, 0x02010000000000beUL, 0x0101010101010101UL, 0x03ff030509112141UL },
+            new ulong[4] { 0x0102040810204080UL, 0x040201000000003dUL, 0x0202020202020202UL, 0x07ff070a12224282UL },
+            new ulong[4] { 0x0204081020408001UL, 0x080402010000001bUL, 0x0404040404040404UL, 0x0eff0e1524448404UL },
+            new ulong[4] { 0x0408102040800003UL, 0x1008040201000007UL, 0x0808080808080808UL, 0x1cff1c2a49880808UL },
+            new ulong[4] { 0x0810204080000007UL, 0x2010080402010003UL, 0x1010101010101010UL, 0x38ff385492111010UL },
+            new ulong[4] { 0x102040800000000fUL, 0x4020100804020101UL, 0x2020202020202020UL, 0x70ff70a824222120UL },
+            new ulong[4] { 0x204080000000003eUL, 0x8040201008040201UL, 0x4040404040404040UL, 0xe0ffe05048444241UL },
+            new ulong[4] { 0x408000000000007dUL, 0x0080402010080402UL, 0x8080808080808080UL, 0xc0ffc0a090888482UL },
+            new ulong[4] { 0x0102040810204080UL, 0x010000000000027eUL, 0x0101010101010101UL, 0xff03050911214181UL },
+            new ulong[4] { 0x0204081020408001UL, 0x020100000000007dUL, 0x0202020202020202UL, 0xff070a1222428202UL },
+            new ulong[4] { 0x0408102040800003UL, 0x040201000000003bUL, 0x0404040404040404UL, 0xff0e152444840404UL },
+            new ulong[4] { 0x0810204080000007UL, 0x0804020100000017UL, 0x0808080808080808UL, 0xff1c2a4988080808UL },
+            new ulong[4] { 0x102040800000000fUL, 0x1008040201000007UL, 0x1010101010101010UL, 0xff38549211101010UL },
+            new ulong[4] { 0x204080000000001fUL, 0x2010080402010003UL, 0x2020202020202020UL, 0xff70a82422212020UL },
+            new ulong[4] { 0x408000000000003fUL, 0x4020100804020101UL, 0x4040404040404040UL, 0xffe0504844424140UL },
+            new ulong[4] { 0x800000000000017eUL, 0x8040201008040201UL, 0x8080808080808080UL, 0xffc0a09088848281UL }
+        };
 
         Bitboard bitboard;
         public DiscColor SideToMove { get; private set; }
@@ -112,7 +182,55 @@ namespace Kalmia.Reversi
         bool mobilityWasCalculated = false;
         ulong mobility;
 
-        public FastBoard():this(new Board(DiscColor.Black, InitialBoardState.Cross)) { }
+        static FastBoard()
+        {
+            HASH_RANK = new ulong[HASH_RANK_DIM_0_LEN * HASH_RANK_DIM_1_LEN];
+            var rand = new Random();
+            for (var i = 0; i < HASH_RANK_DIM_0_LEN; i++)
+            {
+                for (var j = 0; j < HASH_RANK_DIM_1_LEN; j++)
+                    HASH_RANK[i * HASH_RANK_DIM_0_LEN + j] = (ulong)rand.NextInt64();
+            }
+
+            LAST_FLIP_DISC_DOUBLE_COUNT = (from _ in Enumerable.Range(0, 8) select new byte[256]).ToArray();
+            InitLastFlippedDiscCountTable();
+        }
+
+        static void InitLastFlippedDiscCountTable()
+        {
+            for (var pos = 0; pos < LAST_FLIP_DISC_DOUBLE_COUNT.Length; pos++)
+            {
+                var x = 1u << pos;
+                var flipCount = LAST_FLIP_DISC_DOUBLE_COUNT[pos];
+                for (var playerPattern = 0u; playerPattern < flipCount.Length; playerPattern++)
+                {
+                    var opponentPattern = ~playerPattern & 0x000000ffu;
+                    if ((opponentPattern & x) != 0)
+                        opponentPattern ^= x;
+
+                    var flipped0 = (x << 1) & opponentPattern;
+                    flipped0 |= (flipped0 << 1) & opponentPattern;
+                    var prefix0 = opponentPattern & (opponentPattern << 1);
+                    flipped0 |= (flipped0 << 2) & prefix0;
+                    flipped0 |= (flipped0 << 2) & prefix0;
+                    var outflank0 = playerPattern & (flipped0 << 1);
+                    if (outflank0 == 0)
+                        flipped0 = 0u;
+
+                    var flipped1 = (x >> 1) & opponentPattern;
+                    flipped1 |= (flipped1 >> 1) & opponentPattern;
+                    var prefix1 = opponentPattern & (opponentPattern >> 1);
+                    flipped1 |= (flipped1 >> 2) & prefix1;
+                    flipped1 |= (flipped1 >> 2) & prefix1;
+                    var outflank1 = playerPattern & (flipped1 >> 1);
+                    if (outflank1 == 0)
+                        flipped1 = 0u;
+                    flipCount[playerPattern] = (byte)(PopCount(flipped0 | flipped1) << 1);
+                }
+            }
+        }
+
+        public FastBoard() : this(new Board(DiscColor.Black, InitialBoardState.Cross)) { }
 
         public FastBoard(Board board) : this(board.SideToMove, board.GetBitBoard()) { }
 
@@ -175,6 +293,26 @@ namespace Kalmia.Reversi
             return this.bitboard.GetEmptyCount();
         }
 
+        /// <summary>
+        /// Counts flipped discs when current player plays last one empty square.
+        /// Source code reference: https://github.com/okuhara/edax-reversi-AVX/blob/master/src/count_last_flip_bmi2.c
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetLastFlippedDiscDoubleCount(BoardPosition pos)
+        {
+            var colIdx = (int)pos & 7;  // same as (int)pos % 8
+            var rowIdx = (int)pos >> 3; // same as (int)pos / 8
+            var mask = LINE_MASK[(int)pos];
+            var p = this.bitboard.CurrentPlayer & mask[3];
+            var count = LAST_FLIP_DISC_DOUBLE_COUNT[colIdx][(byte)(p >> ((int)pos & 0x38))];    // (int)pos & 0x38 is same as ((int)pos / 8) * 8
+            count += LAST_FLIP_DISC_DOUBLE_COUNT[rowIdx][ParallelBitExtract(p, mask[0])];
+            count += LAST_FLIP_DISC_DOUBLE_COUNT[rowIdx][ParallelBitExtract(p, mask[1])];
+            count += LAST_FLIP_DISC_DOUBLE_COUNT[rowIdx][ParallelBitExtract(p, mask[2])];
+            return count;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DiscColor GetDiscColor(BoardPosition pos)
         {
@@ -230,7 +368,7 @@ namespace Kalmia.Reversi
         public ulong Update(BoardPosition pos)
         {
             var flipped = 0UL;
-            if(pos != BoardPosition.Pass)
+            if (pos != BoardPosition.Pass)
             {
                 var x = 1UL << (byte)pos;
                 flipped = CalculateFlippedDiscs((byte)pos);
@@ -246,16 +384,15 @@ namespace Kalmia.Reversi
         {
             if (this.bitboard.GetEmptyCount() != 0)
             {
-                var mobility = (this.mobilityWasCalculated) ? this.mobility : GetCurrentPlayerMobility();
+                var mobility = GetCurrentPlayerMobility();
                 if (PopCount(mobility) != 0 || PopCount(CalculateMobility(this.bitboard.OpponentPlayer, this.bitboard.CurrentPlayer)) != 0)
                     return GameResult.NotOver;
             }
 
-            var currentPlayerCount = PopCount(this.bitboard.CurrentPlayer);
-            var opponentPlayerCount = PopCount(this.bitboard.OpponentPlayer);
-            if (currentPlayerCount > opponentPlayerCount)
+            var diff = (int)PopCount(this.bitboard.CurrentPlayer) - (int)PopCount(this.bitboard.OpponentPlayer);
+            if (diff > 0)
                 return GameResult.Win;
-            if (currentPlayerCount < opponentPlayerCount)
+            if (diff < 0)
                 return GameResult.Loss;
             return GameResult.Draw;
         }
@@ -270,7 +407,7 @@ namespace Kalmia.Reversi
             this.SideToMove ^= DiscColor.White;
         }
 
-        public int GetNextPositions(BoardPosition[] positions) => GetNextPositionCandidates(positions.AsSpan());
+        public int GetNextPositionCandidates(BoardPosition[] positions) => GetNextPositionCandidates(positions.AsSpan());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetNextPositionCandidates(Span<BoardPosition> positions)
@@ -308,6 +445,25 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ulong GetCurrentPlayerMobility()
+        {
+            if (!this.mobilityWasCalculated)
+            {
+                this.mobility = CalculateMobility(this.bitboard.CurrentPlayer, this.bitboard.OpponentPlayer);
+                this.mobilityWasCalculated = true;
+            }
+            return this.mobility;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ulong GetCurrentPlayerMobility(out int mobilityNum)
+        {
+            GetCurrentPlayerMobility();
+            mobilityNum = (int)PopCount(this.mobility);
+            return this.mobility;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe new ulong GetHashCode()
         {
             var bb = this.bitboard;
@@ -316,19 +472,19 @@ namespace Kalmia.Reversi
 
             fixed (ulong* hash_rank = &HASH_RANK[0])
             {
-                var h0 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[p[0]]).AsDouble(), (double*)&hash_rank[4 *HASH_RANK_DIM_0_LEN +  p[4]]);
+                var h0 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[p[0]]).AsDouble(), (double*)&hash_rank[4 * HASH_RANK_DIM_0_LEN + p[4]]);
                 var h1 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[HASH_RANK_DIM_0_LEN + p[1]]).AsDouble(), (double*)&hash_rank[5 * HASH_RANK_DIM_0_LEN + p[5]]);
                 var h2 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[2 * HASH_RANK_DIM_0_LEN + p[2]]).AsDouble(), (double*)&hash_rank[6 * HASH_RANK_DIM_0_LEN + p[6]]);
                 var h3 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[3 * HASH_RANK_DIM_0_LEN + p[3]]).AsDouble(), (double*)&hash_rank[7 * HASH_RANK_DIM_0_LEN + p[7]]);
-                h0 = Sse2.Xor(h0, h2); 
+                h0 = Sse2.Xor(h0, h2);
                 h1 = Sse2.Xor(h1, h3);
                 h2 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[8 * HASH_RANK_DIM_0_LEN + p[8]]).AsDouble(), (double*)&hash_rank[10 * HASH_RANK_DIM_0_LEN + p[10]]);
                 h3 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[9 * HASH_RANK_DIM_0_LEN + p[9]]).AsDouble(), (double*)&hash_rank[11 * HASH_RANK_DIM_0_LEN + p[11]]);
-                h0 = Sse2.Xor(h0, h2); 
+                h0 = Sse2.Xor(h0, h2);
                 h1 = Sse2.Xor(h1, h3);
                 h2 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[12 * HASH_RANK_DIM_0_LEN + p[12]]).AsDouble(), (double*)&hash_rank[14 * HASH_RANK_DIM_0_LEN + p[14]]);
                 h3 = Sse2.LoadHigh(Sse2.LoadScalarVector128(&hash_rank[13 * HASH_RANK_DIM_0_LEN + p[13]]).AsDouble(), (double*)&hash_rank[15 * HASH_RANK_DIM_0_LEN + p[15]]);
-                h0 = Sse2.Xor(h0, h2); 
+                h0 = Sse2.Xor(h0, h2);
                 h1 = Sse2.Xor(h1, h3);
                 h0 = Sse2.Xor(h0, h1);
                 h0 = Sse2.Xor(h0, Sse.MoveHighToLow(h1.AsSingle(), h0.AsSingle()).AsDouble());
@@ -345,31 +501,23 @@ namespace Kalmia.Reversi
         {
             var bb = this.bitboard;
             var p = (byte*)&bb;
-            var h0 = HASH_RANK[p[0]]; 
+            var h0 = HASH_RANK[p[0]];
             var h1 = HASH_RANK[HASH_RANK_DIM_0_LEN + p[1]];
-            h0 ^= HASH_RANK[2 * HASH_RANK_DIM_0_LEN + p[2]]; 
+            h0 ^= HASH_RANK[2 * HASH_RANK_DIM_0_LEN + p[2]];
             h1 ^= HASH_RANK[3 * HASH_RANK_DIM_0_LEN + p[3]];
-            h0 ^= HASH_RANK[4 * HASH_RANK_DIM_0_LEN + p[4]]; 
+            h0 ^= HASH_RANK[4 * HASH_RANK_DIM_0_LEN + p[4]];
             h1 ^= HASH_RANK[5 * HASH_RANK_DIM_0_LEN + p[5]];
-            h0 ^= HASH_RANK[6 * HASH_RANK_DIM_0_LEN + p[6]]; 
+            h0 ^= HASH_RANK[6 * HASH_RANK_DIM_0_LEN + p[6]];
             h1 ^= HASH_RANK[7 * HASH_RANK_DIM_0_LEN + p[7]];
-            h0 ^= HASH_RANK[8 * HASH_RANK_DIM_0_LEN + p[8]]; 
+            h0 ^= HASH_RANK[8 * HASH_RANK_DIM_0_LEN + p[8]];
             h1 ^= HASH_RANK[9 * HASH_RANK_DIM_0_LEN + p[9]];
-            h0 ^= HASH_RANK[10 * HASH_RANK_DIM_0_LEN + p[10]]; 
+            h0 ^= HASH_RANK[10 * HASH_RANK_DIM_0_LEN + p[10]];
             h1 ^= HASH_RANK[11 * HASH_RANK_DIM_0_LEN + p[11]];
-            h0 ^= HASH_RANK[12 * HASH_RANK_DIM_0_LEN + p[12]]; 
+            h0 ^= HASH_RANK[12 * HASH_RANK_DIM_0_LEN + p[12]];
             h1 ^= HASH_RANK[13 * HASH_RANK_DIM_0_LEN + p[13]];
-            h0 ^= HASH_RANK[14 * HASH_RANK_DIM_0_LEN + p[14]]; 
+            h0 ^= HASH_RANK[14 * HASH_RANK_DIM_0_LEN + p[14]];
             h1 ^= HASH_RANK[15 * HASH_RANK_DIM_0_LEN + p[15]];
             return h0 ^ h1;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ulong GetCurrentPlayerMobility()
-        {
-            if (this.mobilityWasCalculated)
-                return this.mobility;
-            return CalculateMobility(this.bitboard.CurrentPlayer, this.bitboard.OpponentPlayer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -393,25 +541,26 @@ namespace Kalmia.Reversi
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateMobility_AVX2(ulong p, ulong o)   // p is current player's board      o is opponent player's board
         {
-            var shift = SHIFT_1897;
-            var shift2 = SHIFT_1897_2;
+            var shift = Vector256.Create(1UL, 8UL, 9UL, 7UL);
+            var shift2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
+            var flipMask = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
 
             var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
-            var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), FLIP_MASK);
-            var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, SHIFT_1897));
-            var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, SHIFT_1897);
+            var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), flipMask);
+            var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
+            var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
 
             var flipLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(p4, shift));
-            var flipRight = Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(p4, SHIFT_1897));
-            flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, SHIFT_1897)));
-            flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, SHIFT_1897)));
+            var flipRight = Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(p4, shift));
+            flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift)));
+            flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, shift)));
             flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
             flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
             flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
             flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
 
-            var mobility4 = Avx2.ShiftLeftLogicalVariable(flipLeft, SHIFT_1897);
-            mobility4 = Avx2.Or(mobility4, Avx2.ShiftRightLogicalVariable(flipRight, SHIFT_1897));
+            var mobility4 = Avx2.ShiftLeftLogicalVariable(flipLeft, shift);
+            mobility4 = Avx2.Or(mobility4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
             var mobility2 = Sse2.Or(Avx2.ExtractVector128(mobility4, 0), Avx2.ExtractVector128(mobility4, 1));
             mobility2 = Sse2.Or(mobility2, Sse2.UnpackHigh(mobility2, mobility2));
             return Sse2.X64.ConvertToUInt64(mobility2) & ~(p | o);
@@ -427,8 +576,8 @@ namespace Kalmia.Reversi
             var prefix1 = maskedO & (maskedO << 1);
             var prefix8 = o & (o << 8);
 
-            var flip = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(p2, 7));    
-            var flip1 = maskedO & (p << 1);                                
+            var flip = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(p2, 7));
+            var flip1 = maskedO & (p << 1);
             var flip8 = o & (p << 8);
             flip = Sse2.Or(flip, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flip, 7)));
             flip1 |= maskedO & (flip1 << 1);
@@ -471,14 +620,14 @@ namespace Kalmia.Reversi
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateFilippedDiscs_AVX2(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
         {
-            var shift = SHIFT_1897;
-            var shift2 = SHIFT_1897_2;
-            var zeros = ZEROS_256;
+            var shift = Vector256.Create(1UL, 8UL, 9UL, 7UL);
+            var shift2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
+            var flipMask = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
 
             var x = 1UL << pos;
             var x4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(x));
             var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
-            var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), FLIP_MASK);
+            var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), flipMask);
             var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
             var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
 
@@ -493,8 +642,8 @@ namespace Kalmia.Reversi
 
             var outflankLeft = Avx2.And(p4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift));
             var outflankRight = Avx2.And(p4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
-            flipLeft = Avx2.AndNot(Avx2.CompareEqual(outflankLeft, zeros), flipLeft);
-            flipRight = Avx2.AndNot(Avx2.CompareEqual(outflankRight, zeros), flipRight);
+            flipLeft = Avx2.AndNot(Avx2.CompareEqual(outflankLeft, Vector256<ulong>.Zero), flipLeft);
+            flipRight = Avx2.AndNot(Avx2.CompareEqual(outflankRight, Vector256<ulong>.Zero), flipRight);
             var flip4 = Avx2.Or(flipLeft, flipRight);
             var flip2 = Sse2.Or(Avx2.ExtractVector128(flip4, 0), Avx2.ExtractVector128(flip4, 1));
             flip2 = Sse2.Or(flip2, Sse2.UnpackHigh(flip2, flip2));
@@ -504,8 +653,6 @@ namespace Kalmia.Reversi
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ulong CalculateFlippedDiscs_SSE(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
         {
-            var zeros = ZEROS_128;
-
             var x = 1UL << pos;
             var maskedO = o & 0x7e7e7e7e7e7e7e7eUL;
             var x2 = Vector128.Create(x, ByteSwap(x));   // byte swap = vertical mirror
@@ -554,13 +701,13 @@ namespace Kalmia.Reversi
 
             if (Sse41.IsSupported)
             {
-                flip7 = Sse2.AndNot(Sse41.CompareEqual(outflank7, zeros), flip7);
-                flip9 = Sse2.AndNot(Sse41.CompareEqual(outflank9, zeros), flip9);
+                flip7 = Sse2.AndNot(Sse41.CompareEqual(outflank7, Vector128<ulong>.Zero), flip7);
+                flip9 = Sse2.AndNot(Sse41.CompareEqual(outflank9, Vector128<ulong>.Zero), flip9);
             }
             else
             {
-                flip7 = Sse2.And(Sse2.CompareNotEqual(outflank7.AsDouble(), zeros.AsDouble()).AsUInt64(), flip7);
-                flip9 = Sse2.And(Sse2.CompareNotEqual(outflank9.AsDouble(), zeros.AsDouble()).AsUInt64(), flip9);
+                flip7 = Sse2.And(Sse2.CompareNotEqual(outflank7.AsDouble(), Vector128<ulong>.Zero.AsDouble()).AsUInt64(), flip7);
+                flip9 = Sse2.And(Sse2.CompareNotEqual(outflank9.AsDouble(), Vector128<ulong>.Zero.AsDouble()).AsUInt64(), flip9);
             }
 
             if (outflankLeft1 == 0)

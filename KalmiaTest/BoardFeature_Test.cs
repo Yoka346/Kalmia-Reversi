@@ -20,7 +20,7 @@ namespace KalmiaTest
             var bf1 = new BoardFeature(board);
             while (board.GetGameResult() == GameResult.NotOver)
             {
-                var posCount = board.GetNextPositions(positions);
+                var posCount = board.GetNextPositionCandidates(positions);
                 var pos = positions[rand.Next(posCount)];
                 var flipped = board.Update(pos);
                 bf0.InitFeatures(board);

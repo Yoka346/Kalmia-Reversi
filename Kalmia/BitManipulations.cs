@@ -78,6 +78,25 @@ namespace Kalmia
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong ParallelBitExtract(ulong bits, ulong mask)
+        {
+            // If BMI2 is supported, pext instruction is available. This is faster than the following software emulation code,
+            // however, on Zen2 CPU pext instruction is too slow. Perhaps, it is better to use software emulation code.
+            if (Bmi2.X64.IsSupported)   
+                return Bmi2.X64.ParallelBitExtract(bits, mask);
+
+            // Software emulation pext(too slow)
+            var res = 0UL;
+            for(var bb = 1UL; mask != 0; bb += bb)
+            {
+                if (((long)bits & (long)mask & -(long)mask) != 0)
+                    res |= bb;
+                mask &= mask - 1;
+            }
+            return res;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte BitSwap(byte bits)
         {
             int n = bits;

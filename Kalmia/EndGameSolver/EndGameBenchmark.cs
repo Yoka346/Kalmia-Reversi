@@ -7,7 +7,14 @@ namespace Kalmia.EndGameSolver
 {
     public static class EndGameBenchmark
     {
-        public static int TestMateSolver(MateSolver solver, string ffoPosFilePath)
+        public static int Solve(IEndGameSolver solver, string ffoPosFilePath)
+        {
+            if (solver is MateSolver)
+                return TestMateSolver((MateSolver)solver, ffoPosFilePath);
+            throw new NotImplementedException();
+        }
+
+        static int TestMateSolver(MateSolver solver, string ffoPosFilePath)
         {
             var testCase = LoadFFOTestCase(ffoPosFilePath);
             Console.WriteLine(testCase.Label);
@@ -38,14 +45,14 @@ namespace Kalmia.EndGameSolver
             const char EMPTY = '-';
 
             var board = new FastBoard();
-            for(var i = 0; i < ffoStr.Length; i++)
+            for (var i = 0; i < ffoStr.Length; i++)
             {
-                var color = ffoStr[i] switch 
-                { 
-                    BLACK => DiscColor.Black, 
-                    WHITE => DiscColor.White, 
-                    EMPTY => DiscColor.Null, 
-                    _ => throw new FormatException("Invalid FFO string.") 
+                var color = ffoStr[i] switch
+                {
+                    BLACK => DiscColor.Black,
+                    WHITE => DiscColor.White,
+                    EMPTY => DiscColor.Null,
+                    _ => throw new FormatException("Invalid FFO string.")
                 };
 
                 if (color != DiscColor.Null)

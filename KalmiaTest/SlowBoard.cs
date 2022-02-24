@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 
 using Kalmia.Reversi;
 
@@ -6,10 +8,10 @@ namespace KalmiaTest
 {
     class SlowBoard  // Low speed implementation of board. This is only used for test.
     {
-        public const int LINE_LENGTH = 8;
-        public const int SQUARE_NUM = LINE_LENGTH * LINE_LENGTH;
+        public const int BOARD_SIZE = 8;
+        public const int SQUARE_NUM = BOARD_SIZE * BOARD_SIZE;
 
-        readonly DiscColor[,] DISCS = new DiscColor[LINE_LENGTH, LINE_LENGTH];
+        readonly DiscColor[,] DISCS = new DiscColor[BOARD_SIZE, BOARD_SIZE];
 
         public DiscColor SideToMove { get; private set; }
 
@@ -35,6 +37,11 @@ namespace KalmiaTest
                 Put(secondPlayer, "E4");
             }
             this.SideToMove = firstPlayer;
+        }
+
+        public static (int x, int y) ConvertBoardPositionToCoordinate(BoardPosition pos)
+        {
+            return ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
         }
 
         public DiscColor GetDiscColor(int x, int y)
@@ -64,23 +71,13 @@ namespace KalmiaTest
 
         public void Put(DiscColor color, int pos)
         {
-            Put(color, pos % LINE_LENGTH, pos / LINE_LENGTH);
+            Put(color, pos % BOARD_SIZE, pos / BOARD_SIZE);
         }
 
         public void Update(Move move)
         {
-            var posX = (int)move.Pos % LINE_LENGTH;
-            var posY = (int)move.Pos / LINE_LENGTH;
-
-            if(move.Pos != BoardPosition.Pass)
-            {
-                var flip = CalculateFlippedDiscs(posX, posY);
-                this.DISCS[posX, posY] = this.SideToMove;
-                for (var x = 0; x < flip.GetLength(0); x++)
-                    for (var y = 0; y < flip.GetLength(1); y++)
-                        if(flip[x, y])
-                            this.DISCS[x, y] = this.SideToMove;
-            }
+            foreach (var pos in FlipDiscs(this.SideToMove, move.Pos))
+                this.DISCS[(int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE] = this.SideToMove ^ DiscColor.White;
             SwitchSideToMove();
         }
 
@@ -98,265 +95,102 @@ namespace KalmiaTest
             return count;
         }   
 
-        public int GetNextMoves(Move[] moves)
+        public Move[] GetNextMoves()
         {
             var mobility = CalculateMobility(this.SideToMove);
-            var moveCount = 0;
-            for (var x = 0; x < mobility.GetLength(0); x++)
-                for (var y = 0; y < mobility.GetLength(1); y++)
-                    if (mobility[x, y])
-                        moves[moveCount++] = new Move(this.SideToMove, (BoardPosition)(x + y * LINE_LENGTH));
-
-            if (moveCount == 0)
+            if (mobility.Length == 0)
             {
-                var opponentMobility = CalculateMobility(this.SideToMove ^ DiscColor.White);
-                for (var x = 0; x < opponentMobility.GetLength(0); x++)
-                    for (var y = 0; y < opponentMobility.GetLength(1); y++)
-                        if (opponentMobility[x, y])
-                        {
-                            moves[0] = new Move(this.SideToMove, BoardPosition.Pass);
-                            return 1;
-                        }
+                if (CalculateMobility(this.SideToMove ^ DiscColor.White).Length > 0)
+                    return new Move[1] { new Move(this.SideToMove, BoardPosition.Pass) };
+                return new Move[0];
             }
-
-            return moveCount;
+            return (from pos in mobility select new Move(this.SideToMove, pos)).ToArray();
         }
 
-        bool[,] CalculateMobility(DiscColor currentDiscColor)
+        BoardPosition[] CalculateMobility(DiscColor color)
         {
-            var opponentDiscColor = currentDiscColor ^ DiscColor.White;
-            var mobility = new bool[LINE_LENGTH, LINE_LENGTH];
-            for (var posX = 0; posX < mobility.GetLength(0); posX++)
-                for (var posY = 0; posY < mobility.GetLength(1); posY++)
-                {
-                    if (this.DISCS[posX, posY] != DiscColor.Null)
-                        continue;
-
-                    // right 
-                    if (posX != LINE_LENGTH - 1 && this.DISCS[posX + 1, posY] == opponentDiscColor)
-                        for (var x = posX + 2; x < LINE_LENGTH; x++)
-                            if (this.DISCS[x, posY] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[x, posY] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    // left 
-                    if (posX != 0 && this.DISCS[posX - 1, posY] == opponentDiscColor)
-                        for (var x = posX - 2; x >= 0; x--)
-                            if (this.DISCS[x, posY] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[x, posY] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    // downward
-                    if (posY != LINE_LENGTH - 1 && this.DISCS[posX, posY + 1] == opponentDiscColor)
-                        for (var y = posY + 2; y < LINE_LENGTH; y++)
-                            if (this.DISCS[posX, y] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[posX, y] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    // upward
-                    if (posY != 0 && this.DISCS[posX, posY - 1] == opponentDiscColor)
-                        for (var y = posY - 2; y >= 0; y--)
-                            if (this.DISCS[posX, y] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[posX, y] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    (int x, int y) pos = (posX, posY);
-                    // diagonal(upper left to lower right)
-                    if (pos.x != LINE_LENGTH - 1 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x + 1, pos.y + 1] == opponentDiscColor)
-                        for ((int x, int y) p = (pos.x + 2, pos.y + 2); p.x - LINE_LENGTH!= 0 && p.y - LINE_LENGTH != 0; p = (p.x + 1, p.y + 1))
-                            if (this.DISCS[p.x, p.y] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    // diagonal(lower right to upper left)
-                    if (pos.x != 0 && pos.y != 0 && this.DISCS[pos.x - 1, pos.y - 1] == opponentDiscColor)
-                        for ((int x, int y) p = (pos.x - 2, pos.y - 2); p.x != -1 && p.y != -1; p = (p.x - 1, p.y - 1))
-                            if (this.DISCS[p.x, p.y] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    // diagonal(upper right to lower left)
-                    if (pos.x != 0 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x - 1, pos.y + 1] == opponentDiscColor)
-                        for ((int x, int y) p = (pos.x - 2, pos.y + 2); p.x != -1 && p.y - LINE_LENGTH != 0; p = (p.x - 1, p.y + 1))
-                            if (this.DISCS[p.x, p.y] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                                break;
-
-                    if (mobility[posX, posY])
-                        continue;
-
-                    // diagonal(lower left to upper right)
-                    if (pos.x != LINE_LENGTH - 1 && pos.y != 0 && this.DISCS[pos.x + 1, pos.y - 1] == opponentDiscColor)
-                        for ((int x, int y) p = (pos.x + 2, pos.y - 2); p.x - LINE_LENGTH != 0 && p.y !=-1; p = (p.x + 1, p.y - 1))
-                            if (this.DISCS[p.x, p.y] == currentDiscColor)
-                            {
-                                mobility[posX, posY] = true;
-                                break;
-                            }
-                            else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                                break;
-                }
-            return mobility;
+            var mobility = new List<BoardPosition>();
+            for (var pos = 0; pos < this.DISCS.Length; pos++)
+            {
+                if (this.DISCS[pos % BOARD_SIZE, pos / BOARD_SIZE] != DiscColor.Null)
+                    continue;
+                if (CheckMobility(color, (BoardPosition)pos))
+                    mobility.Add((BoardPosition)pos);
+            }
+            return mobility.ToArray();
         }
 
-        bool[,] CalculateFlippedDiscs(int posX, int posY)
+        bool CheckMobility(DiscColor color, BoardPosition pos)
         {
-            var currentDiscColor = this.SideToMove;
-            var opponentDiscColor = this.SideToMove ^ DiscColor.White;
-            var flipped = new bool[LINE_LENGTH, LINE_LENGTH];
+            return CheckMobility(color, pos, 1, 0)
+                || CheckMobility(color, pos, -1, 0)
+                || CheckMobility(color, pos, 0, 1)
+                || CheckMobility(color, pos, 0, -1)
+                || CheckMobility(color, pos, 1, 1)
+                || CheckMobility(color, pos, -1, -1)
+                || CheckMobility(color, pos, -1, 1)
+                || CheckMobility(color, pos, 1, -1);
+        }
 
-            // right 
-            if (posX != LINE_LENGTH - 1 && this.DISCS[posX + 1, posY] == opponentDiscColor)
-                for (var x = posX + 2; x < LINE_LENGTH; x++)
-                {
-                    if (this.DISCS[x, posY] == currentDiscColor)
-                    {
-                        for (var xx = x - 1; xx > posX; xx--)
-                            flipped[xx, posY] = true;
-                        break;
-                    }
-                    else if (this.DISCS[x, posY] == DiscColor.Null)
-                        break;
-                }
+        BoardPosition[] FlipDiscs(DiscColor color, BoardPosition pos)
+        {
+            var flipped = new List<BoardPosition>();
+            FlipDiscs(color, pos, 1, 0, flipped);
+            FlipDiscs(color, pos, -1, 0, flipped);
+            FlipDiscs(color, pos, 0, 1, flipped);
+            FlipDiscs(color, pos, 0, -1, flipped);
+            FlipDiscs(color, pos, 1, 1, flipped);
+            FlipDiscs(color, pos, -1, -1, flipped);
+            FlipDiscs(color, pos, -1, 1, flipped);
+            FlipDiscs(color, pos, 1, -1, flipped);
+            return flipped.ToArray();
+        }
 
-            // left 
-            if (posX != 0 && this.DISCS[posX - 1, posY] == opponentDiscColor)
-                for (var x = posX - 2; x >= 0; x--)
-                    if (this.DISCS[x, posY] == currentDiscColor)
-                    {
-                        for (var xx = x + 1; xx < posX; xx++)
-                            flipped[xx, posY] = true;
-                        break;
-                    }
-                    else if (this.DISCS[x, posY] == DiscColor.Null)
-                        break;
+        void FlipDiscs(DiscColor color, BoardPosition pos, int dirX, int dirY, List<BoardPosition> flipped)
+        {
+            var oppColor = (DiscColor)(-(int)color);
+            (int x, int y) = ConvertBoardPositionToCoordinate(pos);
 
-            // downward
-            if (posY != LINE_LENGTH - 1 && this.DISCS[posX, posY + 1] == opponentDiscColor)
-                for (var y = posY + 2; y < LINE_LENGTH; y++)
-                    if (this.DISCS[posX, y] == currentDiscColor)
-                    {
-                        for (var yy = y - 1; yy > posY; yy--)
-                            flipped[posX, yy] = true;
-                        break;
-                    }
-                    else if (this.DISCS[posX, y] == DiscColor.Null)
-                        break;
+            if (!CheckMobility(color, pos, dirX, dirY))
+                return;
 
-            // upward
-            if (posY != 0 && this.DISCS[posX, posY - 1] == opponentDiscColor)
-                for (var y = posY - 2; y >= 0; y--)
-                    if (this.DISCS[posX, y] == currentDiscColor)
-                    {
-                        for (var yy = y + 1; yy < posY; yy++)
-                            flipped[posX, yy] = true;
-                        break;
-                    }
-                    else if (this.DISCS[posX, y] == DiscColor.Null)
-                        break;
+            (int nextX, int nextY) = (x + dirX, y + dirY);
+            while (nextX >= 0 && nextX < BOARD_SIZE && nextY >= 0 && nextY < BOARD_SIZE && this.DISCS[nextX, nextY] == oppColor)
+            {
+                var flippedPos = nextX + nextY * BOARD_SIZE;
+                this.DISCS[flippedPos % BOARD_SIZE, flippedPos / BOARD_SIZE] = color;
+                flipped.Add((BoardPosition)flippedPos);
+                nextX += dirX;
+                nextY += dirY;
+            }
+        }
 
-            (int x, int y) pos = (posX, posY);
-            // diagonal(upper left to lower right)
-            if (pos.x != LINE_LENGTH - 1 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x + 1, pos.y + 1] == opponentDiscColor)
-                for ((int x, int y) p = (pos.x + 2, pos.y + 2); p.x - LINE_LENGTH != 0 && p.y - LINE_LENGTH != 0; p = (p.x + 1, p.y + 1))
-                    if (this.DISCS[p.x, p.y] == currentDiscColor)
-                    {
-                        for ((int x, int y) pp = (p.x - 1, p.y - 1); pp.x - posX != 0 && pp.y - posY != 0; pp = (pp.x - 1, pp.y - 1))
-                            flipped[pp.x, pp.y] = true;
-                        break;
-                    }
-                    else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                        break;
+        bool CheckMobility(DiscColor color, BoardPosition pos, int dirX, int dirY)
+        {
+            var oppColor = (DiscColor)(-(int)color);
+            (int x, int y) = ConvertBoardPositionToCoordinate(pos);
 
-            // diagonal(lower right to upper left)
-            if (pos.x != 0 && pos.y != 0 && this.DISCS[pos.x - 1, pos.y - 1] == opponentDiscColor)
-                for ((int x, int y) p = (pos.x - 2, pos.y - 2); p.x != -1 && p.y != -1; p = (p.x - 1, p.y - 1))
-                    if (this.DISCS[p.x, p.y] == currentDiscColor)
-                    {
-                        for ((int x, int y) pp = (p.x + 1, p.y + 1); pp.x - pos.x != 0 && pp.y - pos.y != 0; pp = (pp.x + 1, pp.y + 1))
-                            flipped[pp.x, pp.y] = true;
-                        break;
-                    }
-                    else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                        break;
+            (int nextX, int nextY) = (x + dirX, y + dirY);
+            Func<int, int, bool> outOfRange = (x, y) => nextX < 0 || nextX >= BOARD_SIZE || nextY < 0 || nextY >= BOARD_SIZE;
+            if (outOfRange(nextX, nextY) || this.DISCS[nextX, nextY] != oppColor)
+                return false;
 
-            // diagonal(upper right to lower left)
-            if (pos.x != 0 && pos.y != LINE_LENGTH - 1 && this.DISCS[pos.x - 1, pos.y + 1] == opponentDiscColor)
-                for ((int x, int y) p = (pos.x - 2, pos.y + 2); p.x != -1 && p.y - LINE_LENGTH != 0; p = (p.x - 1, p.y + 1))
-                    if (this.DISCS[p.x, p.y] == currentDiscColor)
-                    {
-                        for ((int x, int y) pp = (p.x + 1, p.y - 1); pp.x - pos.x != 0 && pp.y - pos.y != 0; pp = (pp.x + 1, pp.y - 1))
-                            flipped[pp.x, pp.y] = true;
-                        break;
-                    }
-                    else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                        break;
+            do
+            {
+                nextX += dirX;
+                nextY += dirY;
+            } while (!outOfRange(nextX, nextY) && this.DISCS[nextX, nextY] == oppColor);
 
-            // diagonal(lower left to upper right)
-            if (pos.x != LINE_LENGTH - 1 && pos.y != 0 && this.DISCS[pos.x + 1, pos.y - 1] == opponentDiscColor)
-                for ((int x, int y) p = (pos.x + 2, pos.y - 2); p.x - LINE_LENGTH != 0 && p.y != -1; p = (p.x + 1, p.y - 1))
-                    if (this.DISCS[p.x, p.y] == currentDiscColor)
-                    {
-                        for ((int x, int y) pp = (p.x - 1, p.y + 1); pp.x - pos.x != 0 && pp.y - pos.y != 0; pp = (pp.x - 1, pp.y + 1))
-                            flipped[pp.x, pp.y] = true;
-                        break;
-                    }
-                    else if (this.DISCS[p.x, p.y] == DiscColor.Null)
-                        break;
-            return flipped;
+            if (!outOfRange(nextX, nextY) && this.DISCS[nextX, nextY] == color)
+                return true;
+            return false;
         }
 
         static int StringToPos(string pos)
         {
             var posX = char.ToLower(pos[0]) - 'a';
             var posY = int.Parse(pos[1].ToString()) - 1;
-            return posX + posY * LINE_LENGTH;
+            return posX + posY * BOARD_SIZE;
         }
     }
 }
