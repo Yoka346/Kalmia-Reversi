@@ -11,7 +11,7 @@ namespace Kalmia.EndGameSolver
         {
             if (solver is MateSolver)
                 return TestMateSolver((MateSolver)solver, ffoPosFilePath);
-            throw new NotImplementedException();
+            return TestFinalDiscDifferenceSolver((FinalDiscDifferenceSolver)solver, ffoPosFilePath);
         }
 
         static int TestMateSolver(MateSolver solver, string ffoPosFilePath)
@@ -19,8 +19,23 @@ namespace Kalmia.EndGameSolver
             var testCase = LoadFFOTestCase(ffoPosFilePath);
             Console.WriteLine(testCase.Label);
             Console.WriteLine($"Side to move is {testCase.InitialBoard.SideToMove}");
-            solver.SolveBestMove(testCase.InitialBoard, int.MaxValue, out GameResult result, out _);
+            solver.SolveBestMove(testCase.InitialBoard, int.MaxValue / 10, out GameResult result, out _);
             Console.WriteLine($"Done.\nGame result is {result}");
+            Console.WriteLine($"ellapsed = {solver.SearchEllapsedMilliSec}[ms]");
+            Console.WriteLine($"{solver.Nps}[nps]");
+            Console.WriteLine($"internal_node_count = {solver.InternalNodeCount}");
+            Console.WriteLine($"leaf_node_count = {solver.LeafNodeCount}");
+            return solver.SearchEllapsedMilliSec;
+        }
+
+        static int TestFinalDiscDifferenceSolver(FinalDiscDifferenceSolver solver, string ffoPosFilePath)
+        {
+            var testCase = LoadFFOTestCase(ffoPosFilePath);
+            Console.WriteLine(testCase.Label);
+            Console.WriteLine($"Side to move is {testCase.InitialBoard.SideToMove}");
+            solver.SolveBestMove(testCase.InitialBoard, int.MaxValue / 10, out sbyte finalDiscDiff, out _);
+            var resultStr = (finalDiscDiff > 0) ? $"+{finalDiscDiff}" : finalDiscDiff.ToString();
+            Console.WriteLine($"Done.\nGame result is {resultStr}");
             Console.WriteLine($"ellapsed = {solver.SearchEllapsedMilliSec}[ms]");
             Console.WriteLine($"{solver.Nps}[nps]");
             Console.WriteLine($"internal_node_count = {solver.InternalNodeCount}");

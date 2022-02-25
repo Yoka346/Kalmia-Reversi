@@ -90,7 +90,7 @@ namespace Kalmia.Engines
         /// When the number of empty squares is less than or equal this value,
         /// the final disc difference solver will be executed.
         /// </summary>
-        public int FinalDiscDifferenceSolverMoveNum { get; set; } = 18;
+        public int FinalDiscDifferenceSolverMoveNum { get; set; } = 20;
 
         /// <summary>
         /// The size of memory for the end game solver's transposition table.
@@ -115,6 +115,7 @@ namespace Kalmia.Engines
         UCT tree;
         SearchInfo lastGenMoveSearchInfo;
         MateSolver mateSolver;
+        FinalDiscDifferenceSolver diskDiffSolver;
         Logger thoughtLog;
         TimeController timeController;
         bool quitFlag;
@@ -133,6 +134,7 @@ namespace Kalmia.Engines
             this.Config = config;
             this.tree = new UCT(config.TreeOptions, this.VALUE_FUNC = new ValueFunction(config.ValueFuncParamFile));
             this.mateSolver = new MateSolver(config.EndgameSolverMemorySize);
+            this.diskDiffSolver = new FinalDiscDifferenceSolver(config.EndgameSolverMemorySize);
             this.timeController = new TimeController(0, 1, 0, 0, config.LatencyCentiSec);
             this.thoughtLog = new Logger(logFilePath, Console.OpenStandardError());
             ClearBoard();
@@ -170,12 +172,14 @@ namespace Kalmia.Engines
             if(this.searchTask is not null && !this.searchTask.IsCompleted)
             {
                 StopPondering();
+                this.thoughtLog.WriteLine("Stop pondering.");
                 this.thoughtLog.WriteLine(GetSearchInfoString());
             }
 
             if (!this.tree.TransitionToRootChildNode(move))
                 this.tree.SetRoot(this.board);
             this.thoughtLog.WriteLine($"Opponent's move is {move}");
+            this.thoughtLog.Flush();
             return true;
         }
 
@@ -196,7 +200,11 @@ namespace Kalmia.Engines
         public override Move GenerateMove(DiscColor color)
         {
             if (this.searchTask != null && !this.searchTask.IsCompleted)
+            {
                 StopPondering();
+                this.thoughtLog.WriteLine("Stop pondering.");
+                this.thoughtLog.WriteLine(GetSearchInfoString());
+            }
 
             var move = RegGenerateMove(color);
             this.board.Update(move);
@@ -274,7 +282,7 @@ namespace Kalmia.Engines
 
         void StartPondering()
         {
-            this.searchTask = this.tree.SearchAsync(int.MaxValue, int.MaxValue);
+            this.searchTask = this.tree.SearchAsync(int.MaxValue, int.MaxValue / 10);
         }
 
         void StopPondering()
@@ -339,10 +347,10 @@ namespace Kalmia.Engines
                     move = this.Config.SelectMoveStochastically && moveNum < this.Config.StochasticMoveNum
                            ? SelectMoveStochastically(searchInfo, out _)
                            : SelectBestMove(searchInfo, out _);
+                    this.thoughtLog.WriteLine(GetSearchInfoString());
                 }
             }
 
-            this.thoughtLog.WriteLine(GetSearchInfoString());
             this.thoughtLog.Flush();
             this.timeController.Stop(color);
             return move;
@@ -352,9 +360,6 @@ namespace Kalmia.Engines
         {
             this.timeController.Start(color);
 
-            this.thoughtLog.WriteLine("Execute mate solver.");
-            this.thoughtLog.Flush();
-
             int timeLimitCentiSec;
             if (this.timeController.IsUnlimitedTime)
                 timeLimitCentiSec = int.MaxValue / 10;
@@ -363,7 +368,27 @@ namespace Kalmia.Engines
             else
                 timeLimitCentiSec = (int)(this.timeController.RemainingTimeCentiSec[(int)color] * 0.7 * 10);
 
-            var movePos = this.mateSolver.SolveBestMove(this.board.GetFastBoard(), timeLimitCentiSec, out GameResult result, out bool timeout);
+            IEndGameSolver solver;
+            BoardPosition movePos;
+            string resultStr;
+            bool timeout;
+
+            if (this.board.GetEmptyCount() > this.Config.FinalDiscDifferenceSolverMoveNum)
+            {
+                this.thoughtLog.WriteLine("Execute mate solver.");
+                this.thoughtLog.Flush();
+                solver = this.mateSolver;
+                movePos = this.mateSolver.SolveBestMove(this.board.GetFastBoard(), timeLimitCentiSec, out GameResult result, out timeout);
+                resultStr = result.ToString();
+            }
+            else
+            {
+                this.thoughtLog.WriteLine("Execute final disc difference solver.");
+                this.thoughtLog.Flush();
+                solver = this.diskDiffSolver;
+                movePos = this.diskDiffSolver.SolveBestMove(this.board.GetFastBoard(), timeLimitCentiSec, out sbyte result, out timeout);
+                resultStr = (result > 0) ? $"+{result}" : result.ToString();
+            }
 
             Move move;
             if (timeout)    // When timeout, executes stopgap move generation by fast MCTS. 
@@ -377,8 +402,8 @@ namespace Kalmia.Engines
             }
             else
             {
-                this.thoughtLog.WriteLine($"ellapsed = {this.mateSolver.SearchEllapsedMilliSec}[ms]   nps = {this.mateSolver.Nps}[nps]");
-                this.thoughtLog.WriteLine($"Final result is {result}.");
+                this.thoughtLog.WriteLine($"ellapsed = {solver.SearchEllapsedMilliSec}[ms]   nps = {solver.Nps}[nps]");
+                this.thoughtLog.WriteLine($"Final result is {resultStr}.");
                 move = new Move(this.board.SideToMove, movePos);
             }
             this.thoughtLog.Flush();

@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define DEVELOP
+
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -21,7 +23,7 @@ namespace Kalmia
 
         static void Main(string[] args)
         {
-#if DEBUG
+#if DEVELOP
             DevTest();
 #else
             var options = ExtractOptions(args);
@@ -91,19 +93,11 @@ namespace Kalmia
 #endif
         }
 
-#if DEBUG
+#if DEVELOP
         static void DevTest()
         {
-            var options = new MCTS.UCTOptions();
-            var tree = new MCTS.UCT(options, new ValueFunction("kalmia_value_func.dat"));
-
-            var policy = new (Reversi.BoardPosition pos, float prob)[4];
-            var value = tree.SearchFastly(new GameInfo(new Reversi.FastBoard(), new BoardFeature(new Reversi.FastBoard())), 3200, policy);
-            Console.WriteLine($"{3200}[playouts] winning_rate = {value * 100.0f:f2}%");
-            Console.WriteLine("|move|probability|");
-            policy = policy.OrderByDescending(p => p.prob).ToArray();
-            foreach (var p in policy)
-                Console.WriteLine($"| {p.pos} |{p.prob * 100.0f,10:f2}%|");
+            var solver = new FinalDiscDifferenceSolver(256 * 1024 * 1024);
+            EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end40.pos");
         }
 #endif
 
@@ -160,7 +154,6 @@ namespace Kalmia
 
         static void StartEndGameBenchmark(IEndGameSolver solver, string problemsPath)
         {
-            
             EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end41.pos");
         }
     }
