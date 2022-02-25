@@ -284,49 +284,6 @@ namespace Kalmia.MCTS
             this.cts = null;
         }
 
-        public double SearchFastly(FastBoard board, uint searchCount, Span<(BoardPosition pos, float prob)> policy)
-        {
-            return SearchFastly(new GameInfo(board, new BoardFeature(board)), searchCount, policy);
-        }
-
-        /// <summary>
-        /// Execute searching on single thread without recording.
-        /// </summary>
-        /// <param name="rootGameInfo"></param>
-        /// <param name="searchCount"></param>
-        /// <returns>The value of current board.</returns>
-        public double SearchFastly(GameInfo rootGameInfo, uint searchCount, Span<(BoardPosition pos, float prob)> policy)
-        {
-            var searcher = new Searcher(rootGameInfo);
-            var root = new Node();
-            ExpandNode(searcher, root);
-            root.InitChildNodes();
-            for (var i = 0; i < root.ChildNodes.Length; i++)
-                root.ChildNodes[i] = new Node();
-
-            for (var i = 0u; i < searchCount; i++)
-            {
-                rootGameInfo.CopyTo(searcher.GameInfo);
-
-                // vist root node
-                int childIdx;
-                var edges = root.Edges;
-                childIdx = SelectRootChildNode();
-                searcher.GameInfo.Update(edges[childIdx].Pos);
-                if(edges[childIdx].IsVisited)
-                    UpdateResult(this.root, childIdx, VisitNode(searcher, this.root.ChildNodes[childIdx], ref this.root.Edges[childIdx]));
-                else
-                {
-                    edges[childIdx].Label = EdgeLabel.Evaluated;
-                    UpdateResult(this.root, childIdx, EstimateReward(searcher.GameInfo.Feature));
-                }
-            }
-
-            for (var i = 0; i < root.Edges.Length; i++)
-                policy[i] = (root.Edges[i].Pos, (float)root.Edges[i].VisitCount / searchCount);
-            return root.ExpReward;
-        }
-
         public async Task SearchAsync(uint searchCount, int timeLimitCentiSec)
         {
             await Task.Run(() => Search(searchCount, timeLimitCentiSec)).ConfigureAwait(false);

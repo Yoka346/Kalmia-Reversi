@@ -74,7 +74,7 @@ namespace Kalmia.Reversi
         public override string ToString()
         {
             if (this.Pos == BoardPosition.Pass)
-                return "PASS";
+                return "pass";
 
             var posX = (char)('A' + (byte)this.Pos % BOARD_SIZE);
             var posY = (byte)this.Pos / BOARD_SIZE;

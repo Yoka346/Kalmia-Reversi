@@ -27,6 +27,8 @@ namespace Kalmia
         /// </summary>
         public int LatencyCentiSec { get; set; }
 
+        public bool IsUnlimitedTime { get { return this.byoYomiTimeCentiSec == 100 && this.byoYomiStones == 0 && this.byoYomiPeriods == 0; } }
+
         public ReadOnlySpan<int> RemainingTimeCentiSec { get { return this.remainingTimeCentiSec; } }
 
         public TimeController(int mainTimeSec, int byoYomiTimeSec, int byoYomiStone, int byoYomiPeriods, int latencyCentiSec)

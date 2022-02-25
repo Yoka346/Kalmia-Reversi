@@ -33,7 +33,7 @@ namespace Kalmia.EndGameSolver
             this.transpositionTable.Clear();
         }
 
-        public BoardPosition SolveBestMove(FastBoard rootState, int timeLimit, out GameResult result, out bool timeout)
+        public BoardPosition SolveBestMove(FastBoard rootState, int timeLimitSentiSec, out GameResult result, out bool timeout)
         {
             var board = new FastBoard(rootState);
             var bitboard = board.GetBitboard();
@@ -58,7 +58,7 @@ namespace Kalmia.EndGameSolver
             for (var i = 0; i < posNum; i++)
             {
                 board.Update(positions[i]);
-                var score = (GameResult)(-(int)SearchWithTranspositionTable(board, GameResult.Loss, (GameResult)(-(int)bestScore), timeLimit, out timeout));
+                var score = (GameResult)(-(int)SearchWithTranspositionTable(board, GameResult.Loss, (GameResult)(-(int)bestScore), timeLimitSentiSec * 10, out timeout));
                 if (timeout)
                 {
                     this.IsSearching = false;
@@ -88,9 +88,9 @@ namespace Kalmia.EndGameSolver
         }
 
         [SkipLocalsInit]
-        unsafe GameResult SearchWithTranspositionTable(FastBoard board, GameResult alpha, GameResult beta, int timeLimit, out bool timeout)
+        unsafe GameResult SearchWithTranspositionTable(FastBoard board, GameResult alpha, GameResult beta, int timeLimitMilliSec, out bool timeout)
         {
-            if (this.SearchEllapsedMilliSec >= timeLimit)
+            if (this.SearchEllapsedMilliSec >= timeLimitMilliSec)
             {
                 timeout = true;
                 return 0.0f;
@@ -148,9 +148,9 @@ namespace Kalmia.EndGameSolver
                 board.Update(pos);
                 GameResult score;
                 if (enableNextTransposition)
-                    score = (GameResult)(-(int)SearchWithTranspositionTable(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimit, out timeout));
+                    score = (GameResult)(-(int)SearchWithTranspositionTable(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimitMilliSec, out timeout));
                 else
-                    score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimit, out timeout));
+                    score = (GameResult)(-(int)SearchFastly(board, (GameResult)(-(int)beta), (GameResult)(-(int)newAlpha), timeLimitMilliSec, out timeout));
                 board.SetBitboard(bitboard);
 
                 if (score >= beta)   // beta cut

@@ -10,35 +10,10 @@ using Kalmia.IO;
 
 namespace Kalmia.GoTextProtocol
 {
-    public enum GTPCoordinateRule
-    {
-        Go,     //   A B C D E F G H         Go(Chinese game) style
-                // 8 . . . . . . . . 
-                // 7 . . . . . . . . 
-                // 6 . . . . . . . . 
-                // 5 . . . . . . . . 
-                // 4 . . . . . . . . 
-                // 3 . . . . . . . . 
-                // 2 . . . . . . . . 
-                // 1 . . . . . . . . 
-
-        Othello //   A B C D E F G H        Othello(Japanese game almost same as Reversi) style
-                // 1 . . . . . . . . 
-                // 2 . . . . . . . . 
-                // 3 . . . . . . . . 
-                // 4 . . . . . . . . 
-                // 5 . . . . . . . . 
-                // 6 . . . . . . . . 
-                // 7 . . . . . . . . 
-                // 8 . . . . . . . . 
-    }
-
     public static class GTP
     {
         const string VERSION = "2.0";
-        const GTPCoordinateRule DEFAULT_COORDINATE_RULE = GTPCoordinateRule.Go;
 
-        public static GTPCoordinateRule CoordinateRule { get; private set; }
         static GTPEngine Engine;
         static readonly ReadOnlyDictionary<string, Action<int, string[]>> COMMANDS;
         static bool Quit = false;
@@ -94,21 +69,10 @@ namespace Kalmia.GoTextProtocol
             Mainloop(engine, string.Empty);
         }
 
-        public static void Mainloop(GTPEngine engine, GTPCoordinateRule coordRule)
-        {
-            Mainloop(engine, coordRule, string.Empty);
-        }
-
         public static void Mainloop(GTPEngine engine, string logFilePath)
         {
-            Mainloop(engine, DEFAULT_COORDINATE_RULE, logFilePath);
-        }
-
-        public static void Mainloop(GTPEngine engine, GTPCoordinateRule coordRule, string logFilePath)
-        {
-            CoordinateRule = coordRule;
             Engine = engine;
-            Logger = new Logger(logFilePath, Console.OpenStandardError());
+            Logger = new Logger(logFilePath);
 
             int id = 0;
             while (!Quit)
@@ -303,7 +267,7 @@ namespace Kalmia.GoTextProtocol
                 GTPFailure(id, "invalid color");
                 return;
             }
-            GTPSuccess(id,  MoveToString(Engine.GenerateMove(color)));
+            GTPSuccess(id,  Engine.GenerateMove(color).ToString());
         }
 
         static void ExecuteUndoCommand(int id, string[] args)
@@ -427,7 +391,7 @@ namespace Kalmia.GoTextProtocol
                 GTPFailure(id, "invalid color");
                 return;
             }
-            GTPSuccess(id, MoveToString(Engine.RegGenerateMove(color)));
+            GTPSuccess(id, Engine.RegGenerateMove(color).ToString());
         }
 
         static void ExecuteShowBoardCommand(int id, string[] args)
@@ -481,11 +445,7 @@ namespace Kalmia.GoTextProtocol
         {
             var sb = new StringBuilder();
             foreach (var move in Engine.GetLegalMoves())
-                if (CoordinateRule == GTPCoordinateRule.Othello)
                     sb.Append($"{move} ");
-                else
-                    sb.Append($"{ConvertCoordinateRule(move)} ");
-
             GTPSuccess(id, sb.ToString());
         }
 
@@ -527,17 +487,6 @@ namespace Kalmia.GoTextProtocol
             return DiscColor.Null;
         }
 
-        static string MoveToString(Move move)
-        {
-            var str = move.ToString();
-            if (str == "PASS" || CoordinateRule == GTPCoordinateRule.Othello)
-                return str;
-            var sb = new StringBuilder(str);
-            sb.Remove(1, 1);
-            sb.Append((Board.BOARD_SIZE - 1) - move.PosY + 1);
-            return sb.ToString();
-        }
-
         static bool ParseCoordinate(string str, out (int posX, int posY) coord)
         {
             str = str.ToLower();
@@ -549,8 +498,6 @@ namespace Kalmia.GoTextProtocol
             coord.posX = str[0] - 'a';
             var isInt = int.TryParse(str[1].ToString(), out coord.posY);
             coord.posY -= 1;
-            if (CoordinateRule == GTPCoordinateRule.Go)
-                coord.posY = (Board.BOARD_SIZE - 1) - coord.posY;
             return isInt;
         }
     }

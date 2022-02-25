@@ -202,20 +202,22 @@ namespace Kalmia.Reversi
             var bitboard = this.fastBoard.GetBitboard();
             var p = bitboard.CurrentPlayer;
             var o = bitboard.OpponentPlayer;
-            var mask = 1UL;
-            for (var y = 0; y < BOARD_SIZE; y++)
+            var mask = 1UL << (SQUARE_NUM - 1);
+            for (var y = BOARD_SIZE - 1; y >= 0; y--)
             {
                 sb.Append($"\n{y + 1} ");
+                var line = new StringBuilder();
                 for (var x = 0; x < BOARD_SIZE; x++)
                 {
                     if ((p & mask) != 0)
-                        sb.Append((this.SideToMove == DiscColor.Black) ? "X " : "O ");
+                        line.Append((this.SideToMove == DiscColor.Black) ? "X " : "O ");
                     else if ((o & mask) != 0)
-                        sb.Append((this.SideToMove != DiscColor.Black) ? "X " : "O ");    
+                        line.Append((this.SideToMove != DiscColor.Black) ? "X " : "O ");    
                     else
-                        sb.Append(". ");
-                    mask <<= 1;
+                        line.Append(". ");
+                    mask >>= 1;
                 }
+                sb.Append(line.ToString().Reverse().ToArray());
             }
             return sb.ToString();
         }

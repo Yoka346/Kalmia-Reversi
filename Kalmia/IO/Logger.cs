@@ -23,7 +23,7 @@ namespace Kalmia.IO
                 this.logFs = new FileStream(path, FileMode.Create, FileAccess.Write);
                 this.logSw = new StreamWriter(this.logFs);
             }
-            this.subSw = new StreamWriter(subOutStream);
+            this.subSw = new StreamWriter(subOutStream ?? Stream.Null);
         }
 
         public void Dispose()

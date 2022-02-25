@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Linq;
 
 using Kalmia.Engines;
 using Kalmia.EndGameSolver;
@@ -20,6 +21,9 @@ namespace Kalmia
 
         static void Main(string[] args)
         {
+#if DEBUG
+            DevTest();
+#else
             var options = ExtractOptions(args);
             KalmiaConfig config;
             if (options.ContainsKey("configfile"))
@@ -42,29 +46,6 @@ namespace Kalmia
             else
                 config = new KalmiaConfig();
 
-            GTPCoordinateRule coordRule;
-            if (options.ContainsKey("coordrule"))
-            {
-                if (options["coordrule"].Length == 0)
-                {
-                    Console.WriteLine("Error: Specify coordinate rule. The coordinate rule is \"go\" or \"othello\"");
-                    return;
-                }
-
-                var coordRuleStr = options["coordrule"][0];
-                if (coordRuleStr == "go")
-                    coordRule = GTPCoordinateRule.Go;
-                else if (coordRuleStr == "othello")
-                    coordRule = GTPCoordinateRule.Othello;
-                else
-                {
-                    Console.WriteLine("Error: Specify valid coordinate rule. The available coordinate rules are \"go\" or \"othello\"");
-                    return;
-                }
-            }
-            else
-                coordRule = GTPCoordinateRule.Go;
-
             if (options.ContainsKey("mode"))
             {
                 if(options["mode"].Length == 0)
@@ -73,7 +54,7 @@ namespace Kalmia
                     return;
                 }
 
-                var modeStr = options["mode"][0];
+                var modeStr = options["mode"][0].ToLower();
                 switch (modeStr)
                 {
                     case "gtp":
@@ -84,7 +65,7 @@ namespace Kalmia
                                 Console.WriteLine("Error: Specify Kalmia's log file path.");
                                 return;
                             }
-                        StartEngine(config, coordRule, kalmiaLogPath);
+                        StartEngine(config, kalmiaLogPath);
                         return;
 
                     case "matesolverbenchmark":
@@ -107,7 +88,24 @@ namespace Kalmia
                         return;
                 }
             }
+#endif
         }
+
+#if DEBUG
+        static void DevTest()
+        {
+            var options = new MCTS.UCTOptions();
+            var tree = new MCTS.UCT(options, new ValueFunction("kalmia_value_func.dat"));
+
+            var policy = new (Reversi.BoardPosition pos, float prob)[4];
+            var value = tree.SearchFastly(new GameInfo(new Reversi.FastBoard(), new BoardFeature(new Reversi.FastBoard())), 3200, policy);
+            Console.WriteLine($"{3200}[playouts] winning_rate = {value * 100.0f:f2}%");
+            Console.WriteLine("|move|probability|");
+            policy = policy.OrderByDescending(p => p.prob).ToArray();
+            foreach (var p in policy)
+                Console.WriteLine($"| {p.pos} |{p.prob * 100.0f,10:f2}%|");
+        }
+#endif
 
         static Dictionary<string, string[]> ExtractOptions(string[] args)
         {
@@ -120,7 +118,7 @@ namespace Kalmia
                     int j;
                     for (j = i + 1; j < args.Length; j++)
                         if (!Regex.IsMatch(args[j], "^--"))
-                            value.Add(args[j].ToLower());
+                            value.Add(args[j]);
                         else
                             break;
                     options.Add(key, value.ToArray());
@@ -129,10 +127,10 @@ namespace Kalmia
             return options;
         }
 
-        static void StartEngine(KalmiaConfig config, GTPCoordinateRule coordRule, string logFilePath)
+        static void StartEngine(KalmiaConfig config, string logFilePath)
         {
             if(logFilePath == string.Empty)
-                GTP.Mainloop(new KalmiaEngine(config), coordRule);
+                GTP.Mainloop(new KalmiaEngine(config));
             else
             {
                 if (!File.Exists(logFilePath))
@@ -140,7 +138,7 @@ namespace Kalmia
                     Console.WriteLine($"Error: File \"{logFilePath}\" does not exist. If the specified path contains some spaces, close it by \" \".");
                     return;
                 }
-                GTP.Mainloop(new KalmiaEngine(config, logFilePath), coordRule);
+                GTP.Mainloop(new KalmiaEngine(config, logFilePath));
             }
         }
 

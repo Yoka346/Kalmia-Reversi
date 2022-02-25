@@ -355,25 +355,25 @@ namespace Kalmia.Engines
             this.thoughtLog.WriteLine("Execute mate solver.");
             this.thoughtLog.Flush();
 
-            var timeLimit = (int)(this.timeController.RemainingTimeCentiSec[(int)color] * 0.7 * 10);   // ToDo: This is not enough time. considers the other way.
-            var movePos = this.mateSolver.SolveBestMove(this.board.GetFastBoard(), timeLimit, out GameResult result, out bool timeout);
+            int timeLimitCentiSec;
+            if (this.timeController.IsUnlimitedTime)
+                timeLimitCentiSec = int.MaxValue / 10;
+            else if (this.timeController.InByoYomi(color))
+                timeLimitCentiSec = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount());
+            else
+                timeLimitCentiSec = (int)(this.timeController.RemainingTimeCentiSec[(int)color] * 0.7 * 10);
+
+            var movePos = this.mateSolver.SolveBestMove(this.board.GetFastBoard(), timeLimitCentiSec, out GameResult result, out bool timeout);
 
             Move move;
             if (timeout)    // When timeout, executes stopgap move generation by fast MCTS. 
             {
                 this.thoughtLog.WriteLine("timeout!!");
                 this.thoughtLog.WriteLine("Select move by fast MCTS.");
-                var policy = new (BoardPosition pos, float prob)[this.board.GetNextMoves().Length];
-                var value = this.tree.SearchFastly(this.board.GetFastBoard(), this.Config.FastSearchCount, policy);
-                this.thoughtLog.WriteLine($"{this.Config.FastSearchCount}[playouts] winning_rate = {value * 100.0f:f2}%");
-                this.thoughtLog.WriteLine("|move|probability|");
-                policy = policy.OrderByDescending(p => p.prob).ToArray();
-                foreach (var p in policy)
-                {
-                    var m = (GTP.CoordinateRule != GTPCoordinateRule.Othello) ? GTP.ConvertCoordinateRule(p.pos) : p.pos;
-                    this.thoughtLog.WriteLine($"| {m} |{p.prob * 100.0f,10:f2}%|");
-                }
-                move = new Move(this.board.SideToMove, policy[0].pos);
+                this.tree.Search(this.Config.FastSearchCount);
+                var searchInfo = this.lastGenMoveSearchInfo = this.tree.SearchInfo;
+                this.thoughtLog.WriteLine(GetSearchInfoString());
+                move = SelectBestMove(searchInfo, out _);
             }
             else
             {
@@ -432,15 +432,9 @@ namespace Kalmia.Engines
             sb.AppendLine("|move|search_count|winnning_rate|probability|depth|pv");
             foreach(var childEval in searchInfo.ChildEvaluations.OrderByDescending(n => n.PlayoutCount))
             {
-                var m = (GTP.CoordinateRule != GTPCoordinateRule.Othello) ? GTP.ConvertCoordinateRule(childEval.Move) : childEval.Move;
-                sb.Append($"| {m} |{childEval.PlayoutCount,12}|{childEval.Value * 100.0f,12:f2}%|{childEval.MoveProbability * 100.0f,10:f2}%|{childEval.PrincipalVariation.Count,5}|");
+                sb.Append($"| {childEval.Move} |{childEval.PlayoutCount,12}|{childEval.Value * 100.0f,12:f2}%|{childEval.MoveProbability * 100.0f,10:f2}%|{childEval.PrincipalVariation.Count,5}|");
                 foreach (var move in childEval.PrincipalVariation) 
-                {
-                    if (GTP.CoordinateRule != GTPCoordinateRule.Othello)
-                        sb.Append($"{GTP.ConvertCoordinateRule(move)} ");
-                    else
                         sb.Append($"{move} ");
-                }
                 sb.AppendLine();
             }
             return sb.ToString();
