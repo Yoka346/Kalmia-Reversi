@@ -366,7 +366,7 @@ namespace Kalmia.Engines
             else if (this.timeController.InByoYomi(color))
                 timeLimitCentiSec = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount());
             else
-                timeLimitCentiSec = (int)(this.timeController.RemainingTimeCentiSec[(int)color] * 0.7 * 10);
+                timeLimitCentiSec = (int)(this.timeController.RemainingTimeCentiSec[(int)color] * 0.7);
 
             IEndGameSolver solver;
             BoardPosition movePos;
