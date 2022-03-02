@@ -17,16 +17,65 @@ namespace Kalmia
 {
     class Program
     {
-        const string LOG_DIR_PATH = "log//";
-        const string GTP_LOG_FILE_NAME = "gtp{0}.txt";
-        const string THOUGHT_LOG_FILE_NAME = "thought_log{0}.txt";
+        const string LOG_DIR_PATH = "log/";
+        const string GTP_LOG_DIR_PATH = $"{LOG_DIR_PATH}/gtp/";
+        const string KALMIA_LOG_DIR_PATH = $"{LOG_DIR_PATH}/kalmia/";
+        const string GTP_LOG_FILE_NAME = "gtp{0}.log";
+        const string KALMIA_LOG_FILE_NAME = "kalmia_thought{0}.log";
 
         static void Main(string[] args)
         {
 #if DEVELOP
             DevTest();
 #else
+            CheckFiles();
             var options = ExtractOptions(args);
+            RunAsSpecifiedMode(options);
+#endif
+        }
+
+#if DEVELOP
+        static void DevTest()
+        {
+            var solver = new FinalDiscDifferenceSolver(256 * 1024 * 1024);
+            EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end40.pos");
+        }
+#endif
+
+        static void CheckFiles()
+        {
+            if (!Directory.Exists(LOG_DIR_PATH))
+                Directory.CreateDirectory(LOG_DIR_PATH);
+
+            if (!Directory.Exists(GTP_LOG_DIR_PATH))
+                Directory.CreateDirectory(GTP_LOG_DIR_PATH);
+
+            if (!Directory.Exists(KALMIA_LOG_DIR_PATH))
+                Directory.CreateDirectory(KALMIA_LOG_DIR_PATH);
+        }
+
+        static Dictionary<string, string[]> ExtractOptions(string[] args)
+        {
+            var options = new Dictionary<string, string[]>();
+            for (var i = 0; i < args.Length; i++)
+                if (Regex.IsMatch(args[i], "^--"))
+                {
+                    var key = args[i].Remove(0, 2).ToLower();
+                    var value = new List<string>();
+                    int j;
+                    for (j = i + 1; j < args.Length; j++)
+                        if (!Regex.IsMatch(args[j], "^--"))
+                            value.Add(args[j]);
+                        else
+                            break;
+                    options.Add(key, value.ToArray());
+                    i = j - 1;
+                }
+            return options;
+        }
+
+        static void RunAsSpecifiedMode(Dictionary<string, string[]> options)
+        {
             KalmiaConfig config;
             if (options.ContainsKey("configfile"))
             {
@@ -50,7 +99,7 @@ namespace Kalmia
 
             if (options.ContainsKey("mode"))
             {
-                if(options["mode"].Length == 0)
+                if (options["mode"].Length == 0)
                 {
                     Console.WriteLine("Error: Specify program mode.");
                     return;
@@ -60,14 +109,7 @@ namespace Kalmia
                 switch (modeStr)
                 {
                     case "gtp":
-                        var kalmiaLogPath = string.Empty;
-                        if (options.ContainsKey("kalmialogpath"))
-                            if (options["kalmialogpath"].Length == 0)
-                            {
-                                Console.WriteLine("Error: Specify Kalmia's log file path.");
-                                return;
-                            }
-                        StartEngine(config, kalmiaLogPath);
+                        StartEngine(config);
                         return;
 
                     case "matesolverbenchmark":
@@ -90,50 +132,23 @@ namespace Kalmia
                         return;
                 }
             }
-#endif
         }
 
-#if DEVELOP
-        static void DevTest()
+        static string CreateFilePath(string dir, string nameTemp)
         {
-            var solver = new FinalDiscDifferenceSolver(256 * 1024 * 1024);
-            EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end40.pos");
-        }
-#endif
-
-        static Dictionary<string, string[]> ExtractOptions(string[] args)
-        {
-            var options = new Dictionary<string, string[]>();
-            for (var i = 0; i < args.Length; i++)
-                if (Regex.IsMatch(args[i], "^--"))
-                {
-                    var key = args[i].Remove(0, 2).ToLower();
-                    var value = new List<string>();
-                    int j;
-                    for (j = i + 1; j < args.Length; j++)
-                        if (!Regex.IsMatch(args[j], "^--"))
-                            value.Add(args[j]);
-                        else
-                            break;
-                    options.Add(key, value.ToArray());
-                    i = j - 1;
-                }
-            return options;
+            string path;
+            var i = 0;
+            do
+                path = $"{dir}{string.Format(nameTemp, i++)}";
+            while (File.Exists(path));
+            return path;
         }
 
-        static void StartEngine(KalmiaConfig config, string logFilePath)
+        static void StartEngine(KalmiaConfig config)
         {
-            if(logFilePath == string.Empty)
-                GTP.Mainloop(new KalmiaEngine(config));
-            else
-            {
-                if (!File.Exists(logFilePath))
-                {
-                    Console.WriteLine($"Error: File \"{logFilePath}\" does not exist. If the specified path contains some spaces, close it by \" \".");
-                    return;
-                }
-                GTP.Mainloop(new KalmiaEngine(config, logFilePath));
-            }
+            GTP.Mainloop(new KalmiaEngine(config, 
+                         CreateFilePath(KALMIA_LOG_DIR_PATH, KALMIA_LOG_FILE_NAME)), 
+                         CreateFilePath(GTP_LOG_DIR_PATH, GTP_LOG_FILE_NAME));
         }
 
         static void StartLearning()

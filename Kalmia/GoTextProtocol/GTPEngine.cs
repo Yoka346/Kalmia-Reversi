@@ -155,6 +155,7 @@ namespace Kalmia.GoTextProtocol
 
                     var sgfCoord = node.GetMove(this.board.SideToMove);
                     var move = new Move(this.board.SideToMove, SGFFile.SGFCoordinateToBoardPos(sgfCoord));
+                    Console.Write(move);
                     if (move.Pos == pos)
                         break;
                     if (!this.board.Update(move))

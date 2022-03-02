@@ -158,8 +158,7 @@ namespace Kalmia.MCTS
 
     public class UCT
     {
-        const float ROOT_EXP_REWARD_INIT = 1.0f;
-        const float MIDDLE_EXP_REWARD_INIT = 0.0f;
+        const float FPU_ROOT = 1.0f;
 
         static readonly EdgeLabel[] GAME_RESULT_TO_EDGE_LABEL = new EdgeLabel[3] { EdgeLabel.Loss, EdgeLabel.Draw, EdgeLabel.Win };
 
@@ -262,7 +261,7 @@ namespace Kalmia.MCTS
 
         public void Search(uint searchCount)
         {
-            Search(searchCount, int.MaxValue);
+            Search(searchCount, int.MaxValue / 10);
         }
 
         public void Search(uint searchCount, int timeLimitCentiSec)
@@ -451,7 +450,7 @@ namespace Kalmia.MCTS
                 float q, u;
                 if(n == 0)
                 {
-                    q = ROOT_EXP_REWARD_INIT;
+                    q = FPU_ROOT;
                     u = defaultU;
                 }
                 else
@@ -481,6 +480,7 @@ namespace Kalmia.MCTS
             var cBase = this.UCB_FACTOR_BASE;
             var c = this.UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
             var defaultU = (sum == 0) ? 0.0f : MathF.Sqrt(logSum);
+            var parentQ = (float)(edgeToParentNode.RewardSum / edgeToParentNode.VisitCount);
 
             var lossCount = 0;
             var drawCount = 0;
@@ -510,7 +510,7 @@ namespace Kalmia.MCTS
                 float q, u;
                 if (n == 0)
                 {
-                    q = MIDDLE_EXP_REWARD_INIT;
+                    q = parentQ;
                     u = defaultU;
                 }
                 else

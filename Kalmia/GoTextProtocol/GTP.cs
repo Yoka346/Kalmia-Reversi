@@ -79,11 +79,11 @@ namespace Kalmia.GoTextProtocol
             {
                 var cmdName = string.Empty;
                 string[] args = null;
+                var input = Console.ReadLine();
+                Logger.WriteLine($"[{DateTime.Now}] Input: {input}");
+                cmdName = ParseCommand(input, out id, out args);
                 try
                 {
-                    var input = Console.ReadLine();
-                    Logger.WriteLine($"[{DateTime.Now}] Input: {input}");
-                    cmdName = ParseCommand(input, out id, out args);
                     COMMANDS[cmdName](id, args);
                 }
                 catch (KeyNotFoundException)
@@ -102,7 +102,7 @@ namespace Kalmia.GoTextProtocol
                 {
                     GTPFailure(id, ex.Message);
                     Logger.WriteLine($"[ERROR_DETAIL]\n{ex}\n");
-                    Logger.Flush();
+                    break;
                 }
 #endif
                 Logger.Flush();
@@ -358,7 +358,7 @@ namespace Kalmia.GoTextProtocol
 
         static void LoadSGFCommand(int id, string[] args)
         {
-            GTPFailure(id, "not supported");
+            Engine.LoadSGF(args[0]);
         }
 
         static void ExecuteColorCommand(int id, string[] args)

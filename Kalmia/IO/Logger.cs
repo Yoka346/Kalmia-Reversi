@@ -29,18 +29,16 @@ namespace Kalmia.IO
         public void Dispose()
         {
             this.logSw.Dispose();
-            if(this.logFs is not null)
+            if (this.logFs is not null)
                 this.logFs.Dispose();
-            if (this.subSw is not null)
-                this.subSw.Dispose();
+            this.subSw.Dispose();
             this.IsDisposed = true;
         }
 
         public void Flush()
         {
             this.logSw.Flush();
-            if (this.subSw is not null)
-                this.subSw.Flush();
+            this.subSw.Flush();
         }
 
         public void WriteLine()
@@ -56,15 +54,13 @@ namespace Kalmia.IO
         public void WriteLine(string str)
         {
             this.logSw.WriteLine(str);
-            if (this.subSw is not null)
-                this.subSw.WriteLine(str);
+            this.subSw.WriteLine(str);
         }
 
         public void Write(string str)
         {
             this.logSw.Write(str);
-            if (this.subSw is not null)
-                this.subSw.Write(str);
+            this.subSw.Write(str);
         }
     }
 }

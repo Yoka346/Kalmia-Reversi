@@ -113,7 +113,7 @@ namespace Kalmia.Engines
         readonly ValueFunction VALUE_FUNC;
 
         UCT tree;
-        SearchInfo lastGenMoveSearchInfo;
+        SearchInfo lastSearchInfo;
         MateSolver mateSolver;
         FinalDiscDifferenceSolver diskDiffSolver;
         Logger thoughtLog;
@@ -123,7 +123,7 @@ namespace Kalmia.Engines
 
         public KalmiaConfig Config { get; }
         public int SearchEllapsedMilliSec { get { return this.tree.SearchEllapsedMilliSec; } }
-        public SearchInfo SearchInfo { get { return this.tree.IsSearching ? this.tree.SearchInfo : this.lastGenMoveSearchInfo; } }
+        public SearchInfo SearchInfo { get { return this.tree.IsSearching ? this.tree.SearchInfo : this.lastSearchInfo; } }
 
         bool timeControlEnabled { get { return this.timeController is not null; } set { if (!value) this.timeController = null; } }
 
@@ -153,7 +153,9 @@ namespace Kalmia.Engines
 
         public override void ClearBoard()
         {
-            base.ClearBoard();
+            base.ClearBoard(); 
+            if (this.searchTask is not null && !this.searchTask.IsCompleted)
+                StopPondering();
             this.tree.SetRoot(this.board);
             this.timeController.Reset();
             this.thoughtLog.WriteLine("Tree was initialized.\n");
@@ -173,6 +175,7 @@ namespace Kalmia.Engines
             {
                 StopPondering();
                 this.thoughtLog.WriteLine("Stop pondering.");
+                this.lastSearchInfo = this.tree.SearchInfo;
                 this.thoughtLog.WriteLine(GetSearchInfoString());
             }
 
@@ -203,6 +206,7 @@ namespace Kalmia.Engines
             {
                 StopPondering();
                 this.thoughtLog.WriteLine("Stop pondering.");
+                this.lastSearchInfo = this.tree.SearchInfo;
                 this.thoughtLog.WriteLine(GetSearchInfoString());
             }
 
@@ -325,7 +329,7 @@ namespace Kalmia.Engines
             this.searchTask = this.tree.SearchAsync(this.Config.SearchCount, timeLimit);
             WaitForSearch(color, timeLimit);
             var searchInfo = this.tree.SearchInfo;
-            this.lastGenMoveSearchInfo = searchInfo;
+            this.lastSearchInfo = searchInfo;
 
             this.thoughtLog.WriteLine(GetSearchInfoString());
 
@@ -343,7 +347,7 @@ namespace Kalmia.Engines
                     this.searchTask = this.tree.SearchAsync(this.Config.SearchCount, timeLimit);
                     WaitForSearch(color, timeLimit);
                     searchInfo = this.tree.SearchInfo;
-                    this.lastGenMoveSearchInfo = searchInfo;
+                    this.lastSearchInfo = searchInfo;
                     move = this.Config.SelectMoveStochastically && moveNum < this.Config.StochasticMoveNum
                            ? SelectMoveStochastically(searchInfo, out _)
                            : SelectBestMove(searchInfo, out _);
@@ -372,6 +376,7 @@ namespace Kalmia.Engines
             BoardPosition movePos;
             string resultStr;
             bool timeout;
+            var foundWin = false;
 
             if (this.board.GetEmptyCount() > this.Config.FinalDiscDifferenceSolverMoveNum)
             {
@@ -387,16 +392,24 @@ namespace Kalmia.Engines
                 this.thoughtLog.Flush();
                 solver = this.diskDiffSolver;
                 movePos = this.diskDiffSolver.SolveBestMove(this.board.GetFastBoard(), timeLimitCentiSec, out sbyte result, out timeout);
-                resultStr = (result > 0) ? $"+{result}" : result.ToString();
+                if (result > 0)
+                {
+                    resultStr = $"+{result}";
+                    foundWin = true;
+                }
+                else
+                    resultStr = result.ToString();
+                if (timeout)
+                    resultStr += "(LCB)";
             }
 
             Move move;
-            if (timeout)    // When timeout, executes stopgap move generation by fast MCTS. 
+            if (timeout && !foundWin)    // When timeout, executes stopgap move generation by fast MCTS. 
             {
                 this.thoughtLog.WriteLine("timeout!!");
                 this.thoughtLog.WriteLine("Select move by fast MCTS.");
                 this.tree.Search(this.Config.FastSearchCount);
-                var searchInfo = this.lastGenMoveSearchInfo = this.tree.SearchInfo;
+                var searchInfo = this.lastSearchInfo = this.tree.SearchInfo;
                 this.thoughtLog.WriteLine(GetSearchInfoString());
                 move = SelectBestMove(searchInfo, out _);
             }

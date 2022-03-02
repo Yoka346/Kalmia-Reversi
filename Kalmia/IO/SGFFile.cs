@@ -71,6 +71,9 @@ namespace Kalmia.IO
             var chars = sgfCoord.ToLower().ToCharArray();
             var x = chars[0] - 'a';
             var y = chars[1] - 'a';
+            //debug
+            y = 7 - y;
+            // debug
             if (x < 0 || y < 0 || x >= Board.BOARD_SIZE || y >= Board.BOARD_SIZE)
                 return BoardPosition.Null;
             return (BoardPosition)(x + y * Board.BOARD_SIZE);
