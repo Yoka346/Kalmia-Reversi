@@ -21,17 +21,40 @@ namespace Kalmia.MCTS
         Draw = Proved | 0x03
     }
 
-    // To avoid random access to child node, Node object has Edge array,
-    // each Edge object is located sequentially in memory, and informations about each child node are cached.
+    /// <summary>
+    /// To avoid random access to child node, Node object has Edge array,
+    /// each Edge object is located sequentially in memory, and informations about each child node are cached.
+    /// Note: All informations in Edge object are viewed form parent node, so if the expected reward of child node is R,
+    /// the edge to that child node has (1.0 - R) as expected reward. 
+    /// </summary>
     struct Edge   
     {
         static readonly double[] EDGE_LABEL_TO_REWARD = new double[] { 1.0, 0.0, 0.5 };
 
+        /// <summary>
+        /// Where player put disc.
+        /// </summary>
         public BoardPosition Pos;
+
+        /// <summary>
+        /// The number of visits to this edge.
+        /// </summary>
         public uint VisitCount;
+
+        /// <summary>
+        /// The sum of estimated reward. Reward means the winning rate.
+        /// </summary>
         public double RewardSum;
+
+        /// <summary>
+        /// The lable of edge. 
+        /// </summary>
         public EdgeLabel Label;
 
+        /// <summary>
+        /// The expected reward(the mean of reward sum). 
+        /// Note: If this edge is proved, this property returns exact reward(win: 1.0, loss: 0.0, draw: 0.5).
+        /// </summary>
         public double ExpReward
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -39,7 +62,12 @@ namespace Kalmia.MCTS
         }
 
         public bool IsVisited { get { return this.Label != EdgeLabel.NotVisited; } }
+
+        /// <summary>
+        /// Whether the exact game result(win, loss, draw) is proved or not.
+        /// </summary>
         public bool IsProved { get { return (this.Label & EdgeLabel.Proved) != 0; } }
+
         public bool IsWin { get { return this.Label == EdgeLabel.Win; } }
         public bool IsLoss { get { return this.Label == EdgeLabel.Loss; } }
         public bool IsDraw { get { return this.Label == EdgeLabel.Draw; } }
@@ -48,15 +76,41 @@ namespace Kalmia.MCTS
     class Node
     {
         static uint _ObjectCount = 0u;
+
+        /// <summary>
+        /// The number of Node object created. 
+        /// If a Node object is created, this value will be incremented,
+        /// If a Node object is deleted by GC, this value will be decremented.
+        /// </summary>
         public static uint ObjectCount { get { return _ObjectCount; } }
 
+        /// <summary>
+        /// The number of visits to this node.
+        /// </summary>
         public uint VisitCount;
+
+        /// <summary>
+        /// Edges to child nodes.
+        /// </summary>
         public Edge[] Edges;     
+
+        /// <summary>
+        /// Child nodes.
+        /// </summary>
         public Node[] ChildNodes;
+
+        /// <summary>
+        /// The number of child nodes.
+        /// </summary>
         public int ChildNum { get { return this.Edges.Length; } }
+
         public bool ChildNodesAreInitialized { get { return this.ChildNodes is not null; } }
         public bool IsExpanded { get { return this.Edges is not null; } }
 
+        /// <summary>
+        /// The expected reward(the mean of reward sum). 
+        /// Note: If this node is proved, this property returns exact reward(win: 1.0, loss: 0.0, draw: 0.5).
+        /// </summary>
         public double ExpReward
         {
             get
@@ -107,6 +161,10 @@ namespace Kalmia.MCTS
         }
     }
 
+    /// <summary>
+    /// Searcher class has the information about the game which is being searched 
+    /// and the buffer of next position candidates. Searcher object is created for each search thread.
+    /// </summary>
     class Searcher
     {
         public GameInfo GameInfo;
@@ -119,6 +177,9 @@ namespace Kalmia.MCTS
         }
     }
 
+    /// <summary>
+    /// Provides the options of UCT.
+    /// </summary>
     public class UCTOptions
     {
         /// <summary>
@@ -152,13 +213,30 @@ namespace Kalmia.MCTS
         public long ManagedMemoryLimit { get; set; } = long.MaxValue;
     }
 
+    /// <summary>
+    /// Records the evaluation of each move which is calculated by UCT.
+    /// </summary>
+    /// <param name="Move"></param>
+    /// <param name="MoveProbability">The probability of being the best move.</param>
+    /// <param name="Value">The value of move which is estimated by UCT.</param>
+    /// <param name="IsProved">The exact value of move is proved or not.</param>
+    /// <param name="PlayoutCount">The number of playouts for this move.</param>
+    /// <param name="PrincipalVariation">The best move sequence which is estimated by UCT.</param>
     public record class MoveEvaluation(Move Move, double MoveProbability, double Value, bool IsProved, uint PlayoutCount, ReadOnlyCollection<Move> PrincipalVariation);
 
+    /// <summary>
+    /// Records the result of UCT search.
+    /// </summary>
+    /// <param name="RootEvaluation">The evaluation of root(current state) which is estimated by UCT.</param>
+    /// <param name="ChildEvaluations">The evaluation of child nodes(next moves) which is estimated by UCT.</param>
     public record class SearchInfo(MoveEvaluation RootEvaluation, ReadOnlyCollection<MoveEvaluation> ChildEvaluations);
 
     public class UCT
     {
-        const float FPU_ROOT = 1.0f;
+        /// <summary>
+        /// The expected reward of unvisited root child node. 
+        /// </summary>
+        const float ROOT_FPU = 1.0f;
 
         static readonly EdgeLabel[] GAME_RESULT_TO_EDGE_LABEL = new EdgeLabel[3] { EdgeLabel.Loss, EdgeLabel.Draw, EdgeLabel.Win };
 
@@ -172,7 +250,12 @@ namespace Kalmia.MCTS
 
         Board rootState;
         Node root;
+
+        /// <summary>
+        /// The counter to calculate PPS(Playouts Per Second).
+        /// </summary>
         int ppsCounter;
+
         int searchStartTime;
         int searchEndTime;
         CancellationTokenSource cts;
@@ -181,6 +264,9 @@ namespace Kalmia.MCTS
         public float Pps { get { return this.ppsCounter / (this.SearchEllapsedMilliSec * 1.0e-3f); } }
         public int SearchEllapsedMilliSec { get { return this.IsSearching ? Environment.TickCount - this.searchStartTime : this.searchEndTime - this.searchStartTime; } }
 
+        /// <summary>
+        /// Search results.
+        /// </summary>
         public SearchInfo SearchInfo
         {
             get
@@ -230,6 +316,11 @@ namespace Kalmia.MCTS
             InitRootChildNodes();
         }
 
+        /// <summary>
+        /// Transitions the root node to the child node corresponding to the specified move.
+        /// </summary>
+        /// <param name="move">move.</param>
+        /// <returns></returns>
         public bool TransitionToRootChildNode(Move move)
         {
             if (move.Color != this.rootState.SideToMove)
@@ -242,7 +333,7 @@ namespace Kalmia.MCTS
                         var prevRoot = this.root;
                         this.root = prevRoot.ChildNodes[i];
                         this.root.VisitCount += prevRoot.Edges[i].VisitCount;
-                        this.rootState.Update(move);
+                        this.rootState.Update(move); 
                         InitRootChildNodes();
                         prevRoot.ChildNodes[i] = null;
                         return true;
@@ -259,12 +350,24 @@ namespace Kalmia.MCTS
         }
 #endif
 
-        public void Search(uint searchCount)
+        /// <summary>
+        /// Executes tree search for the specified number of playouts.
+        /// </summary>
+        /// <param name="playoutCount"></param>
+        public void Search(uint playoutCount)
         {
-            Search(searchCount, int.MaxValue / 10);
+            Search(playoutCount, int.MaxValue / 10);
         }
 
-        public void Search(uint searchCount, int timeLimitCentiSec)
+        /// <summary>
+        /// Executes tree search for the specified number of playouts until the specified time limit.
+        /// Note: When the time limit is reached, search will be suspended 
+        /// even if the playout count is not reached to the specified number of playouts.
+        /// </summary>
+        /// <param name="playoutCount"></param>
+        /// <param name="timeLimitCentiSec"></param>
+        /// <exception cref="NullReferenceException"></exception>
+        public void Search(uint playoutCount, int timeLimitCentiSec)
         {
             if (this.rootState == null)
                 throw new NullReferenceException("Set root before search.");
@@ -275,19 +378,30 @@ namespace Kalmia.MCTS
             var searchers = (from _ in Enumerable.Range(0, this.THREAD_NUM) select new Searcher(new GameInfo(new FastBoard(board), new BoardFeature(board)))).ToArray();
             this.IsSearching = true;
             this.searchStartTime = Environment.TickCount;
-            Parallel.For(0, this.THREAD_NUM, threadID => SearchKernel(searchers[threadID], searchCount / (uint)this.THREAD_NUM, timeLimitCentiSec, this.cts.Token));
-            SearchKernel(searchers[0], searchCount % (uint)this.THREAD_NUM, timeLimitCentiSec, this.cts.Token);
+            Parallel.For(0, this.THREAD_NUM, threadID => SearchKernel(searchers[threadID], playoutCount / (uint)this.THREAD_NUM, timeLimitCentiSec, this.cts.Token));
+            SearchKernel(searchers[0], playoutCount % (uint)this.THREAD_NUM, timeLimitCentiSec, this.cts.Token);
             this.IsSearching = false;
             this.searchEndTime = Environment.TickCount;
             this.cts.Dispose();
             this.cts = null;
         }
 
+        /// <summary>
+        /// Executes tree search asynchronously for the specified number of playouts until the specified time limit.
+        /// Note: When the time limit is reached, search will be suspended 
+        /// even if the playout count is not reached to the specified number of playouts. 
+        /// </summary>
+        /// <param name="searchCount"></param>
+        /// <param name="timeLimitCentiSec"></param>
+        /// <returns></returns>
         public async Task SearchAsync(uint searchCount, int timeLimitCentiSec)
         {
             await Task.Run(() => Search(searchCount, timeLimitCentiSec)).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Sends request to stop search to search threads.
+        /// </summary>
         public void RequestToStopSearch()
         {
             if (this.IsSearching)
@@ -310,19 +424,30 @@ namespace Kalmia.MCTS
                     childNodes[i] = new Node();
         }
 
-        void SearchKernel(Searcher searcher, uint searchCount, int timeLimitCentiSec, CancellationToken ct)
+        /// <summary>
+        /// The core of search process. This method will be called and run for the number of threads.
+        /// </summary>
+        /// <param name="searcher"></param>
+        /// <param name="playoutCount"></param>
+        /// <param name="timeLimitCentiSec"></param>
+        /// <param name="ct"></param>
+        void SearchKernel(Searcher searcher, uint playoutCount, int timeLimitCentiSec, CancellationToken ct)
         {
             var timeLimitMilliSec = timeLimitCentiSec * 10;
             var rootGameInfo = new GameInfo(searcher.GameInfo);
-            for (var i = 0u; i < searchCount && !IsTimeout(timeLimitMilliSec, ct); i++)
+            for (var i = 0u; i < playoutCount && !isTimeout(timeLimitMilliSec, ct); i++)
             {
                 rootGameInfo.CopyTo(searcher.GameInfo);
                 VisitRootNode(searcher);
             }
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool IsTimeout(int timeLimitMilliSec, CancellationToken ct) => this.SearchEllapsedMilliSec >= timeLimitMilliSec || ct.IsCancellationRequested || Node.ObjectCount >= this.NODE_NUM_LIMIT || Environment.WorkingSet >= this.MANAGED_MEM_LIMIT;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            bool isTimeout(int timeLimitMilliSec, CancellationToken ct) 
+            => this.SearchEllapsedMilliSec >= timeLimitMilliSec 
+               || ct.IsCancellationRequested 
+               || Node.ObjectCount >= this.NODE_NUM_LIMIT 
+               || Environment.WorkingSet >= this.MANAGED_MEM_LIMIT;
+        }
 
         void VisitRootNode(Searcher searcher)
         {
@@ -363,12 +488,29 @@ namespace Kalmia.MCTS
                 AddVirtualLoss(currentNode, childIdx);
                 searcher.GameInfo.Update(edges[childIdx].Pos);
 
-                if (!edges[childIdx].IsVisited)
+                var isFirstVisit = !edges[childIdx].IsVisited;
+                if (isFirstVisit)
                     LabelEdge(ref edges[childIdx], searcher.GameInfo);
 
-                if (!edges[childIdx].IsProved)
+                if (edges[childIdx].IsProved)
                 {
-                    if (edges[childIdx].IsVisited)    // child node is not a leaf node.
+                    Monitor.Exit(currentNode);
+                    nodeLocked = false;
+
+                    reward = edges[childIdx].ExpReward;
+                }
+                else    // child node is proved node.
+                {
+                    if (isFirstVisit)    // child node is a leaf node.
+                    {
+                        Monitor.Exit(currentNode);
+                        nodeLocked = false;
+
+                        edges[childIdx].Label = EdgeLabel.Evaluated;
+                        reward = EstimateReward(searcher.GameInfo.Feature);
+
+                    }
+                    else    // child node is not a leaf node.
                     {
                         if (currentNode.ChildNodes is null)
                             currentNode.InitChildNodes();
@@ -381,21 +523,6 @@ namespace Kalmia.MCTS
 
                         reward = VisitNode(searcher, currentNode.ChildNodes[childIdx], ref edges[childIdx]);
                     }
-                    else    // child node is a leaf node.
-                    {
-                        Monitor.Exit(currentNode);
-                        nodeLocked = false;
-
-                        edges[childIdx].Label = EdgeLabel.Evaluated;
-                        reward = EstimateReward(searcher.GameInfo.Feature);
-                    }
-                }
-                else    // child node is proved node.
-                {
-                    Monitor.Exit(currentNode);
-                    nodeLocked = false;
-
-                    reward = edges[childIdx].ExpReward;
                 }
             }
             catch
@@ -440,7 +567,8 @@ namespace Kalmia.MCTS
                 {
                     lossCount++;
                     continue;
-                }else if (edge.IsDraw)
+                }
+                else if (edge.IsDraw)
                 {
                     drawCount++;
                     drawIdx = i;
@@ -450,7 +578,7 @@ namespace Kalmia.MCTS
                 float q, u;
                 if(n == 0)
                 {
-                    q = FPU_ROOT;
+                    q = ROOT_FPU;
                     u = defaultU;
                 }
                 else
@@ -491,7 +619,7 @@ namespace Kalmia.MCTS
                 if (edge.IsWin)
                 {
                     // when at least one child node is win, parent node is win,
-                    // so edge to parent node is lose. (current player's loss means opponent player's win) 
+                    // so edge to parent node is loss. (current player's loss means opponent player's win) 
                     edgeToParentNode.Label = EdgeLabel.Loss;    
                     return i;   // definitely select win node
                 }
@@ -528,7 +656,8 @@ namespace Kalmia.MCTS
             }
 
             if (lossCount == edges.Length)
-                edgeToParentNode.Label = EdgeLabel.Win;     // when all child nodes are loss, parent node is loss, so edge to parent node is win. 
+                // when all child nodes are loss, parent node is loss, so edge to parent node is win. 
+                edgeToParentNode.Label = EdgeLabel.Win;     
             else if (lossCount + drawCount == edges.Length)
             {
                 edgeToParentNode.Label = EdgeLabel.Draw;

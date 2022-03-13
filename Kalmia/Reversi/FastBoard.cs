@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Runtime.InteropServices;
 
 using static Kalmia.BitManipulations;
 
@@ -70,6 +68,11 @@ namespace Kalmia.Reversi
         public override bool Equals(object obj)
         {
             return obj is Bitboard && (Bitboard)obj == this;
+        }
+
+        public override int GetHashCode()   // This method is just for suppressing a caution.
+        {
+            return base.GetHashCode();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -4,8 +4,6 @@ using Kalmia.Reversi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
 
 using static Kalmia.Evaluation.ValueFunction;

@@ -207,6 +207,11 @@ namespace Kalmia.Evaluation
             return bf != null && bf.SideToMove == this.SideToMove && bf.FEATURES.SequenceEqual(this.FEATURES);
         }
 
+        public override int GetHashCode()   // This method is for just suppressing a caution.
+        {
+            return base.GetHashCode();
+        }
+
         void UpdateAfterBlackMove(BoardPosition pos, ulong flipped)
         {
             var features = this.FEATURES;

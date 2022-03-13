@@ -101,6 +101,8 @@ namespace Kalmia.GoTextProtocol
 
         public Move[] GetLegalMoves()
         {
+            if (this.board.GetGameResult(DiscColor.Black) != GameResult.NotOver)
+                return new Move[0];
             return this.board.GetNextMoves().ToArray();
         }
 
@@ -155,7 +157,6 @@ namespace Kalmia.GoTextProtocol
 
                     var sgfCoord = node.GetMove(this.board.SideToMove);
                     var move = new Move(this.board.SideToMove, SGFFile.SGFCoordinateToBoardPos(sgfCoord));
-                    Console.Write(move);
                     if (move.Pos == pos)
                         break;
                     if (!this.board.Update(move))

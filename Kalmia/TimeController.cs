@@ -1,6 +1,7 @@
-﻿using Kalmia.Reversi;
-using System;
+﻿using System;
 using System.Diagnostics;
+
+using Kalmia.Reversi;
 
 namespace Kalmia
 {

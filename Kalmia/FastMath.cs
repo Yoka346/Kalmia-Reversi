@@ -1,9 +1,8 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Kalmia
 {
-    // I refered to Log2 and Log from https://github.com/LeelaChessZero/lc0/blob/master/src/utils/fastmath.h
+    // Source code reference: https://github.com/LeelaChessZero/lc0/blob/master/src/utils/fastmath.h
     public static class FastMath
     {
         static readonly int[] POW3_TABLE;

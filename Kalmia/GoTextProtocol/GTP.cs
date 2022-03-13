@@ -61,6 +61,10 @@ namespace Kalmia.GoTextProtocol
             commands.Add("gogui-rules_legal_moves", ExecuteRulesLegalMovesCommand);
             commands.Add("gogui-rules_side_to_move", ExecuteRulesSideToMoveCommand);
             commands.Add("gogui-rules_final_result", ExecuteRulesFinalResult);
+
+            // additional commands
+            commands.Add("convert_sgf_to_coordinates", ExecuteConvertSGFToCoordinatesCommand);
+
             return commands;
         }
 
@@ -238,7 +242,7 @@ namespace Kalmia.GoTextProtocol
                 return;
             }
 
-            var isSuccess = ParseCoordinate(args[1], out (int posX, int posY) coord);
+            var isSuccess = TryParseCoordinate(args[1], out (int posX, int posY) coord);
             if (!isSuccess)
             {
                 GTPFailure(id, "invalid corrdinate");
@@ -358,7 +362,31 @@ namespace Kalmia.GoTextProtocol
 
         static void LoadSGFCommand(int id, string[] args)
         {
-            Engine.LoadSGF(args[0]);
+            if(args.Length < 1 || !File.Exists(args[0]))
+            {
+                GTPFailure(id, "invalid path.");
+                return;
+            }
+
+            if (args.Length == 1)
+            {
+                GTPSuccess(id, Engine.LoadSGF(args[0]));
+            }
+
+            if (args.Length >= 2)
+            {
+                if (int.TryParse(args[1], out int result))
+                    GTPSuccess(id, Engine.LoadSGF(args[0], result));
+                else
+                {
+                    if(!TryParseCoordinate(args[1], out (int posX, int posY) coord))
+                    {
+                        GTPFailure(id, "invalid coordinate.");
+                        return;
+                    }
+                    GTPSuccess(id, Engine.LoadSGF(args[0], coord.posX, coord.posY));
+                }
+            }
         }
 
         static void ExecuteColorCommand(int id, string[] args)
@@ -459,6 +487,44 @@ namespace Kalmia.GoTextProtocol
             GTPSuccess(id, Engine.GetFinalResult());
         }
 
+        // additional commands
+        static void ExecuteConvertSGFToCoordinatesCommand(int id, string[] args)
+        {
+            if(args.Length == 0 || !File.Exists(args[0]))
+            {
+                GTPFailure(id, "invalid path.");
+                return;
+            }
+
+            var board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            var node = SGFFile.LoadSGFFile(args[0]);
+            var coordinates = new StringBuilder();
+            while (true)
+            {
+                var hasMove = node.HasMove(board.SideToMove);
+                if (!hasMove && node.HasMove(board.Opponent))
+                {
+                    board.SwitchSideToMove();
+                    hasMove = true;
+                }
+
+                if (hasMove)
+                {
+                    var sgfCoord = node.GetMove(board.SideToMove);
+                    var move = new Move(board.SideToMove, SGFFile.SGFCoordinateToBoardPos(sgfCoord));
+                    if (!board.Update(move))
+                        throw new GTPException("specified SGF file contains invalid move.");
+                    if (move.Pos != BoardPosition.Pass)
+                        coordinates.Append(move);
+                }
+
+                if (node.ChildNodes.Count == 0)
+                    break;
+                node = node.ChildNodes[0];
+            }
+            GTPSuccess(id, coordinates.ToString());
+        }
+
         static string ParseCommand(string cmd, out int id, out string[] args)
         {
             var splitedCmd = cmd.ToLower().Split(' ');
@@ -487,7 +553,7 @@ namespace Kalmia.GoTextProtocol
             return DiscColor.Null;
         }
 
-        static bool ParseCoordinate(string str, out (int posX, int posY) coord)
+        static bool TryParseCoordinate(string str, out (int posX, int posY) coord)
         {
             str = str.ToLower();
             if (str == "pass")
@@ -495,6 +561,13 @@ namespace Kalmia.GoTextProtocol
                 coord = ((int)BoardPosition.Pass, 0);
                 return true;
             }
+
+            if (str.Length != 2)
+            {
+                coord = (-1, -1);
+                return false;
+            }
+
             coord.posX = str[0] - 'a';
             var isInt = int.TryParse(str[1].ToString(), out coord.posY);
             coord.posY -= 1;

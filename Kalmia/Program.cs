@@ -5,7 +5,6 @@ using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using System.Linq;
 
 using Kalmia.Engines;
 using Kalmia.EndGameSolver;
@@ -155,16 +154,13 @@ namespace Kalmia
         {
             var valueFunc = new ValueFunction("Kalmia", 1, 4);
             var optimizer = new ValueFuncOptimizer(valueFunc);
-            //var valueFunc = new ValueFunction("Kalmia", 1, 4);
-            //var optimizer = new ValueFuncOptimizer(valueFunc);
 
             Console.WriteLine("Loading data set.");
             optimizer.LoadTrainData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\train_data.csv", false);
             optimizer.LoadTestData(@"C:\Users\admin\source\repos\Kalmia\TrainData\FFO\test_data.csv");
             Console.WriteLine("done.");
 
-            optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\LatentFactor");
-            //optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\Linear");
+            optimizer.StartOptimization(1000, @"C:\Users\admin\source\repos\Kalmia\ValueFuncOptimization\");
         }
 
         static void StartEndGameBenchmark(IEndGameSolver solver, string problemsPath)

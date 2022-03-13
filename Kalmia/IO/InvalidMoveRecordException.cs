@@ -1,4 +1,4 @@
-﻿namespace Kalmia
+﻿namespace Kalmia.IO
 {
     public class InvalidMoveRecordException : WTHORFileException
     {

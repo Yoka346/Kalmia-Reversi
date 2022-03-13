@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.IO;
-using System.Threading.Tasks;
 
 using Kalmia.Reversi;
 
@@ -62,18 +60,15 @@ namespace Kalmia.IO
 
         public static BoardPosition SGFCoordinateToBoardPos(string sgfCoord)
         {
+            if (sgfCoord == "tt" || sgfCoord == string.Empty)
+                return BoardPosition.Pass;
+
             if (sgfCoord.Length != 2)
                 return BoardPosition.Null;
 
-            if (sgfCoord == "tt")
-                return BoardPosition.Pass;
-
             var chars = sgfCoord.ToLower().ToCharArray();
             var x = chars[0] - 'a';
-            var y = chars[1] - 'a';
-            //debug
-            y = 7 - y;
-            // debug
+            var y = 7 - (chars[1] - 'a');
             if (x < 0 || y < 0 || x >= Board.BOARD_SIZE || y >= Board.BOARD_SIZE)
                 return BoardPosition.Null;
             return (BoardPosition)(x + y * Board.BOARD_SIZE);
