@@ -16,11 +16,15 @@ namespace Kalmia
 {
     class Program
     {
+        // log
         const string LOG_DIR_PATH = "log/";
         const string GTP_LOG_DIR_PATH = $"{LOG_DIR_PATH}/gtp/";
         const string KALMIA_LOG_DIR_PATH = $"{LOG_DIR_PATH}/kalmia/";
         const string GTP_LOG_FILE_NAME = "gtp{0}.log";
         const string KALMIA_LOG_FILE_NAME = "kalmia_thought{0}.log";
+
+        // difficulty
+        const string DIFFICULTY_DIR_PATH = "difficulty/";
 
         static void Main(string[] args)
         {
@@ -36,8 +40,7 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            var solver = new FinalDiscDifferenceSolver(256 * 1024 * 1024);
-            EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end40.pos");
+            // write some test code.
         }
 #endif
 
@@ -80,27 +83,45 @@ namespace Kalmia
             {
                 if (options["configfile"].Length == 0)
                 {
-                    Console.WriteLine("Error: Specify config file path.");
+                    Console.Error.WriteLine("Error: Specify config file path.");
                     return;
                 }
 
                 var path = options["configfile"][0];
                 if (!File.Exists(path))
                 {
-                    Console.WriteLine($"Error: File \"{path}\" does not exist. If the specified path contains some spaces, close it by \" \".");
+                    Console.Error.WriteLine($"Error: File \"{path}\" does not exist. If the specified path contains some spaces, close the path with \" \".");
                     return;
                 }
 
                 config = JsonSerializer.Deserialize<KalmiaConfig>(File.ReadAllText(options["configfile"][0]));
             }
+            else if (options.ContainsKey("difficulty"))
+            {
+                if(options["difficulty"].Length == 0)
+                {
+                    Console.Error.WriteLine("Error: Specify the difficulty(easy, normal, proffesional, superhuman, or unlimited). ");
+                    return;
+                }
+
+                var difficulty = options["difficulty"][0].ToLower();
+                var path = $"{DIFFICULTY_DIR_PATH}{difficulty}.json";
+                if (!File.Exists(path))
+                {
+                    Console.Error.WriteLine($"Error: \"{difficulty}\" is an invalid difficulty.");
+                    return;
+                }
+                config = JsonSerializer.Deserialize<KalmiaConfig>(File.ReadAllText(path));
+            }
             else
                 config = new KalmiaConfig();
+
 
             if (options.ContainsKey("mode"))
             {
                 if (options["mode"].Length == 0)
                 {
-                    Console.WriteLine("Error: Specify program mode.");
+                    Console.Error.WriteLine("Error: Specify program mode.");
                     return;
                 }
 
@@ -116,7 +137,7 @@ namespace Kalmia
                         {
                             if (options["matesolverbenchmark"].Length == 0)
                             {
-                                Console.WriteLine("Error: Specify end game problems directory path.");
+                                Console.Error.WriteLine("Error: Specify end game problems directory path.");
                                 return;
                             }
 
@@ -125,7 +146,7 @@ namespace Kalmia
                         }
                         else
                         {
-                            Console.WriteLine("Error: Specify end game problems directory path by \"matesolverbenchmark\" option");
+                            Console.Error.WriteLine("Error: Specify end game problems directory path by \"matesolverbenchmark\" option");
                             return;
                         }
                         return;
@@ -165,7 +186,7 @@ namespace Kalmia
 
         static void StartEndGameBenchmark(IEndGameSolver solver, string problemsPath)
         {
-            EndGameBenchmark.Solve(solver, @"C:\Users\admin\source\repos\Kalmia\FFOEndgame\end41.pos");
+            throw new NotImplementedException();
         }
     }
 }

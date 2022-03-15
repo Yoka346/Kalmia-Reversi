@@ -2,7 +2,7 @@
   "profiles": {
     "Kalmia": {
       "commandName": "Project",
-      "commandLineArgs": "--mode gtp --coordrule othello --configfile \"kalmia_config.json\""
+      "commandLineArgs": "--mode gtp --difficulty easy"
     }
   }
 }

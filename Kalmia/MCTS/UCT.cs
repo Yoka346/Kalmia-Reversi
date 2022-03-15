@@ -435,14 +435,14 @@ namespace Kalmia.MCTS
         {
             var timeLimitMilliSec = timeLimitCentiSec * 10;
             var rootGameInfo = new GameInfo(searcher.GameInfo);
-            for (var i = 0u; i < playoutCount && !isTimeout(timeLimitMilliSec, ct); i++)
+            for (var i = 0u; i < playoutCount && !stop(timeLimitMilliSec, ct); i++)
             {
-                rootGameInfo.CopyTo(searcher.GameInfo);
                 VisitRootNode(searcher);
+                rootGameInfo.CopyTo(searcher.GameInfo);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            bool isTimeout(int timeLimitMilliSec, CancellationToken ct) 
+            bool stop(int timeLimitMilliSec, CancellationToken ct) 
             => this.SearchEllapsedMilliSec >= timeLimitMilliSec 
                || ct.IsCancellationRequested 
                || Node.ObjectCount >= this.NODE_NUM_LIMIT 

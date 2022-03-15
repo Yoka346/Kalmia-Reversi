@@ -21,18 +21,7 @@ namespace Kalmia.Engines
         /// <summary>
         /// The number of search iteration count.
         /// </summary>
-        public uint SearchCount { get; set; } = 300000;
-
-        /// <summary>
-        /// The number of search iteration count for fast search.
-        /// Fast search is used for move ordering in end game solve and stopgap move generation when timeout.
-        /// </summary>
-        public uint FastSearchCount { get; set; } = 3200;
-
-        /// <summary>
-        /// If true, uses maximum time for move, else uses time for move wisely.
-        /// </summary>
-        public bool UseMaxTimeForMove { get; set; } = false;
+        public uint PlayoutCount { get; set; } = 300000;
 
         /// <summary>
         /// Time limit will be decreased by this value.
@@ -42,7 +31,7 @@ namespace Kalmia.Engines
         /// <summary>
         /// The number of opening moves. When the number of moves is within this value, Kalmia plays moves fastly.
         /// </summary>
-        public int OpenningMoveNum { get; set; } = 15;
+        public int OpeningMoveNum { get; set; } = 15;
 
         /// <summary>
         /// Whether selects next move stochastically or not.
@@ -107,8 +96,13 @@ namespace Kalmia.Engines
         const string _NAME = "Kalmia";
         const string _VERSION = "1.0";
 
+        /// <summary>
+        /// The playout count for stopgap search.
+        /// When the timeout of endgame search occurs, selects move by MCTS with a few playout count..
+        /// </summary>
+        const int STOPGAP_PLAYOUT_COUNT = 3200;
+
         readonly Random RAND = new(Random.Shared.Next());
-        readonly ValueFunction VALUE_FUNC;
 
         UCT tree;
         SearchInfo lastSearchInfo;
@@ -116,7 +110,6 @@ namespace Kalmia.Engines
         FinalDiscDifferenceSolver diskDiffSolver;
         Logger thoughtLog;
         TimeController timeController;
-        bool quitFlag;
         Task searchTask;
 
         public KalmiaConfig Config { get; }
@@ -130,7 +123,7 @@ namespace Kalmia.Engines
         public KalmiaEngine(KalmiaConfig config, string logFilePath):base(_NAME, _VERSION)
         {
             this.Config = config;
-            this.tree = new UCT(config.TreeOptions, this.VALUE_FUNC = new ValueFunction(config.ValueFuncParamFile));
+            this.tree = new UCT(config.TreeOptions, new ValueFunction(config.ValueFuncParamFile));
             this.mateSolver = new MateSolver(config.EndgameSolverMemorySize);
             this.diskDiffSolver = new FinalDiscDifferenceSolver(config.EndgameSolverMemorySize);
             this.timeController = new TimeController(0, 1, 0, 0, config.LatencyCentiSec);
@@ -140,7 +133,6 @@ namespace Kalmia.Engines
 
         public override void Quit()
         {
-            this.quitFlag = true;
             if (this.tree.IsSearching)
             {
                 this.tree.RequestToStopSearch();
@@ -322,9 +314,9 @@ namespace Kalmia.Engines
             var moveNum = Board.SQUARE_NUM - this.board.GetEmptyCount();
             this.timeController.Start(color);
             var timeLimit = this.timeController.GetMaxTimeCentiSecForMove(color, this.board.GetEmptyCount());
-            if (moveNum < this.Config.OpenningMoveNum)
+            if (moveNum < this.Config.OpeningMoveNum)
                 timeLimit /= 2;
-            this.searchTask = this.tree.SearchAsync(this.Config.SearchCount, timeLimit);
+            this.searchTask = this.tree.SearchAsync(this.Config.PlayoutCount, timeLimit);
             WaitForSearch(color, timeLimit);
             var searchInfo = this.tree.SearchInfo;
             this.lastSearchInfo = searchInfo;
@@ -335,14 +327,14 @@ namespace Kalmia.Engines
                        ? SelectMoveStochastically(searchInfo, out bool additionalSearchRequired)
                        : SelectBestMove(searchInfo, out additionalSearchRequired);
 
-            if (moveNum >= this.Config.OpenningMoveNum && additionalSearchRequired && !this.timeController.InByoYomi(color))
+            if (moveNum >= this.Config.OpeningMoveNum && additionalSearchRequired && !this.timeController.InByoYomi(color))
             {
                 timeLimit += timeLimit - this.timeController.GetEllapsedCentiSec(color);
                 if (this.timeController.RemainingTimeCentiSec[(int)color] > timeLimit * 1.5)
                 {
                     this.thoughtLog.WriteLine("\n\nAdditional search is required.");
                     this.thoughtLog.Flush();
-                    this.searchTask = this.tree.SearchAsync(this.Config.SearchCount, timeLimit);
+                    this.searchTask = this.tree.SearchAsync(this.Config.PlayoutCount, timeLimit);
                     WaitForSearch(color, timeLimit);
                     searchInfo = this.tree.SearchInfo;
                     this.lastSearchInfo = searchInfo;
@@ -355,6 +347,11 @@ namespace Kalmia.Engines
 
             this.thoughtLog.Flush();
             this.timeController.Stop(color);
+
+#if DEBUG
+            System.Diagnostics.Debug.Assert(this.board.IsLegalMove(move));
+#endif
+
             return move;
         }
 
@@ -406,7 +403,7 @@ namespace Kalmia.Engines
             {
                 this.thoughtLog.WriteLine("timeout!!");
                 this.thoughtLog.WriteLine("Select move by fast MCTS.");
-                this.tree.Search(this.Config.FastSearchCount);
+                this.tree.Search(STOPGAP_PLAYOUT_COUNT);
                 var searchInfo = this.lastSearchInfo = this.tree.SearchInfo;
                 this.thoughtLog.WriteLine(GetSearchInfoString());
                 move = SelectBestMove(searchInfo, out _);

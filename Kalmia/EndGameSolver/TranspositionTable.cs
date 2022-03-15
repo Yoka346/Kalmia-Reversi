@@ -45,6 +45,8 @@ namespace Kalmia.EndGameSolver
 
         static ulong CalcTableLength(ulong maxSize)
         {
+            if (maxSize == 0)
+                return 0;
             var entrySize = Unsafe.SizeOf<TTEntry<T>>();
             var exp = Math.ILogB((double)maxSize / entrySize);
             return Enumerable.Repeat(2UL, exp).Aggregate((x, y) => x * y);
