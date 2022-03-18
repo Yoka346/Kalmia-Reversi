@@ -2,7 +2,6 @@
 
 namespace Kalmia
 {
-    // Source code reference: https://github.com/LeelaChessZero/lc0/blob/master/src/utils/fastmath.h
     public static class FastMath
     {
         static readonly int[] POW3_TABLE;

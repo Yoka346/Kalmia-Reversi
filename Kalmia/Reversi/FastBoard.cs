@@ -91,7 +91,7 @@ namespace Kalmia.Reversi
     /// <summary>
     /// Provides fast reversi board for searching.
     /// Source code reference: https://github.com/okuhara/edax-reversi-AVX/blob/master/src/board_sse.c
-    /// See also: http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm (Japanese document)
+    /// Bit operations reference: http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm (Japanese document)
     /// </summary>
     public class FastBoard     // board for searching
     {
