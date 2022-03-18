@@ -348,10 +348,6 @@ namespace Kalmia.Engines
             this.thoughtLog.Flush();
             this.timeController.Stop(color);
 
-#if DEBUG
-            System.Diagnostics.Debug.Assert(this.board.IsLegalMove(move));
-#endif
-
             return move;
         }
 
