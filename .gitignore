@@ -364,3 +364,6 @@ FodyWeavers.xsd
 /TrainData
 /ValueFunctionOptimize
 /FFOEndgame
+Params/
+ValueFuncOptimization/
+
