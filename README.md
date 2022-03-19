@@ -24,18 +24,21 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 ## 3. GoGuiへの登録
 まず、ダウンロードしたKalmia本体を適当な場所に配置し展開します。
 
-![キャプチャ](https://user-images.githubusercontent.com/53616737/132211712-a2bbcb9a-cf22-4be1-9822-2ef1072b99f3.PNG)
+![スクリーンショット 2022-03-19 220914](https://user-images.githubusercontent.com/53616737/159122398-13feafa3-5e45-4101-ad22-24271f78164a.png)
 
-次にGoGuiを起動し、上部のツールバーから 対局 -> ルール -> 新規プログラム　を選択します。「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exe(LinuxやmacOS版では".exe"が付いていません)を選択し、コマンドテキストボックスの末尾に"--mode ruler"というオプションを追加します。
-![キャプチャ](https://user-images.githubusercontent.com/53616737/132212273-d823a48a-c929-44b9-8b77-140fe29dabc6.PNG)
+次にGoGuiを起動し、上部のツールバーから 対局 -> ルール -> 新規プログラム　を選択します。「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exe(LinuxやmacOS版では".exe"が付いていません)を選択し、コマンドテキストボックスの末尾に"--mode ruler"というオプションを追加します。ワーキングディレクトリにはKalmia.exeが存在するディレクトリを指定します。そのままOKをクリックすればReversiRulerの導入が完了です。  
+※ Prototypeでは、ReversiRulerはKalmiaとは別のプログラムでしたが、バージョン1.0でKalmiaと統合されました。
 
-これでGoGuiでリバーシをプレイできるようになります。
+![スクリーンショット 2022-03-19 221255](https://user-images.githubusercontent.com/53616737/159122573-537ab28a-5fa5-415c-9411-fe3f65597226.png)
+
+![スクリーンショット 2022-03-19 221546](https://user-images.githubusercontent.com/53616737/159122775-712e3e33-473f-4712-8314-c95d4d45161b.png)
+
+
+これでGoGuiでリバーシをプレイできるようになりました。
 次に上部のツールバーから プログラム -> 新規プログラム を選択します。ReversiRulerを導入した時と同様に、「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exeを選択します。
-![キャプチャ](https://user-images.githubusercontent.com/53616737/132213450-b0a5ab70-e27d-44cd-8ccf-dbcf5abcf7fa.PNG)
-
 次にコマンドテキストボックスの末尾に"--mode gtp --difficulty [難易度]"を追加します。難易度は"easy", "normal", "professional", "superhuman", "custom"から選択できます(難易度の詳細については後述)。また、ワーキングディレクトリには、Kalmia.exeがあるディレクトリを指定してください。
 
-![キャプチャ](https://user-images.githubusercontent.com/53616737/132213577-6dcb07af-9965-4f2e-8e22-46bb1f460313.PNG)
+![スクリーンショット 2022-03-19 222159](https://user-images.githubusercontent.com/53616737/159122828-bdc54251-a8fb-4f19-83e1-135f841989da.png)
 
 登録が完了した次回以降は 対局 -> ルール -> プログラムの起動 からReversiRulerを選択し、 プログラム -> プログラムの起動 からKalmiaを選択すれば対局可能な状態になります。
 
@@ -56,19 +59,19 @@ Kalmiaは"easy", "normal", "professional", "superhuman"の4段階難易度に分
 
 + easy  
 プレイアウト回数: 20  
-強さ: 初心者程度
+強さ: 初心者向け
 
 + normal  
 プレイアウト回数: 100
-強さ: 日本オセロ連盟6級~4級程度
+強さ: リバーシ中級者向け
 
 + proffesional  
 プレイアウト回数: 3200  
-強さ: 日本オセロ連盟2級~初段程度
+強さ: リバーシ上級者向け
 
 + superhuman  
 プレイアウト回数: 320000  
-強さ: 日本オセロ連盟高段者程度
+強さ: リバーシ高段者向け
 
 プレイアウト回数とは、「1回の思考で読む局面数」のようなものです。例えば、プレイアウト回数が100回であれば100局面を読んだうえで次の一手を決定します。  
 
