@@ -183,21 +183,6 @@ namespace Kalmia.MCTS
     public class UCTOptions
     {
         /// <summary>
-        /// One of the UCB parameter.
-        /// </summary>
-        public float UCBFactorInit { get; set; } = 0.35f;
-
-        /// <summary>
-        /// One of the UCB parameter.
-        /// </summary>
-        public float UCBFactorBase { get; set; } = 19652.0f;
-
-        /// <summary>
-        /// The virtual loss to prevent from searching a single node by multiple threads. 
-        /// </summary>
-        public uint VirtualLoss { get; set; } = 3u;
-
-        /// <summary>
         /// The number of search threads.
         /// </summary>
         public int ThreadNum { get; set; } = Environment.ProcessorCount;
@@ -238,11 +223,23 @@ namespace Kalmia.MCTS
         /// </summary>
         const float ROOT_FPU = 1.0f;
 
+        /// <summary>
+        /// One of the UCB parameter.
+        /// </summary>
+        const float UCB_FACTOR_INIT = 0.35f;
+
+        /// <summary>
+        /// One of the UCB parameter.
+        /// </summary>
+        const float UCB_FACTOR_BASE = 19652.0f;
+
+        /// <summary>
+        /// The temporary loss to prevent from searching a single node by multiple threads. 
+        /// </summary>
+        const uint VIRTUAL_LOSS = 3u;
+
         static readonly EdgeLabel[] GAME_RESULT_TO_EDGE_LABEL = new EdgeLabel[3] { EdgeLabel.Loss, EdgeLabel.Draw, EdgeLabel.Win };
 
-        readonly float UCB_FACTOR_INIT;
-        readonly float UCB_FACTOR_BASE;
-        readonly uint VIRTUAL_LOSS;
         readonly ValueFunction VALUE_FUNC;
         readonly int THREAD_NUM;
         readonly uint NODE_NUM_LIMIT;
@@ -300,11 +297,8 @@ namespace Kalmia.MCTS
 
         public UCT(UCTOptions options, ValueFunction valueFunc)
         {
-            this.UCB_FACTOR_INIT = options.UCBFactorInit;
-            this.UCB_FACTOR_BASE = options.UCBFactorBase;
-            this.VIRTUAL_LOSS = options.VirtualLoss;
             this.VALUE_FUNC = valueFunc;
-            this.THREAD_NUM = options.ThreadNum;
+            this.THREAD_NUM = options.ThreadNum == 0 ? Environment.ProcessorCount : options.ThreadNum;
             this.NODE_NUM_LIMIT = options.NodeNumLimit;
             this.MANAGED_MEM_LIMIT = options.ManagedMemoryLimit;
         }
@@ -551,8 +545,8 @@ namespace Kalmia.MCTS
             var maxScore = float.NegativeInfinity;
             var sum = this.root.VisitCount;
             var logSum = FastMath.Log(sum);
-            var cBase = this.UCB_FACTOR_BASE;
-            var c = this.UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
+            var cBase = UCB_FACTOR_BASE;
+            var c = UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
             var defaultU = (sum == 0) ? 0.0f : MathF.Sqrt(logSum);
 
             var lossCount = 0;
@@ -605,8 +599,8 @@ namespace Kalmia.MCTS
             var maxScore = float.NegativeInfinity;
             var sum = parentNode.VisitCount;
             var logSum = FastMath.Log(sum);
-            var cBase = this.UCB_FACTOR_BASE;
-            var c = this.UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
+            var cBase = UCB_FACTOR_BASE;
+            var c = UCB_FACTOR_INIT + FastMath.Log((1.0f + sum + cBase) / cBase);
             var defaultU = (sum == 0) ? 0.0f : MathF.Sqrt(logSum);
             var parentQ = (float)(edgeToParentNode.RewardSum / edgeToParentNode.VisitCount);
 
@@ -674,15 +668,15 @@ namespace Kalmia.MCTS
 
         void UpdateResult(Node node, int childNodeIdx, double reward)
         {
-            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, 1 - this.VIRTUAL_LOSS);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, unchecked(1 - VIRTUAL_LOSS));
             AtomicOperations.Add(ref node.Edges[childNodeIdx].RewardSum, reward);
-            AtomicOperations.Add(ref node.VisitCount, 1 - this.VIRTUAL_LOSS);
+            AtomicOperations.Add(ref node.VisitCount, unchecked(1 - VIRTUAL_LOSS));
         }
 
         void AddVirtualLoss(Node node, int childNodeIdx)
         {
-            AtomicOperations.Add(ref node.VisitCount, this.VIRTUAL_LOSS);
-            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, this.VIRTUAL_LOSS);
+            AtomicOperations.Add(ref node.VisitCount, VIRTUAL_LOSS);
+            AtomicOperations.Add(ref node.Edges[childNodeIdx].VisitCount, VIRTUAL_LOSS);
         }
 
         static void LabelEdge(ref Edge edge, GameInfo gameInfo)

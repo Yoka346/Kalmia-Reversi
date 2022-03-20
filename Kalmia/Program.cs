@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Linq;
 
 using Kalmia.Engines;
 using Kalmia.EndGameSolver;
@@ -26,12 +27,15 @@ namespace Kalmia
         // difficulty
         const string DIFFICULTY_DIR_PATH = "difficulty/";
 
+        static readonly TimeSpan REMOVE_LOG_FILE_SPAN = new(31, 0, 0, 0, 0);  // 1 month
+
         static void Main(string[] args)
         {
 #if DEVELOP
             DevTest();
 #else
             CheckFiles();
+            RemoveOldLogFiles();
             var options = ExtractOptions(args);
             RunAsSpecifiedMode(options);
 #endif
@@ -54,6 +58,14 @@ namespace Kalmia
 
             if (!Directory.Exists(KALMIA_LOG_DIR_PATH))
                 Directory.CreateDirectory(KALMIA_LOG_DIR_PATH);
+        }
+
+        static void RemoveOldLogFiles()
+        {
+            foreach (var dir in new string[] { GTP_LOG_DIR_PATH, KALMIA_LOG_DIR_PATH })
+                foreach (var file in Directory.GetFiles(dir))
+                    if (Path.GetExtension(file) == ".log" && DateTime.Now - File.GetCreationTime(file) >= REMOVE_LOG_FILE_SPAN)
+                        File.Delete(file);
         }
 
         static Dictionary<string, string[]> ExtractOptions(string[] args)
@@ -132,6 +144,10 @@ namespace Kalmia
                         StartEngine(config);
                         return;
 
+                    case "ruler":
+                        StartRuler();
+                        return;
+
                     case "matesolverbenchmark":
                         if (options.ContainsKey("matesolverbenchmark"))
                         {
@@ -169,6 +185,11 @@ namespace Kalmia
             GTP.Mainloop(new KalmiaEngine(config, 
                          CreateFilePath(KALMIA_LOG_DIR_PATH, KALMIA_LOG_FILE_NAME)), 
                          CreateFilePath(GTP_LOG_DIR_PATH, GTP_LOG_FILE_NAME));
+        }
+
+        static void StartRuler()
+        {
+            GTP.Mainloop(new ReversiRuler());
         }
 
         static void StartLearning()

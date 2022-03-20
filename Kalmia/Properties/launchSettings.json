@@ -2,7 +2,7 @@
   "profiles": {
     "Kalmia": {
       "commandName": "Project",
-      "commandLineArgs": "--mode gtp --difficulty easy"
+      "commandLineArgs": "--mode ruler --difficulty easy"
     }
   }
 }

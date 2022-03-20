@@ -458,10 +458,10 @@ namespace Kalmia.Engines
         {
             var searchInfo = this.SearchInfo;
             var sb = new StringBuilder($"ellapsed={this.SearchEllapsedMilliSec}[ms] {searchInfo.RootEvaluation.PlayoutCount}[playouts] {this.tree.Pps}[pps] winning_rate={searchInfo.RootEvaluation.Value * 100.0f:f2}%\n");
-            sb.AppendLine("|move|search_count|winnning_rate|probability|depth|pv");
+            sb.AppendLine("|move|playout_count|winnning_rate|probability|depth|pv");
             foreach(var childEval in searchInfo.ChildEvaluations.OrderByDescending(n => n.PlayoutCount))
             {
-                sb.Append($"| {childEval.Move} |{childEval.PlayoutCount,12}|{childEval.Value * 100.0f,12:f2}%|{childEval.MoveProbability * 100.0f,10:f2}%|{childEval.PrincipalVariation.Count,5}|");
+                sb.Append($"| {childEval.Move} |{childEval.PlayoutCount,13}|{childEval.Value * 100.0f,12:f2}%|{childEval.MoveProbability * 100.0f,10:f2}%|{childEval.PrincipalVariation.Count,5}|");
                 foreach (var move in childEval.PrincipalVariation) 
                         sb.Append($"{move} ");
                 sb.AppendLine();
