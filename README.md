@@ -137,6 +137,25 @@ Kalmiaは持ち時間の設定に対応しています。GoGuiで持ち時間を
 Kalmiaについての詳細は以下のブログで紹介しています。  
 https://kalmia.hatenadiary.jp/entry/2022/03/18/140704
 
+## 8. 謝辞
+以下の文献及びリポジトリは開発の際に大変参考になりました。
+
++ 文献  
+http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm  
+ビットボードによる合法手生成の参考にしました。  
+https://deepmind.com/research/publications/2019/mastering-game-go-deep-neural-networks-tree-search  
+https://deepmind.com/research/publications/2019/mastering-game-go-without-human-knowledge  
+MCTSのロールアウトの代わりに、静的評価関数を用いるというアイデアはこちらの論文から着想を得ました。  
+  
++ リポジトリ  
+https://github.com/LeelaChessZero/lc0  
+https://github.com/TadaoYamaoka/DeepLearningShogi  
+https://github.com/yaneurao/YaneuraOu/tree/master/source/engine/dlshogi-engine  
+主にMCTSの実装の参考にしました。  
+https://github.com/abulmo/edax-reversi  
+https://github.com/okuhara/edax-reversi-AVX  
+ビットボードによる合法手生成、盤面のハッシュコードの生成などの参考にしました。
+
 
 
 
