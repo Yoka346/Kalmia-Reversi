@@ -1,5 +1,5 @@
 # Kalmia-Reversi
-C#(.NET6.0)で書かれたリバーシの思考エンジンです。探索アルゴリズムにUCT(Upper Confidence Bound applied Tree)を採用していることが特徴です。  
+C#(.NET6.0)で書かれたリバーシの思考エンジンです。探索アルゴリズムにUCT(Upper Confidence Bound applied Trees)を採用していることが特徴です。  
 囲碁プログラムでよく用いられるGTP(Go Text Protocol)に対応しているため、GoGuiで対戦することが可能です(方法は後述)。  
 現在の最新バージョンは1.0です。
 
@@ -10,23 +10,23 @@ C#(.NET6.0)で書かれたリバーシの思考エンジンです。探索アル
 + メモリ : 4GB
 
 推奨環境
-+ OS : Windows, Linux, macOS (いずれも64bit対応)
++ OS : Windows 64bit
 + CPU : 64bit、4コア以上、AVX2に対応したもの(2013~2015年以降に購入したPCであれば概ね対応しています)
 + メモリ : 8GB以上
 
-このソフトウェアはmacOSに対応していますが、M1チップ搭載のMacでは動作確認ができていません。またARMのCPUにおいても動作確認ができておりません。
+このソフトウェアはLinux, macOSに対応してはいますが、Windowsに比べて動作が遅くなる傾向があります。また、ARMプロセッサ上での動作は確認できていません。
 
 ## 2. ダウンロード
-[Release](https://github.com/Yoka346/Kalmia-Reversi/releases)からKalmia本体をダウンロードしてください。
+[Release](https://github.com/Yoka346/Kalmia-Reversi/releases)からKalmia本体をダウンロードしてください。Version 1.0が最新です。
 Kalmiaの実行には.NET6.0のランタイムが必要です。[ここ](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)からインストーラーをダウンロードし、インストールしてください。
 GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウンロード可能です。ここ以外の場所からダウンロードしたGoGuiの場合はリバーシに対応できない場合があります。
 
 ## 3. GoGuiへの登録
-まず、ダウンロードしたKalmia本体を適当な場所に配置し展開します。
+まず、ダウンロードしたKalmia本体を適当な場所に配置し展開します。できる限りユーザーフォルダー内(Documentsなど)に配置してください。Cドライブ直下などでは権限が足りずにエラーが発生することがあります。どうしてもCドライブ直下などに配置したい場合は、GoGuiを管理者として実行してください。
 
 ![スクリーンショット 2022-03-19 220914](https://user-images.githubusercontent.com/53616737/159122398-13feafa3-5e45-4101-ad22-24271f78164a.png)
 
-次にGoGuiを起動し、上部のツールバーから 対局 -> ルール -> 新規プログラム　を選択します。「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exe(LinuxやmacOS版では".exe"が付いていません)を選択し、コマンドテキストボックスの末尾に"--mode ruler"というオプションを追加します。ワーキングディレクトリにはKalmia.exeが存在するディレクトリを指定します。そのままOKをクリックすればReversiRulerの導入が完了です。  
+次にGoGuiを起動し、上部のツールバーから 対局 -> ルール -> 新規プログラム　を選択します。「囲碁プログラムの選択」から、展開したフォルダ内にあるKalmia.exe(LinuxやmacOS版では".exe"が付いていません)を選択し、コマンドテキストボックスの末尾に"--mode ruler"というオプションを追加します。ワーキングディレクトリにはKalmia.exeが存在するディレクトリを指定します。そのままOKをクリックすればReversiRulerの導入が完了です。  
 ※ Prototypeでは、ReversiRulerはKalmiaとは別のプログラムでしたが、バージョン1.0でKalmiaと統合されました。
 
 ![スクリーンショット 2022-03-19 221255](https://user-images.githubusercontent.com/53616737/159122573-537ab28a-5fa5-415c-9411-fe3f65597226.png)
@@ -35,7 +35,7 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 
 
 これでGoGuiでリバーシをプレイできるようになりました。
-次に上部のツールバーから プログラム -> 新規プログラム を選択します。ReversiRulerを導入した時と同様に、「囲碁プログラムの選択」から展開したフォルダ内にあるKalmia.exeを選択します。
+次に上部のツールバーから プログラム -> 新規プログラム を選択します。ReversiRulerを導入した時と同様に「囲碁プログラムの選択」から、展開したフォルダ内にあるKalmia.exeを選択します。
 次にコマンドテキストボックスの末尾に"--mode gtp --difficulty [難易度]"を追加します。難易度は"easy", "normal", "professional", "superhuman", "custom"から選択できます(難易度の詳細については後述)。また、ワーキングディレクトリには、Kalmia.exeがあるディレクトリを指定してください。
 
 ![スクリーンショット 2022-03-19 222159](https://user-images.githubusercontent.com/53616737/159122828-bdc54251-a8fb-4f19-83e1-135f841989da.png)
@@ -43,26 +43,30 @@ GoGuiは[ここ](https://github.com/Remi-Coulom/gogui/releases)からダウン�
 登録が完了した次回以降は 対局 -> ルール -> プログラムの起動 からReversiRulerを選択し、 プログラム -> プログラムの起動 からKalmiaを選択すれば対局可能な状態になります。
 
 ## 4. GoGuiでの遊び方
-ReversiRulerとGoGuiが起動した時点では以下のような初期局面が表示されています。このまま黒石を置けばKalmiaが白番となり思考および着手を行います。Kalmiaに黒番をにぎらせたい場合は 対局 -> コンピュータの手番 から手番を選択してください。
-![キャプチャ](https://user-images.githubusercontent.com/53616737/132214173-a7072512-482a-4546-bc27-ac11b37c139e.PNG)
+ReversiRulerとGoGuiが起動した時点では以下のような初期局面が表示されています。このままでは通常のリバーシの盤面とは向きが異なるので、表示 -> Board OrientationからFlip Horizontallyを選択します。
+![スクリーンショット 2022-03-20 152104](https://user-images.githubusercontent.com/53616737/159150784-51acbbcd-299d-4625-a5ca-0d88e2f37cc6.png)
+
+盤面の向きを調整し、このまま黒石を置けばKalmiaが白番となり思考および着手を行います。Kalmiaに黒番をにぎらせたい場合は 対局 -> コンピュータの手番 から手番を選択してください。
+![スクリーンショット 2022-03-20 152323](https://user-images.githubusercontent.com/53616737/159150839-341a85bf-cf45-416e-aa0b-12fa6adb5941.png)
+
 
 自分の石を置ける場所がないときはF2キーを押下、または 対局 -> パス からパスをすることが可能です。また、Kalmiaに石を置ける場所がないときは自動的にパスされます。Kalmiaがパスした際に以下のようなウインドウが表示されますが、対局は続いているのでそのまま着手を続けてください。
 
 ![キャプチャ](https://user-images.githubusercontent.com/53616737/132501018-1e45ebea-f382-4450-ab40-188c24cfa2f0.PNG)
 
-両者とも石を置く場所が無くなった場合は終局となります。最終手を人間が着手した場合、盤面が正しく更新されない場合がありますが、石数のカウントは正しく行われます。正しい盤面を表示したい場合は、ツール -> GTPシェル でシェルを開き、テキストボックスに"gogui-rules_final_result"というコマンドを入力することで正しく表示されます。
+両者とも石を置ける場所が無くなった場合は終局となります。最終手を人間が着手した場合、盤面が正しく更新されない場合がありますが、石数のカウントは正しく行われます。正しい盤面を表示したい場合は、ツール -> GTPシェル でシェルを開き、テキストボックスに"gogui-rules_final_result"というコマンドを入力することで正しく表示されます。
 
 ![キャプチャ](https://user-images.githubusercontent.com/53616737/132501377-997e96b7-ab30-4979-9d01-e0e890c1fe52.PNG)
 
 ## 4. 難易度
-Kalmiaは"easy", "normal", "professional", "superhuman"の4段階難易度に分かれています。オプションの難易度で"custom"という難易度も用意されていますが、これについては後に説明します。各難易度の設定は以下の通りです。
+Kalmiaは"easy", "normal", "professional", "superhuman"の4段階の難易度に分かれています。オプションの難易度で"custom"という難易度も用意されていますが、これについては後に説明します。各難易度の設定は以下の通りです。
 
 + easy  
 プレイアウト回数: 20  
 強さ: 初心者向け
 
 + normal  
-プレイアウト回数: 100
+プレイアウト回数: 100  
 強さ: リバーシ中級者向け
 
 + proffesional  
@@ -130,7 +134,8 @@ Kalmiaでは4つの基本難易度の他に、ユーザーが自由に強さを�
 Kalmiaは持ち時間の設定に対応しています。GoGuiで持ち時間を設定するには 対局 -> 対局情報 から対局情報編集ウインドウを開きます。そのウインドウの"持ち時間"の項目で設定が可能です。
 
 ## 7. Kalmiaについての詳細
-Kalmiaについての詳細は以下のブログで紹介しています。
+Kalmiaについての詳細は以下のブログで紹介しています。  
+https://kalmia.hatenadiary.jp/entry/2022/03/18/140704
 
 
 
