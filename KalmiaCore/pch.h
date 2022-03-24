@@ -8,7 +8,7 @@
 #include <iterator>
 #include <stdio.h>
 
-#if defined(USE_AVX2) || defined(USE_SSE41)
+#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE2)
 
 #include <intrin.h>
 #include <immintrin.h>
@@ -17,4 +17,7 @@
 
 #include "initialize_callback.h"
 
+typedef unsigned char byte;
+
 #endif //PCH_H
+

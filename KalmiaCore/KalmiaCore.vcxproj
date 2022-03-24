@@ -154,6 +154,7 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="bitmanipulation.h" />
+    <ClInclude Include="bitvector.h" />
     <ClInclude Include="reversi\board.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="initialize_callback.h" />
