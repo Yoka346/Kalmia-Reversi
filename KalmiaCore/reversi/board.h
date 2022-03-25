@@ -18,7 +18,6 @@ namespace reversi
 		1ULL << 40, 1ULL << 41, 1ULL << 42, 1ULL << 43, 1ULL << 44, 1ULL << 45, 1ULL << 46, 1ULL << 47,
 		1ULL << 48, 1ULL << 49, 1ULL << 50, 1ULL << 51, 1ULL << 52, 1ULL << 53, 1ULL << 54, 1ULL << 55,
 		1ULL << 56, 1ULL << 57, 1ULL << 58, 1ULL << 59, 1ULL << 60, 1ULL << 61, 1ULL << 62, 1ULL << 63
-
 	};
 
 	enum BoardCoordinate : unsigned char
@@ -152,10 +151,13 @@ namespace reversi
 
 #ifdef USE_AVX2
 		static uint64_t calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoordinate coord);
+		static uint64_t calc_mobility_AVX2(uint64_t p, uint64_t o);
 #elif defined(USE_SSE42) || defined(USE_SSE2)
 		static uint64_t calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoordinate coord);
+		static uint64_t calc_mobility_SSE(uint64_t p, uint64_t o);
 #else
 		static uint64_t calc_flipped_discs_CPU(uint64_t p, uint64_t o, BoardCoordinate coord);
+		static uint64_t calc_mobility_CPU(uint64_t p, uint64_t o);
 #endif
 	};
 };

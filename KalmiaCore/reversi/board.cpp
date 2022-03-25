@@ -40,11 +40,38 @@ INIT_CALLBACK(Board, Board::static_initializer);
 
 inline uint64_t Board::calc_flipped_discs(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
-
+#ifdef USE_AVX2
+	calc_flipped_discs_AVX2(p, o, coord);
+#elif defined(USE_SSE41) || defined(USE_SSE2)
+	calc_flipped_discs_SSE(p, o, coord);
+#else
+	calc_flipped_discs(p, o, coord);
+#endif 
 }
 
 #ifdef USE_AVX2
 
+/**
+ * @fn
+ * @brief Calculates flipped discs bit pattern with AVX2.
+ * @param (p) Current player's discs bit pattern.
+ * @param (o) Opponent player's discs bit pattern.
+ * @param (coord) The coordinate where disc is put.
+ * @return Flipped discs bit pattern.
+ * @sa calc_flipped_discs_CPU
+ * @detail 
+ * The flipped discs bit pattern is calculated using parallel prefix algorithm.
+ * First, outflank in 4 directions are calculated in parallel using AVX2, 
+ * then flipped discs bit patterns in 4 directions can be gotten. 
+ * The flipped discs bit patterns in the other 4 directions is calculated as same.
+ * 
+ * Term explanation: 
+ * Outflank are discs which surround the opponent discs.
+ * 
+ * @cite
+ * https://www.chessprogramming.org/Parallel_Prefix_Algorithms
+ * http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#movegen (Japanese)
+*/
 inline static uint64_t calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
 	const static __m256i SHIFT = _mm256_set_epi64x(7, 9, 8, 1);
@@ -85,7 +112,28 @@ inline static uint64_t calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoor
 
 #elif defined(USE_SSE41) || defined(USE_SSE2)
 
-static uint64_t calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoordinate coord)
+/**
+ * @fn
+ * @brief Calculates flipped discs bit pattern with SSE.
+ * @param (p) Current player's discs bit pattern.
+ * @param (o) Opponent player's discs bit pattern.
+ * @param (coord) The coordinate where disc is put.
+ * @return Flipped discs bit pattern.
+ * @sa calc_flipped_discs_CPU
+ * @detail
+ * The flipped discs bit pattern is calculated using parallel prefix algorithm.
+ * First, outflank in 2 directions are calculated in parallel using SSE 
+ * and in other 2 directions are calculated using CPU, then flipped discs bit patterns in 4 directions can be gotten.
+ * The flipped discs bit patterns in the other 4 directions is calculated as same.
+ *
+ * Term explanation:
+ * Outflank are discs which surround the opponent discs.
+ * 
+ * @cite
+ * https://www.chessprogramming.org/Parallel_Prefix_Algorithms
+ * http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#movegen (Japanese)
+*/
+inline static uint64_t calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
 	auto coord_bit = COORD_TO_BIT[coord];
 	auto coord_bit_2 = _mm_set_epi64x(_byteswap_uint64(coord_bit), coord_bit);
@@ -172,12 +220,104 @@ static uint64_t calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoordinate c
 
 #else
 
-static uint64_t calc_flipped_discs_CPU(uint64_t p, uint64_t o, BoardCoordinate coord)
+/**
+ * @fn
+ * @brief Calculates flipped discs bit pattern with bit manipulation.
+ * @param (p) Current player's discs bit pattern.
+ * @param (o) Opponent player's discs bit pattern.
+ * @param (coord) The coordinate where disc is put.
+ * @return Flipped discs bit pattern.
+ * @detail
+ * The flipped discs bit pattern is calculated using parallel prefix algorithm.
+ * First, outflank in particular direction are calculated, then flipped discs bit pattern can be gotten.
+ * The flipped discs patterns in the other 3 directions is calculated as same.
+ *
+ * Term explanation:
+ * Outflank are discs which surround the opponent discs.
+ * 
+ * @cite
+ * https://www.chessprogramming.org/Parallel_Prefix_Algorithms
+ * http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#movegen (Japanese)
+*/
+inline static uint64_t calc_flipped_discs_CPU(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
 	auto coord_bit = COORD_TO_BIT[coord];
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
 
+	auto flipped_horizontal_left = masked_o & (coord_bit << 1);
+	auto flipped_diag_A1H8_left = masked_o & (coord_bit << 9);
+	auto flipped_diag_A8H1_left = masked_o & (coord_bit << 7);
+	auto flipped_vertical_left = o & (coord_bit << 8);
 
+	flipped_horizontal_left |= masked_o & (flipped_horizontal_left << 1);
+	flipped_diag_A1H8_left |= masked_o & (flipped_diag_A1H8_left << 9);
+	flipped_diag_A8H1_left |= masked_o & (flipped_diag_A8H1_left << 7);
+	flipped_vertical_left |= o & (flipped_vertical_left << 8);
+
+	auto prefix_horizontal = masked_o & (masked_o << 1);
+	auto prefix_diag_A1H8 = masked_o & (masked_o << 9);
+	auto prefix_diag_A8H1 = masked_o & (masked_o << 7);
+	auto prefix_vertical = o & (o << 8);
+
+	flipped_horizontal_left |= prefix_horizontal & (flipped_horizontal_left << 2);
+	flipped_diag_A1H8_left |= prefix_diag_A1H8 & (flipped_diag_A1H8_left << 18);
+	flipped_diag_A8H1_left |= prefix_diag_A8H1 & (flipped_diag_A8H1_left << 14);
+	flipped_vertical_left |= prefix_vertical & (flipped_vertical_left << 16);
+
+	flipped_horizontal_left |= prefix_horizontal & (flipped_horizontal_left << 2);
+	flipped_diag_A1H8_left |= prefix_diag_A1H8 & (flipped_diag_A1H8_left << 18);
+	flipped_diag_A8H1_left |= prefix_diag_A8H1 & (flipped_diag_A8H1_left << 14);
+	flipped_vertical_left |= prefix_vertical & (flipped_vertical_left << 16);
+
+	auto flipped_horizontal_right = masked_o & (coord_bit >> 1);
+	auto flipped_diag_A1H8_right = masked_o & (coord_bit >> 9);
+	auto flipped_diag_A8H1_right = masked_o & (coord_bit >> 7);
+	auto flipped_vertical_right = o & (coord_bit >> 8);
+
+	flipped_horizontal_right |= masked_o & (flipped_horizontal_right >> 1);
+	flipped_diag_A1H8_right |= masked_o & (flipped_diag_A1H8_right >> 9);
+	flipped_diag_A8H1_right |= masked_o & (flipped_diag_A8H1_right >> 7);
+	flipped_vertical_right |= o & (flipped_vertical_right >> 8);
+
+	auto prefix_horizontal = masked_o & (masked_o >> 1);
+	auto prefix_diag_A1H8 = masked_o & (masked_o >> 9);
+	auto prefix_diag_A8H1 = masked_o & (masked_o >> 7);
+	auto prefix_vertical = o & (o >> 8);
+
+	flipped_horizontal_right |= prefix_horizontal & (flipped_horizontal_right >> 2);
+	flipped_diag_A1H8_right |= prefix_diag_A1H8 & (flipped_diag_A1H8_right >> 18);
+	flipped_diag_A8H1_right |= prefix_diag_A8H1 & (flipped_diag_A8H1_right >> 14);
+	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
+
+	flipped_horizontal_right |= prefix_horizontal & (flipped_horizontal_right >> 2);
+	flipped_diag_A1H8_right |= prefix_diag_A1H8 & (flipped_diag_A1H8_right >> 18);
+	flipped_diag_A8H1_right |= prefix_diag_A8H1 & (flipped_diag_A8H1_right >> 14);
+	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
+
+	auto outflank_horizontal_left = p & (flipped_horizontal_left << 1);
+	auto outflank_diag_A1H8_left = p & (flipped_diag_A1H8_left << 9);
+	auto outflank_diag_A8H1_left = p & (flipped_diag_A8H1_left << 7);
+	auto outflank_vertical_left = p & (flipped_vertical_left << 8);
+
+	auto outflank_horizontal_right = p & (flipped_horizontal_right >> 1);
+	auto outflank_diag_A1H8_right = p & (flipped_diag_A1H8_right >> 9);
+	auto outflank_diag_A8H1_right = p & (flipped_diag_A8H1_right >> 7);
+	auto outflank_vertical_right = p & (flipped_vertical_right >> 8);
+
+	flipped_horizontal_left &= -(int)(outflank_horizontal_left != 0);
+	flipped_diag_A1H8_left &= -(int)(outflank_diag_A1H8_left != 0);
+	flipped_diag_A8H1_left &= -(int)(outflank_diag_A8H1_left != 0);
+	flipped_vertical_left &= -(int)(outflank_vertical_left != 0);
+
+	flipped_horizontal_right &= -(int)(outflank_horizontal_right != 0);
+	flipped_diag_A1H8_right &= -(int)(outflank_diag_A1H8_right != 0);
+	flipped_diag_A8H1_right &= -(int)(outflank_diag_A8H1_right != 0);
+	flipped_vertical_right &= -(int)(outflank_vertical_right != 0);
+
+	auto flipped =
+		flipped_horizontal_left | flipped_horizontal_right | flipped_vertical_left | flipped_vertical_right |
+		flipped_diag_A1H8_left | flipped_diag_A1H8_right | flipped_diag_A8H1_left | flipped_diag_A8H1_right;
+	return flipped;
 }
 
 #endif
