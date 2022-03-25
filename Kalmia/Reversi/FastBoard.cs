@@ -724,6 +724,7 @@ namespace Kalmia.Reversi
 
             var flippedDiscs2 = Sse2.Or(flip7, flip9);
             var flippedDiscs = flip1Left | flip8Left | flip1Right | flip8Right;
+
             if (Sse2.X64.IsSupported)
                 flippedDiscs |= Sse2.X64.ConvertToUInt64(flippedDiscs2)
                              | ByteSwap(Sse2.X64.ConvertToUInt64(Sse2.UnpackHigh(flippedDiscs2, flippedDiscs2)));

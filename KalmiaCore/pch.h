@@ -8,7 +8,7 @@
 #include <iterator>
 #include <stdio.h>
 
-#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE2)
+#if defined(USE_AVX2) || defined(USE_SSE41) || defined(USE_SSE2)
 
 #include <intrin.h>
 #include <immintrin.h>
