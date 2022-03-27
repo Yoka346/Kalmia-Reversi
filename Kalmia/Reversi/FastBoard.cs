@@ -582,12 +582,15 @@ namespace Kalmia.Reversi
             var flip = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(p2, 7));
             var flip1 = maskedO & (p << 1);
             var flip8 = o & (p << 8);
+
             flip = Sse2.Or(flip, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flip, 7)));
             flip1 |= maskedO & (flip1 << 1);
             flip8 |= o & (flip8 << 8);
+
             flip = Sse2.Or(flip, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip, 14)));
             flip1 |= prefix1 & (flip1 << 2);
             flip8 |= prefix8 & (flip8 << 16);
+
             flip = Sse2.Or(flip, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip, 14)));
             flip1 |= prefix1 & (flip1 << 2);
             flip8 |= prefix8 & (flip8 << 16);

@@ -65,11 +65,21 @@ namespace reversi
 		NONE
 	};
 
+	enum GameResult : int
+	{
+		WIN = 1,
+		LOSS = -1,
+		DRAW = 0,
+		NOT_OVER = 2
+	};
+
 	class Mobility
 	{
 	public:
 		Mobility(uint64_t mobility) :mobility(mobility), mobility_num(popcount(mobility)) { ; }
 		inline uint64_t get_raw_mobility() const { return this->mobility; }
+		inline void set_raw_mobility(uint64_t raw_mobility);
+		inline void move_to_first() { this->current_coordinate = BoardCoordinate::A1; this->mobility_count = 0; this->mask = 1ULL; }
 		inline bool move_to_next_coord(BoardCoordinate& coord);
 
 	private:
@@ -77,11 +87,12 @@ namespace reversi
 		int mobility_num;
 		BoardCoordinate current_coordinate = BoardCoordinate::A1;
 		int mobility_count = 0;
-		uint64_t mask = 1;
+		uint64_t mask = 1ULL;
 	};
 
 	typedef struct Move
 	{
+		const static Move PASS[2];
 		DiscColor color;
 		BoardCoordinate coord;
 		uint64_t flipped;
@@ -135,7 +146,12 @@ namespace reversi
 		}
 
 		DiscColor get_square_color(BoardCoordinate coord);
-		inline Move get_move(BoardCoordinate coord) { return Move(this->side_to_move, coord, calc_flipped_discs(this->bitboard.current_player, this->bitboard.opponent_player, coord)); }
+		void get_move(Move& move, BoardCoordinate coord);
+		void get_current_player_mobility(Mobility& mobility);
+		void get_opponent_player_mobility(Mobility& mobility);
+		void update(Move& move);
+		uint64_t get_hash_code();
+		GameResult get_game_result();
 
 	private:
 		static const int HASH_RANK_LEN_0 = 16;	// Rank is a chess term which means horizontal line.
@@ -148,6 +164,7 @@ namespace reversi
 		DiscColor side_to_move;
 
 		static uint64_t calc_flipped_discs(uint64_t p, uint64_t o, BoardCoordinate coord);
+		static uint64_t calc_mobility(uint64_t p, uint64_t o);
 
 #ifdef USE_AVX2
 		static uint64_t calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoordinate coord);
@@ -158,6 +175,12 @@ namespace reversi
 #else
 		static uint64_t calc_flipped_discs_CPU(uint64_t p, uint64_t o, BoardCoordinate coord);
 		static uint64_t calc_mobility_CPU(uint64_t p, uint64_t o);
+#endif
+
+#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE2)
+		uint64_t calc_hash_code_SSE();
+#else
+		uint64_t calc_hash_code_CPU();
 #endif
 	};
 };
