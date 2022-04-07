@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="evaluation\feature.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="bitmanipulation.h" />
     <ClInclude Include="bitvector.h" />

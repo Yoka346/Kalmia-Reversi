@@ -664,9 +664,6 @@ namespace Kalmia.Reversi
             var x2 = Vector128.Create(x, ByteSwap(x));   // byte swap = vertical mirror
             var p2 = Vector128.Create(p, ByteSwap(p));
             var maskedO2 = Vector128.Create(maskedO, ByteSwap(maskedO));
-            var prefix = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(maskedO2, 7));
-            var prefix1 = maskedO & (maskedO << 1);
-            var prefix8 = o & (o << 8);
 
             var flip7 = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(x2, 7));
             var flip1Left = maskedO & (x << 1);
@@ -674,6 +671,11 @@ namespace Kalmia.Reversi
             flip7 = Sse2.Or(flip7, Sse2.And(maskedO2, Sse2.ShiftLeftLogical(flip7, 7)));
             flip1Left |= maskedO & (flip1Left << 1);
             flip8Left |= o & (flip8Left << 8);
+
+            var prefix = Sse2.And(maskedO2, Sse2.ShiftLeftLogical(maskedO2, 7));
+            var prefix1 = maskedO & (maskedO << 1);
+            var prefix8 = o & (o << 8);
+
             flip7 = Sse2.Or(flip7, Sse2.And(prefix, Sse2.ShiftLeftLogical(flip7, 14)));
             flip1Left |= prefix1 & (flip1Left << 2);
             flip8Left |= prefix8 & (flip8Left << 16);

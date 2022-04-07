@@ -4,11 +4,14 @@
 #include "config.h"
 
 #include <iostream>
+#include <string>
+#include <sstream>
 #include <random>
 #include <iterator>
+#include <bitset>
 #include <stdio.h>
 
-#if defined(USE_AVX2) || defined(USE_SSE41) || defined(USE_SSE2)
+#if defined(USE_AVX2) || defined(USE_SSE41) 
 
 #include <intrin.h>
 #include <immintrin.h>

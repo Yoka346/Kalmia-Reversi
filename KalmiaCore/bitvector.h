@@ -10,7 +10,7 @@ union Vector256
 	__m256i data;
 };
 
-#elif defined(USE_SSE41) || defined(USE_SSE2)
+#elif defined(USE_SSE41) 
 
 union Vector128
 {

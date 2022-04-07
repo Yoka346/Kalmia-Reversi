@@ -3,6 +3,15 @@
 
 using namespace reversi;
 
+std::string reversi::coordinate_to_string(BoardCoordinate coord)
+{
+	auto x = coord % BOARD_SIZE;
+	auto y = coord / BOARD_SIZE;
+	std::stringstream ss;
+	ss << (char)('A' + x) << y + 1;
+	return ss.str();
+}
+
 inline bool Mobility::move_to_next_coord(BoardCoordinate& coord)
 {
 	while (this->mobility_count != this->mobility_num)
@@ -19,8 +28,6 @@ inline bool Mobility::move_to_next_coord(BoardCoordinate& coord)
 	}
 	return false;
 }
-
-const Move Move::PASS[2] = {Move(DiscColor::BLACK, BoardCoordinate::PASS, 0ULL), Move(DiscColor::WHITE, BoardCoordinate::PASS, 0ULL) };
 
 bool Board::initialized = false;
 uint64_t Board::hash_rank[Board::HASH_RANK_LEN_0][Board::HASH_RANK_LEN_1];
@@ -47,7 +54,7 @@ DiscColor Board::get_square_color(BoardCoordinate coord)
 	return (color != 0) ? static_cast<DiscColor>(color - 1) : DiscColor::NONE;
 }
 
-inline void Board::get_move(Move& move, BoardCoordinate coord)
+inline void Board::get_move(BoardCoordinate coord, Move& move)
 {
 	move.color = this->side_to_move;
 	move.coord = coord;
@@ -71,14 +78,16 @@ inline void Board::update(Move& move)
 	auto coord_bit = COORD_TO_BIT[move.coord];
 	this->bitboard.opponent_player ^= move.flipped;
 	this->bitboard.current_player |= (move.flipped | coord_bit);
+	this->side_to_move = opponent_disc_color(this->side_to_move);
+	this->bitboard.swap();
 }
 
 inline uint64_t Board::get_hash_code()
 {
-#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE2)
-	calc_hash_code_SSE();
+#if defined(USE_AVX2) || defined(USE_SSE41)
+	return calc_hash_code_SSE();
 #else
-	calc_hash_code_CPU();
+	return calc_hash_code_CPU();
 #endif
 }
 
@@ -92,25 +101,52 @@ inline GameResult Board::get_game_result()
 	return GameResult::DRAW;
 }
 
+std::string Board::to_string()
+{
+	std::stringstream ss;
+	ss << "  ";
+	for (auto i = 0; i < BOARD_SIZE; i++)
+		ss << (char)('A' + i) << ' ';
+
+	auto p = this->bitboard.current_player;
+	auto o = this->bitboard.opponent_player;
+	auto mask = 1ULL;
+	for (auto y = 0; y < BOARD_SIZE; y++) 
+	{
+		ss << '\n' << y + 1 << ' ';
+		for (auto x = 0; x < BOARD_SIZE; x++) 
+		{
+			if (p & mask)
+				ss << ((this->side_to_move == DiscColor::BLACK) ? 'X' : 'O') << ' ';
+			else if (o & mask)
+				ss << ((this->side_to_move != DiscColor::BLACK) ? 'X' : 'O') << ' ';
+			else
+				ss << ". ";
+			mask <<= 1;
+		}
+	}
+	return ss.str();
+}
+
 inline uint64_t Board::calc_flipped_discs(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
 #ifdef USE_AVX2
-	calc_flipped_discs_AVX2(p, o, coord);
-#elif defined(USE_SSE41) || defined(USE_SSE2)
-	calc_flipped_discs_SSE(p, o, coord);
+	return calc_flipped_discs_AVX2(p, o, coord);
+#elif defined(USE_SSE41)
+	return calc_flipped_discs_SSE(p, o, coord);
 #else
-	calc_flipped_discs(p, o, coord);
+	return calc_flipped_discs_CPU(p, o, coord);
 #endif 
 }
 
 inline uint64_t Board::calc_mobility(uint64_t p, uint64_t o)
 {
 #ifdef USE_AVX2
-	calc_mobility_AVX2(p, o);
-#elif defined(USE_SSE41) || defined(USE_SSE2)
-	calc_mobility_SSE(p, o);
+	return calc_mobility_AVX2(p, o);
+#elif defined(USE_SSE41)
+	return calc_mobility_SSE(p, o);
 #else
-	calc_mobility(p, o);
+	return calc_mobility_CPU(p, o);
 #endif 
 }
 
@@ -140,6 +176,7 @@ inline uint64_t Board::calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoor
 	const static __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
 	const static __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
 	const static __m256i MASK = _mm256_set_epi64x(0x7e7e7e7e7e7e7e7eULL, 0x7e7e7e7e7e7e7e7eULL, 0xffffffffffffffffULL, 0x7e7e7e7e7e7e7e7eULL);
+	const static __m256i ZERO = _mm256_setzero_si256();
 
 	auto coord_bit = COORD_TO_BIT[coord];
 	auto coord_bit_4 = _mm256_broadcastq_epi64(_mm_cvtsi64_si128(coord_bit));
@@ -153,7 +190,7 @@ inline uint64_t Board::calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoor
 	flipped_right_4 = _mm256_or_si256(flipped_right_4, _mm256_and_si256(_mm256_srlv_epi64(flipped_right_4, SHIFT), masked_o_4));
 
 	auto prefix_left = _mm256_and_si256(masked_o_4, _mm256_sllv_epi64(masked_o_4, SHIFT));
-	auto prefix_right = _mm256_and_si256(masked_o_4, _mm256_sllv_epi64(masked_o_4, SHIFT));
+	auto prefix_right = _mm256_srlv_epi64(prefix_left, SHIFT);
 
 	flipped_left_4 = _mm256_or_si256(flipped_left_4, _mm256_and_si256(_mm256_sllv_epi64(flipped_left_4, SHIFT_2), prefix_left));
 	flipped_right_4 = _mm256_or_si256(flipped_right_4, _mm256_and_si256(_mm256_srlv_epi64(flipped_right_4, SHIFT_2), prefix_right));
@@ -164,8 +201,8 @@ inline uint64_t Board::calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoor
 	auto outflank_left_4 = _mm256_and_si256(p_4, _mm256_sllv_epi64(flipped_left_4, SHIFT));
 	auto outflank_right_4 = _mm256_and_si256(p_4, _mm256_srlv_epi64(flipped_right_4, SHIFT));
 
-	flipped_left_4 = _mm256_andnot_epi64(_mm256_cmpeq_epi64(outflank_left_4, _mm256_setzero_si256()), flipped_left_4);
-	flipped_right_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_left_4, _mm256_setzero_si256()), flipped_right_4);
+	flipped_left_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_left_4, ZERO), flipped_left_4);	// ‚±‚±‚Åerror
+	flipped_right_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_right_4, ZERO), flipped_right_4);
 
 	auto flipped_4 = _mm256_or_si256(flipped_left_4, flipped_right_4);
 	auto flipped_2 = _mm_or_si128(_mm256_extracti128_si256(flipped_4, 0), _mm256_extracti128_si256(flipped_4, 1));
@@ -206,7 +243,7 @@ inline uint64_t Board::calc_mobility_AVX2(uint64_t p, uint64_t o)
 	flip_right = _mm256_or_si256(flip_right, _mm256_and_si256(masked_o_4, _mm256_srlv_epi64(flip_right, SHIFT)));
 
 	auto prefix_left = _mm256_and_si256(masked_o_4, _mm256_sllv_epi64(masked_o_4, SHIFT));
-	auto prefix_right = _mm256_and_si256(masked_o_4, _mm256_srlv_epi64(masked_o_4, SHIFT));
+	auto prefix_right = _mm256_srlv_epi64(prefix_left, SHIFT);
 
 	flip_left = _mm256_or_si256(flip_left, _mm256_and_si256(prefix_left, _mm256_sllv_epi64(flip_left, SHIFT_2)));
 	flip_right = _mm256_or_si256(flip_right, _mm256_and_si256(prefix_right, _mm256_srlv_epi64(flip_right, SHIFT_2)));
@@ -220,7 +257,7 @@ inline uint64_t Board::calc_mobility_AVX2(uint64_t p, uint64_t o)
 	return _mm_cvtsi128_si64(mobility_2) & ~(p | o);
 }
 
-#elif defined(USE_SSE41) || defined(USE_SSE2)
+#elif defined(USE_SSE41) 
 
 /**
  * @fn
@@ -272,23 +309,23 @@ inline uint64_t Board::calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoord
 	flipped_vertical_left |= prefix_vertical & (flipped_vertical_left << 16);
 
 	// right
-	auto flipped_diag_right_2 = _mm_and_si128(masked_o_2, _mm_srli_epi64(coord_bit_2, 9));
+	auto flipped_diag_right_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(coord_bit_2, 9));
 	auto flipped_horizontal_right = masked_o & (coord_bit >> 1);
 	auto flipped_vertical_right = o & (coord_bit >> 8);
 
-	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(masked_o_2, _mm_srli_epi64(flipped_diag_right_2, 9)));
+	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flipped_diag_right_2, 9)));
 	flipped_horizontal_right |= masked_o & (flipped_horizontal_right >> 1);
 	flipped_vertical_right |= o & (flipped_vertical_right >> 8);
 
-	prefix_2 = _mm_and_si128(masked_o_2, _mm_srli_epi64(masked_o_2, 9));
+	prefix_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(masked_o_2, 9));
 	prefix_horizontal = masked_o & (masked_o >> 1);
 	prefix_vertical = o & (o >> 8);
 
-	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(prefix_2, _mm_srli_epi64(flipped_diag_right_2, 18)));
+	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_right_2, 18)));
 	flipped_horizontal_right |= prefix_horizontal & (flipped_horizontal_right >> 2);
 	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
 
-	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(prefix_2, _mm_srli_epi64(flipped_diag_right_2, 18)));
+	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_right_2, 18)));
 	flipped_horizontal_right |= prefix_horizontal & (flipped_horizontal_right >> 2);
 	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
 
@@ -377,27 +414,27 @@ inline uint64_t Board::calc_mobility_SSE(uint64_t p, uint64_t o)
 	auto mobility_2 = _mm_slli_epi64(flip_diag_2, 7);
 	auto mobility = (flip_horizontal << 1) | (flip_vertical << 8);
 
-	flip_diag_2 = _mm_and_si128(masked_o_2, _mm_srli_epi64(p_2, 9));
+	flip_diag_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(p_2, 9));
 	flip_horizontal = masked_o & (p >> 1);
 	flip_vertical = o & (p >> 8);
 
-	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(masked_o_2, _mm_srli_epi64(flip_diag_2, 9)));
+	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flip_diag_2, 9)));
 	flip_horizontal |= masked_o & (flip_horizontal >> 1);
 	flip_vertical |= o & (flip_vertical >> 8);
 
-	prefix_2 = _mm_and_si128(masked_o_2, _mm_srli_epi64(masked_o_2, 9));
-	prefix_horizontal = masked_o & (masked_o >> 1);
-	prefix_vertical = o & (o >> 8);
+	prefix_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(masked_o_2, 9));
+	prefix_horizontal >>= 1;
+	prefix_vertical >>= 8;
 
-	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(prefix_2, _mm_srli_epi64(flip_diag_2, 18)));
+	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flip_diag_2, 18)));
 	flip_horizontal |= prefix_horizontal & (flip_horizontal >> 2);
 	flip_vertical |= prefix_vertical & (flip_vertical >> 16);
 
-	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(prefix_2, _mm_srli_epi64(flip_diag_2, 18)));
+	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flip_diag_2, 18)));
 	flip_horizontal |= prefix_horizontal & (flip_horizontal >> 2);
 	flip_vertical |= prefix_vertical & (flip_vertical >> 16);
 
-	mobility_2 = _mm_or_si128(mobility_2, _mm_srli_epi64(flip_diag_2, 7));
+	mobility_2 = _mm_or_si128(mobility_2, _mm_slli_epi64(flip_diag_2, 9));
 	mobility |= (flip_horizontal >> 1) | (flip_vertical >> 8);
 
 #ifdef USE_X64
@@ -557,16 +594,6 @@ inline uint64_t Board::calc_mobility_CPU(uint64_t p, uint64_t o)
 	flip_diag_A8H1 |= prefix_diag_A8H1 & (flip_diag_A8H1 << 14);
 	flip_vertical |= prefix_vertical & (flip_vertical << 16);
 
-	auto outflank_horizontal = p & (flip_horizontal << 1);
-	auto outflank_diag_A1H8 = p & (flip_diag_A1H8 << 9);
-	auto outflank_diag_A8H1 = p & (flip_diag_A8H1 << 7);
-	auto outflank_vertical = p & (flip_vertical << 8);
-
-	flip_horizontal &= -(int)(outflank_horizontal != 0);
-	flip_diag_A1H8 &= -(int)(outflank_diag_A1H8 != 0);
-	flip_diag_A8H1 &= -(int)(outflank_diag_A8H1 != 0);
-	flip_vertical &= -(int)(outflank_vertical != 0);
-
 	auto mobility = (flip_horizontal << 1) | (flip_diag_A1H8 << 9) | (flip_diag_A8H1 << 7) | (flip_vertical << 8);
 
 	// right
@@ -596,11 +623,12 @@ inline uint64_t Board::calc_mobility_CPU(uint64_t p, uint64_t o)
 	flip_vertical |= prefix_vertical & (flip_vertical >> 16);
 
 	mobility |= (flip_horizontal >> 1) | (flip_diag_A1H8 >> 9) | (flip_diag_A8H1 >> 7) | (flip_vertical >> 8);
+	return mobility & ~(p | o);
 }
 
 #endif
 
-#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE2)
+#if defined(USE_AVX2) || defined(USE_SSE41) 
 
 /**
  * @fn
