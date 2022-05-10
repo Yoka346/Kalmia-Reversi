@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+using Kalmia;
 using Kalmia.Reversi;
 using Kalmia.Evaluation;
 

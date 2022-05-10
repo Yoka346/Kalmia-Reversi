@@ -1,14 +1,13 @@
 #pragma once
 #include "../pch.h"
 #include "../bitmanipulation.h"
-#include "../bitvector.h"
 
 namespace reversi
 {
-	static constexpr int BOARD_SIZE = 8;
-	static constexpr int SQUARE_NUM = 64;
+	constexpr int BOARD_SIZE = 8;
+	constexpr int SQUARE_NUM = 64;
 
-	static constexpr uint64_t COORD_TO_BIT[SQUARE_NUM] =
+	constexpr uint64_t COORD_TO_BIT[SQUARE_NUM] =
 	{
 		1ULL, 1ULL << 1, 1ULL << 2, 1ULL << 3, 1ULL << 4, 1ULL << 5, 1ULL << 6, 1ULL << 7,
 		1ULL << 8, 1ULL << 9, 1ULL << 10, 1ULL << 11, 1ULL << 12, 1ULL << 13, 1ULL << 14, 1ULL << 15,
@@ -33,13 +32,13 @@ namespace reversi
 		PASS, NULL_COORD
 	};
 
-	inline BoardCoordinate& operator++(BoardCoordinate& coord) 
+	constexpr BoardCoordinate& operator++(BoardCoordinate& coord) 
 	{ 
 		coord = static_cast<BoardCoordinate>(static_cast<unsigned char>(coord) + 1); 
 		return coord;
 	};
 
-	inline BoardCoordinate operator++(BoardCoordinate& coord, int)
+	constexpr BoardCoordinate operator++(BoardCoordinate& coord, int)
 	{
 		auto prev = coord;
 		++coord;
@@ -74,19 +73,15 @@ namespace reversi
 	class Mobility
 	{
 	public:
-		Mobility() :mobility(0ULL), mobility_num(0) { ; }
-		Mobility(uint64_t mobility) :mobility(mobility), mobility_num(popcount(mobility)) { ; }
+		Mobility() :mobility(0ULL) { ; }
+		Mobility(uint64_t mobility) :mobility(mobility) { ; }
 		inline uint64_t get_raw_mobility() const { return this->mobility; }
-		inline void set_raw_mobility(uint64_t raw_mobility) { this->mobility = raw_mobility;  this->mobility_num = popcount(raw_mobility); move_to_first(); }
-		inline int count() { return this->mobility_num; }
-		inline void move_to_first() { this->current_coordinate = BoardCoordinate::A1; this->mobility_count = 0; this->mask = 1ULL; }
+		inline void set_raw_mobility(uint64_t raw_mobility) { this->mobility = raw_mobility; }
+		inline int count() { return popcount(this->mobility); }
 		__declspec(dllexport) bool move_to_next_coord(BoardCoordinate& coord);
 
 	private:
 		uint64_t mobility;
-		int mobility_num;
-		BoardCoordinate current_coordinate = BoardCoordinate::A1;
-		int mobility_count = 0;
 		uint64_t mask = 1ULL;
 	};
 
@@ -139,7 +134,7 @@ namespace reversi
 		inline void copy_to(Board& dest) { dest.side_to_move = this->side_to_move; dest.bitboard = this->bitboard; }
 		inline int get_current_player_disc_count() { return this->bitboard.get_current_player_disc_count(); }
 		inline int get_opponent_player_disc_count() { return this->bitboard.get_opponent_player_disc_count(); }
-		inline int get_empty_count() { return this->bitboard.get_empty_count(); }
+		inline int get_empty_square_count() { return this->bitboard.get_empty_count(); }
 		inline void pass() { this->side_to_move = opponent_disc_color(this->side_to_move); this->bitboard.swap(); }
 
 		inline Player get_square_side(BoardCoordinate coord) 
@@ -172,7 +167,7 @@ namespace reversi
 #ifdef USE_AVX2
 		static uint64_t calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoordinate coord);
 		static uint64_t calc_mobility_AVX2(uint64_t p, uint64_t o);
-#elif defined(USE_SSE41) 
+#elif defined(USE_SSE42) || defined(USE_SSE41) 
 		static uint64_t calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoordinate coord);
 		static uint64_t calc_mobility_SSE(uint64_t p, uint64_t o);
 #else
@@ -180,7 +175,7 @@ namespace reversi
 		static uint64_t calc_mobility_CPU(uint64_t p, uint64_t o);
 #endif
 
-#if defined(USE_AVX2) || defined(USE_SSE41) 
+#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE41) 
 		uint64_t calc_hash_code_SSE();
 #else
 		uint64_t calc_hash_code_CPU();

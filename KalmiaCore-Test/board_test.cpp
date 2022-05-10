@@ -61,7 +61,6 @@ TEST(Board_Test, FlippAndMobilityTest)
 
 BoardCoordinate sample_move(Mobility& mobility, std::mt19937& rand)
 {
-	mobility.move_to_first();
 	auto idx = rand() % mobility.count();
 	auto count = 0;
 	BoardCoordinate coord = BoardCoordinate::A1;

@@ -194,6 +194,18 @@ namespace Kalmia.Evaluation
             this.SideToMove ^= DiscColor.White;
         }
 
+        public void Flip()
+        {
+            var j = 0;
+            var type = 0;
+            foreach(var size in PATTERN_NUM)
+            {
+                for (var i = 0; i < size; i++)
+                    this.FEATURES[j] = FlipFeature(type, this.FEATURES[j++]);
+                type++;
+            }
+        }
+
         public void CopyTo(BoardFeature dest)
         {
             Buffer.BlockCopy(this.FEATURES, 0, dest.FEATURES, 0, sizeof(int) * PATTERN_NUM_SUM);
@@ -265,7 +277,7 @@ namespace Kalmia.Evaluation
 
         static int FlipCorner3x3Feature(int feature)
         {
-            Span<int> table = stackalloc int[6] { 2187, 729, 81, 27, 9, 3 };
+            Span<int> table = stackalloc int[9] { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
             return FlipFeatureByTable(feature, table);
         }
 
@@ -279,24 +291,18 @@ namespace Kalmia.Evaluation
 
         static int FlipCornerEdgeXFeature(int feature)
         {
-            Span<int> table = stackalloc int[8] { 19683, 1, 6561, 3, 2187, 9, 729, 27 };
+            Span<int> table = stackalloc int[10] { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
             return FlipFeatureByTable(feature, table);
         }
 
         static int FlipFeatureByTable(int feature, Span<int> table)
         {
-            var flipped = feature;
-            for (var i = 0; i < table.Length; i += 2)
+            var flipped = 0;
+            for (var i = 0; i < table.Length; i ++)
             {
-                var digit = table[i];
-                var nextDigit = table[i + 1];
-                var tmp = (feature / digit) % 3;
-                flipped -= tmp * digit;
-                flipped += tmp * nextDigit;
-
-                tmp = (feature / nextDigit) % 3;
-                flipped -= tmp * nextDigit;
-                flipped += tmp * digit;
+                var idx = table[i];
+                var tmp = (feature / FastMath.Pow3(idx)) % 3;
+                flipped += tmp * FastMath.Pow3(i);
             }
             return flipped;
         }

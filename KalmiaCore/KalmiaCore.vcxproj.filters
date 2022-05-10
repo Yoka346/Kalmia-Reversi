@@ -36,10 +36,13 @@
     <ClInclude Include="test.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="bitvector.h">
+    <ClInclude Include="evaluation\feature.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="evaluation\feature.h">
+    <ClInclude Include="fastmath\fastmath.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="arraymanipulation\arraymanipulation.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -48,6 +51,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="test.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="evaluation\feature.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

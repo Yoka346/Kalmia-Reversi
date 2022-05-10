@@ -14,19 +14,8 @@ std::string reversi::coordinate_to_string(BoardCoordinate coord)
 
 inline bool Mobility::move_to_next_coord(BoardCoordinate& coord)
 {
-	while (this->mobility_count != this->mobility_num)
-	{
-		if (this->mobility & this->mask)
-		{
-			this->mobility_count++;
-			coord = this->current_coordinate++;
-			this->mask <<= 1;
-			return true;
-		}
-		this->current_coordinate++;
-		this->mask <<= 1;
-	}
-	return false;
+	coord = static_cast<BoardCoordinate>(find_first_set(this->mobility));
+	return find_next_set(this->mobility);
 }
 
 bool Board::initialized = false;
@@ -64,13 +53,11 @@ inline void Board::get_move(BoardCoordinate coord, Move& move)
 inline void Board::get_current_player_mobility(Mobility& mobility)
 {
 	mobility.set_raw_mobility(calc_mobility(this->bitboard.current_player, this->bitboard.opponent_player));
-	mobility.move_to_first();
 }
 
 inline void Board::get_opponent_player_mobility(Mobility& mobility)
 {
 	mobility.set_raw_mobility(calc_mobility(this->bitboard.opponent_player, this->bitboard.current_player));
-	mobility.move_to_first();
 }
 
 inline void Board::update(Move& move)
@@ -257,7 +244,7 @@ inline uint64_t Board::calc_mobility_AVX2(uint64_t p, uint64_t o)
 	return _mm_cvtsi128_si64(mobility_2) & ~(p | o);
 }
 
-#elif defined(USE_SSE41) 
+#elif defined(USE_SSE41) || defined(USE_SSE42)
 
 /**
  * @fn
@@ -628,7 +615,7 @@ inline uint64_t Board::calc_mobility_CPU(uint64_t p, uint64_t o)
 
 #endif
 
-#if defined(USE_AVX2) || defined(USE_SSE41) 
+#if defined(USE_AVX2) || defined(USE_SSE42) || defined(USE_SSE41) 
 
 /**
  * @fn

@@ -1,9 +1,8 @@
 #pragma once
-#pragma warning(disable : 4146)
 
 #include "pch.h"
 
-#if defined(USE_BMI2) || defined(USE_X64)
+#if defined(USE_SSE42) && defined(USE_X64)
 
 #define popcount(bits) (int)__popcnt64(bits)
 
@@ -13,11 +12,20 @@
 
 #else
 
-#define popcount(bits) std::bitset<64>(bits).count()
+inline int popcount(uint64_t bits)
+{
+	bits = ((bits & 0xaaaaaaaaaaaaaaaaUL) >> 1) + (bits & 0x5555555555555555UL);
+	bits = ((bits & 0xccccccccccccccccUL) >> 2) + (bits & 0x3333333333333333UL);
+	bits = ((bits & 0xf0f0f0f0f0f0f0f0UL) >> 4) + (bits & 0x0f0f0f0f0f0f0f0fUL);
+	bits = ((bits & 0xff00ff00ff00ff00UL) >> 8) + (bits & 0x00ff00ff00ff00ffUL);
+	bits = ((bits & 0xffff0000ffff0000UL) >> 16) + (bits & 0x0000ffff0000ffffUL);
+	bits = ((bits & 0xffffffff00000000UL) >> 32) + (bits & 0x00000000ffffffffUL);
+	return bits;
+}
 
 #endif
 
-#if defined(USE_BMI2) && defined(USE_X64)
+#if defined(USE_BMI1) && defined(USE_X64)
 
 #define find_first_set(bits) (int)_tzcnt_u64(bits)
 
@@ -55,5 +63,6 @@ int find_first_set(uint64_t bits)
 
 #endif
 
-#define foreach_bit(i, bits) for (i = find_first_set(bits); bits; i = find_first_set(bits &= (bits - 1)))
+#define find_next_set(bits) find_first_set(bits &= (bits - 1))
+#define foreach_bit(i, bits) for (i = find_first_set(bits); bits; i = find_next_set(bits))
 

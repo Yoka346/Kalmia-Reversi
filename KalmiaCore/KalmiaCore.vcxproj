@@ -152,16 +152,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arraymanipulation\arraymanipulation.h" />
+    <ClInclude Include="fastmath\fastmath.h" />
     <ClInclude Include="evaluation\feature.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="bitmanipulation.h" />
-    <ClInclude Include="bitvector.h" />
     <ClInclude Include="reversi\board.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="initialize_callback.h" />
     <ClInclude Include="test.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="evaluation\feature.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="reversi\board.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
