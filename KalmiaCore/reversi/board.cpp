@@ -40,7 +40,7 @@ DiscColor Board::get_square_color(BoardCoordinate coord)
 {
 	auto side_to_move = this->side_to_move + 1;
 	auto color = side_to_move * ((this->bitboard.current_player >> coord) & 1) + (side_to_move ^ 3) * ((this->bitboard.opponent_player >> coord) & 1);
-	return (color != 0) ? static_cast<DiscColor>(color - 1) : DiscColor::NONE;
+	return (color != 0) ? static_cast<DiscColor>(color - 1) : DiscColor::EMPTY;
 }
 
 inline void Board::get_move(BoardCoordinate coord, Move& move)

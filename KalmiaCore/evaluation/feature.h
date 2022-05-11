@@ -170,8 +170,8 @@ namespace evaluation
 
         __declspec(dllexport) void init(reversi::Board& board);
         __declspec(dllexport) void update(reversi::Move& move);
-        __declspec(dllexport) void pass();
-        __declspec(dllexport) void copy_to(BoardFeature& dest);
+        __declspec(dllexport) void pass() { this->side_to_move = opponent_disc_color(this->side_to_move); }
+        __declspec(dllexport) void copy_to(BoardFeature& dest) { memmove(&dest, this, sizeof(BoardFeature)); }
 
     private:
         reversi::DiscColor side_to_move;
@@ -180,7 +180,7 @@ namespace evaluation
         static uint16_t calc_opponent_feature(uint16_t feature, int size);
         static uint16_t mirror_feature(uint16_t feature, int size);
         static uint16_t shuffle_feature_with_table(uint16_t feature, const int* table, int size);
-        static void update_after_black_move(uint16_t* feature_values, uint64_t flipped);
-        static void update_after_white_move(uint16_t* feature_values, uint64_t flipped);
+        static void update_after_black_move(uint16_t* feature_values, reversi::Move& move);
+        static void update_after_white_move(uint16_t* feature_values, reversi::Move& move);
 	};
 }

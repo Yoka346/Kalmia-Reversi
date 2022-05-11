@@ -51,7 +51,7 @@ namespace reversi
 	{
 		BLACK,
 		WHITE,
-		NONE
+		EMPTY
 	};
 
 #define opponent_disc_color(color) static_cast<DiscColor>(color ^ DiscColor::WHITE)
