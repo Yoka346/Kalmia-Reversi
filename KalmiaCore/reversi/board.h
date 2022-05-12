@@ -78,6 +78,7 @@ namespace reversi
 		inline uint64_t get_raw_mobility() const { return this->mobility; }
 		inline void set_raw_mobility(uint64_t raw_mobility) { this->mobility = raw_mobility; }
 		inline int count() { return popcount(this->mobility); }
+		__declspec(dllexport) BoardCoordinate get_coord_at(int idx);
 		__declspec(dllexport) bool move_to_next_coord(BoardCoordinate& coord);
 
 	private:
@@ -123,18 +124,20 @@ namespace reversi
 
 		Board() : side_to_move(DiscColor::BLACK),
 				  bitboard(Bitboard(COORD_TO_BIT[BoardCoordinate::E4] | COORD_TO_BIT[BoardCoordinate::D5],
-									COORD_TO_BIT[BoardCoordinate::D4] | COORD_TO_BIT[BoardCoordinate::E5])) { ; }
+									COORD_TO_BIT[BoardCoordinate::D4] | COORD_TO_BIT[BoardCoordinate::E5])),
+				  empty_square_count(this->bitboard.get_empty_count()) { ; }
 
-		Board(DiscColor side_to_move, Bitboard bitboard) : side_to_move(side_to_move), bitboard(bitboard) { ; }
+		Board(DiscColor side_to_move, Bitboard bitboard) 
+			: side_to_move(side_to_move), bitboard(bitboard), empty_square_count(this->bitboard.get_empty_count()) { ; }
 
 		inline DiscColor get_side_to_move() { return this->side_to_move; }
 		inline DiscColor get_opponent_color() { return opponent_disc_color(this->side_to_move); }
+		inline int get_empty_square_count() { return this->empty_square_count; }
 		inline Bitboard get_bitboard() { return this->bitboard; }
-		inline Bitboard set_bitboard(Bitboard& bitboard) { return this->bitboard = bitboard; }
+		inline void set_bitboard(Bitboard& bitboard) { this->bitboard = bitboard; this->empty_square_count = bitboard.get_empty_count(); }
 		inline void copy_to(Board& dest) { dest.side_to_move = this->side_to_move; dest.bitboard = this->bitboard; }
 		inline int get_current_player_disc_count() { return this->bitboard.get_current_player_disc_count(); }
 		inline int get_opponent_player_disc_count() { return this->bitboard.get_opponent_player_disc_count(); }
-		inline int get_empty_square_count() { return this->bitboard.get_empty_count(); }
 		inline void pass() { this->side_to_move = opponent_disc_color(this->side_to_move); this->bitboard.swap(); }
 
 		inline Player get_square_side(BoardCoordinate coord) 
@@ -160,6 +163,7 @@ namespace reversi
 
 		Bitboard bitboard;
 		DiscColor side_to_move;
+		int empty_square_count;
 
 		static uint64_t calc_flipped_discs(uint64_t p, uint64_t o, BoardCoordinate coord);
 		static uint64_t calc_mobility(uint64_t p, uint64_t o);

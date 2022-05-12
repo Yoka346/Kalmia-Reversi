@@ -127,7 +127,7 @@ bool is_out_of_board(int coord)
 void board_init(DiscColor* board)
 {
 	for (auto i = 0; i < SQUARE_NUM; i++)
-		board[i] = DiscColor::NONE;
+		board[i] = DiscColor::EMPTY;
 
 	board[BoardCoordinate::E4] = DiscColor::BLACK;
 	board[BoardCoordinate::D5] = DiscColor::BLACK;
@@ -209,7 +209,7 @@ void board_calc_mobility(DiscColor* board, DiscColor color, bool* mobility)
 {
 	for (auto coord = BoardCoordinate::A1; coord <= BoardCoordinate::H8; coord++)
 	{
-		if (board[coord] != DiscColor::NONE)
+		if (board[coord] != DiscColor::EMPTY)
 		{
 			mobility[coord] = false;
 			continue;
@@ -231,7 +231,7 @@ std::string board_to_string(DiscColor* board)
 	std::stringstream ss;
 	for (auto i = 0; i < SQUARE_NUM; i++)
 	{
-		if (board[i] == DiscColor::NONE)
+		if (board[i] == DiscColor::EMPTY)
 			ss << ". ";
 		else if (board[i] == DiscColor::BLACK)
 			ss << "X ";

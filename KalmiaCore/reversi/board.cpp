@@ -12,6 +12,15 @@ std::string reversi::coordinate_to_string(BoardCoordinate coord)
 	return ss.str();
 }
 
+inline BoardCoordinate Mobility::get_coord_at(int idx) 
+{
+	auto count = 0;
+	auto i = 0;
+	foreach_bit(i, this->mobility)
+		if (count++ == idx)
+			return static_cast<BoardCoordinate>(i);
+}
+
 inline bool Mobility::move_to_next_coord(BoardCoordinate& coord)
 {
 	coord = static_cast<BoardCoordinate>(find_first_set(this->mobility));
@@ -66,6 +75,7 @@ inline void Board::update(Move& move)
 	this->bitboard.opponent_player ^= move.flipped;
 	this->bitboard.current_player |= (move.flipped | coord_bit);
 	this->side_to_move = opponent_disc_color(this->side_to_move);
+	this->empty_square_count--;
 	this->bitboard.swap();
 }
 
@@ -160,10 +170,10 @@ inline uint64_t Board::calc_mobility(uint64_t p, uint64_t o)
 */
 inline uint64_t Board::calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
-	const static __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
-	const static __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
-	const static __m256i MASK = _mm256_set_epi64x(0x7e7e7e7e7e7e7e7eULL, 0x7e7e7e7e7e7e7e7eULL, 0xffffffffffffffffULL, 0x7e7e7e7e7e7e7e7eULL);
-	const static __m256i ZERO = _mm256_setzero_si256();
+	static const __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
+	static const __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
+	static const __m256i MASK = _mm256_set_epi64x(0x7e7e7e7e7e7e7e7eULL, 0x7e7e7e7e7e7e7e7eULL, 0xffffffffffffffffULL, 0x7e7e7e7e7e7e7e7eULL);
+	static const __m256i ZERO = _mm256_setzero_si256();
 
 	auto coord_bit = COORD_TO_BIT[coord];
 	auto coord_bit_4 = _mm256_broadcastq_epi64(_mm_cvtsi64_si128(coord_bit));
@@ -217,9 +227,9 @@ inline uint64_t Board::calc_flipped_discs_AVX2(uint64_t p, uint64_t o, BoardCoor
 */
 inline uint64_t Board::calc_mobility_AVX2(uint64_t p, uint64_t o)
 {
-	const static __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
-	const static __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
-	const static __m256i MASK = _mm256_set_epi64x(0x7e7e7e7e7e7e7e7eULL, 0x7e7e7e7e7e7e7e7eULL, 0xffffffffffffffffULL, 0x7e7e7e7e7e7e7e7eULL);
+	static const __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
+	static const __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
+	static const __m256i MASK = _mm256_set_epi64x(0x7e7e7e7e7e7e7e7eULL, 0x7e7e7e7e7e7e7e7eULL, 0xffffffffffffffffULL, 0x7e7e7e7e7e7e7e7eULL);
 
 	auto p_4 = _mm256_broadcastq_epi64(_mm_cvtsi64_si128(p));
 	auto masked_o_4 = _mm256_and_si256(_mm256_broadcastq_epi64(_mm_cvtsi64_si128(o)), MASK);
