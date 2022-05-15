@@ -1,5 +1,6 @@
 #pragma once
 #include "../pch.h"
+#include "../bitmanipulation.h"
 
 namespace fastmath
 {
@@ -8,9 +9,9 @@ namespace fastmath
 
 	constexpr uint16_t pow3(int n) { return POW3_TABLE[n % POW3_TABLE_SIZE]; }
 
-	inline float exp2(float x)
+	constexpr float exp2(float x)
 	{
-		int32_t exp;
+		int32_t exp = 0;
 		if (x < 0)
 		{
 			if (x < -126)
@@ -27,9 +28,9 @@ namespace fastmath
 		return *(float*)&tmp;
 	}
 
-	inline float exp(float x) { return exp2(1.442695040f * x); }
+	constexpr float exp(float x) { return exp2(1.442695040f * x); }
 
-	inline float log2(float x)
+	constexpr float log2(float x)
 	{
 		auto tmp = *(uint32_t*)&x;
 		auto expb = tmp >> 32;
@@ -39,5 +40,10 @@ namespace fastmath
 		return out * (1.3465552f - 0.34655523f * out) - 127 + expb;
 	}
 
-	inline float log(float x){ return 0.6931471805599453f * log2(x); }
+	constexpr float log(float x){ return 0.6931471805599453f * log2(x); }
+
+	// if n = 0, log2 returns 0.
+	inline int log2(uint32_t n) { return 31 ^ (int)count_leading_zero(n | 1); }	
+	inline int log2(uint64_t n) { return 63 ^ (int)count_leading_zero(n | 1); }
+	inline int log2_ceiling(uint32_t n) { auto result = log2(n); return (popcount(n) == 1) ? result : result + 1; }
 }
