@@ -88,12 +88,6 @@ int count_leading_zero_32(uint32_t bits)
 
 int count_leading_zero(uint64_t bits)
 {
-	constexpr byte DE_BRUIJN_TABLE[32] =
-	{
-		31, 22, 30, 21, 18, 10, 29, 2, 20, 17, 15, 13, 9, 6, 28, 1,
-		23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0
-	};
-
 	uint32_t hi = bits >> 32;
 	return hi ? count_leading_zero_32(hi) : 32 + count_leading_zero_32((uint32_t)bits);
 }

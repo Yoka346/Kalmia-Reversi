@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <bitset>
 #include <stdio.h>
+#include <assert.h>
 
 #if defined(USE_AVX2) || defined(USE_SSE41) || defined(USE_SSE42) || defined(USE_BMI1) || defined(USE_BMI2)
 

@@ -41,38 +41,6 @@ namespace evaluation
         constexpr FeatureValue(int feature_id, uint16_t n) : feature_id(feature_id), n(n) { ; }
     };
 
-    struct CoordinateToFeatureValue 
-    {
-        int length;
-        FeatureValue feature_values[FEATURE_NUM];
-
-        constexpr CoordinateToFeatureValue() :length(0), feature_values() { ; }
-    };
-
-    struct CoordinateToFeatureValueTable 
-    {
-        CoordinateToFeatureValue t[reversi::SQUARE_NUM + 1];
-
-        constexpr CoordinateToFeatureValueTable() : t()
-        {
-            for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::PASS; coord++)
-            {
-                auto count = 0;
-                for (auto featureID = 0; featureID < FEATURE_NUM; featureID++)
-                {
-                    auto feature_info = FEATURE_INFO[featureID];
-                    auto coords = feature_info.coordinates;
-                    auto size = feature_info.size;
-                    auto idx = arraymanipulation::index_of(coords, 0, size, coord);
-                    if (idx == -1)
-                        continue;
-                    t[coord].feature_values[count++] = FeatureValue(featureID, fastmath::pow3(size - idx - 1));
-                }
-                t[coord].length = count;
-            }
-        }
-    };
-
     constexpr FeatureInfo FEATURE_INFO[FEATURE_NUM] =
     {
         // corner3x3 
@@ -147,6 +115,38 @@ namespace evaluation
 
         // bias
         { Bias, 0, { }}
+    };
+
+    struct CoordinateToFeatureValue
+    {
+        int length;
+        FeatureValue feature_values[FEATURE_NUM];
+
+        constexpr CoordinateToFeatureValue() :length(0), feature_values() { ; }
+    };
+
+    struct CoordinateToFeatureValueTable
+    {
+        CoordinateToFeatureValue t[reversi::SQUARE_NUM + 1];
+
+        constexpr CoordinateToFeatureValueTable() : t()
+        {
+            for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::PASS; coord++)
+            {
+                auto count = 0;
+                for (auto featureID = 0; featureID < FEATURE_NUM; featureID++)
+                {
+                    auto feature_info = FEATURE_INFO[featureID];
+                    auto coords = feature_info.coordinates;
+                    auto size = feature_info.size;
+                    auto idx = arraymanipulation::index_of(coords, 0, size, coord);
+                    if (idx == -1)
+                        continue;
+                    t[coord].feature_values[count++] = FeatureValue(featureID, fastmath::pow3(size - idx - 1));
+                }
+                t[coord].length = count;
+            }
+        }
     };
 
     constexpr auto COORD_TO_FEATURE_VALUE = CoordinateToFeatureValueTable();

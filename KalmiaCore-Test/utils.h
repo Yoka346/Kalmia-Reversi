@@ -1,22 +1,8 @@
 #pragma once
 #include "reversi/board.h"
+#include "random.h"
 
-// ToDo: constexpr‚ÈRandomƒNƒ‰ƒX‚ðKalmiaCore‚ÉŽÀ‘•‚·‚é.
-class Random 
-{
-public:
-	Random() : rand(std::time(nullptr)) { ; }
-	Random(uint32_t seed) : rand(seed) { ; }
-
-	uint32_t next() { return this->rand(); }
-	uint32_t next(uint32_t min, uint32_t max) { return next(max - min) + min; }
-	uint32_t next(uint32_t max) { return this->rand() % max; }
-
-private:
-	std::mt19937 rand;
-};
-
-Random& const SHARED_RAND = Random();
+Random& const SHARED_RAND;
 
 void create_random_board(reversi::Board& board, int empty_square_count) 
 {

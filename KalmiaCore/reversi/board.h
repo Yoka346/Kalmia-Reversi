@@ -54,7 +54,7 @@ namespace reversi
 		EMPTY
 	};
 
-#define opponent_disc_color(color) static_cast<DiscColor>(color ^ DiscColor::WHITE)
+#define opponent_disc_color(color) static_cast<reversi::DiscColor>(color ^ reversi::DiscColor::WHITE)
 
 	enum Player : int
 	{
