@@ -78,7 +78,7 @@ int count_leading_zero_32(uint32_t bits)
 		23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0
 	};
 
-	bits |= bits >> 1;	// remains msb
+	bits |= bits >> 1;	// remains only msb
 	bits |= bits >> 2;
 	bits |= bits >> 4;
 	bits |= bits >> 8;

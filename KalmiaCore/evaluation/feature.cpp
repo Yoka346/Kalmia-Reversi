@@ -10,16 +10,16 @@ void BoardFeature::static_initializer()
 	
 }
 
-uint16_t BoardFeature::symmetric_transform_feature(FeatureInfo info, uint16_t feature)
+uint16_t BoardFeature::symmetric_transform_feature(FeatureKind kind, uint16_t feature)
 {
 	constexpr int TABLE_FOR_CORNER_3X3[9] = { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
 	constexpr int TABLE_FOR_CORNER_EDGE_X[10] = { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
 
-	if (info.kind == FeatureKind::Corner3x3)
-		return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_3X3, info.size);
-	if(info.kind == FeatureKind::CornerEdgeX)
-		return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_EDGE_X, info.size);
-	return mirror_feature(feature, info.size);
+	if (kind == FeatureKind::Corner3x3)
+		return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_3X3, FEATURE_SIZE[kind]);
+	if(kind == FeatureKind::CornerEdgeX)
+		return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_EDGE_X, FEATURE_SIZE[kind]);
+	return mirror_feature(feature, FEATURE_SIZE[kind]);
 }
 
 BoardFeature::BoardFeature(Board& board) { init(board); }
@@ -82,7 +82,7 @@ uint16_t BoardFeature::shuffle_feature_with_table(uint16_t feature, const int* t
 
 void BoardFeature::update_after_black_move(uint16_t* feature_values, Move& move)
 {
-	auto coord_to_f = COORD_TO_FEATURE_VALUE.t[move.coord];
+	auto coord_to_f = COORD_TO_FEATURE_VALUE[move.coord];
 	for (auto i = 0; i < coord_to_f.length; i++)
 	{
 		auto value = coord_to_f.feature_values[i];
@@ -92,7 +92,7 @@ void BoardFeature::update_after_black_move(uint16_t* feature_values, Move& move)
 	auto coord = 0;
 	foreach_bit(coord, move.flipped) 
 	{
-		coord_to_f = COORD_TO_FEATURE_VALUE.t[coord];
+		coord_to_f = COORD_TO_FEATURE_VALUE[coord];
 		for (auto i = 0; i < coord_to_f.length; i++) 
 		{
 			auto value = coord_to_f.feature_values[i];
@@ -103,7 +103,7 @@ void BoardFeature::update_after_black_move(uint16_t* feature_values, Move& move)
 
 void BoardFeature::update_after_white_move(uint16_t* feature_values, Move& move)
 {
-	auto coord_to_f = COORD_TO_FEATURE_VALUE.t[move.coord];
+	auto coord_to_f = COORD_TO_FEATURE_VALUE[move.coord];
 	for (auto i = 0; i < coord_to_f.length; i++)
 	{
 		auto value = coord_to_f.feature_values[i];
@@ -113,7 +113,7 @@ void BoardFeature::update_after_white_move(uint16_t* feature_values, Move& move)
 	auto coord = 0;
 	foreach_bit(coord, move.flipped)
 	{
-		coord_to_f = COORD_TO_FEATURE_VALUE.t[coord];
+		coord_to_f = COORD_TO_FEATURE_VALUE[coord];
 		for (auto i = 0; i < coord_to_f.length; i++)
 		{
 			auto value = coord_to_f.feature_values[i];

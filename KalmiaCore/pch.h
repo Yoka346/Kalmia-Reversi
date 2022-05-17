@@ -22,6 +22,7 @@
 #endif
 
 #include "initialize_callback.h"
+#include "constantarray.h"
 #include "fastmath/fastmath.h"
 #include "arraymanipulation/arraymanipulation.h"
 

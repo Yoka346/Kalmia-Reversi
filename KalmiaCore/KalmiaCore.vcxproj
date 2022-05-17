@@ -126,6 +126,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -157,6 +158,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="arraymanipulation\arraymanipulation.h" />
+    <ClInclude Include="constantarray.h" />
+    <ClInclude Include="evaluation\eval.h" />
     <ClInclude Include="fastmath\fastmath.h" />
     <ClInclude Include="evaluation\feature.h" />
     <ClInclude Include="pch.h" />

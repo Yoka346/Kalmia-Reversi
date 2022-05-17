@@ -4,10 +4,12 @@ inline uint32_t Random::next(uint32_t max) { return (uint32_t)next_64(max); }
 
 inline uint64_t Random::next_64(uint64_t max)
 {
+	if (max == 0)
+		return 0;
+
 	auto n = fastmath::log2_ceiling(max);
 	uint64_t res;
 	while ((res = this->rand() >> (64 - n)) >= max);
-	assert(res < max);
 	return res;
 }
 
