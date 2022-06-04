@@ -16,7 +16,7 @@ namespace KalmiaTest
         {
             var rand = new Random();
             var board = new FastBoard();
-            var positions = new BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            var positions = new BoardCoordinate[Board.MAX_MOVE_CANDIDATE_COUNT];
             var bf0 = new BoardFeature(board);
             var bf1 = new BoardFeature(board);
             while (board.GetGameResult() == GameResult.NotOver)

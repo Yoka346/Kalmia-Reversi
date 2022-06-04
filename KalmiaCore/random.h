@@ -18,10 +18,10 @@ public:
 	inline float next_single() { return (this->rand() >> 40) * (1.0f / (1U << 24)); }
 	inline double next_double() { return (this->rand() >> 11) * (1.0 / (1ULL << 53)); }
 
-	__declspec(dllexport) uint32_t next(uint32_t max);
-	__declspec(dllexport) uint64_t next_64(uint64_t max);
-	__declspec(dllexport) uint32_t next(uint32_t min, uint32_t max);
-	__declspec(dllexport) uint64_t next_64(uint64_t min, uint64_t max);
+	DLL_EXPORT uint32_t next(uint32_t max);
+	DLL_EXPORT uint64_t next_64(uint64_t max);
+	DLL_EXPORT uint32_t next(uint32_t min, uint32_t max);
+	DLL_EXPORT uint64_t next_64(uint64_t min, uint64_t max);
 
 private:
 	static std::random_device rand_device;

@@ -25,13 +25,13 @@ namespace Kalmia.Evaluation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Update(BoardPosition pos)
+        public void Update(BoardCoordinate pos)
         {
             this.Feature.Update(pos, this.Board.Update(pos));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetNextPositionCandidates(BoardPosition[] positions)
+        public int GetNextPositionCandidates(BoardCoordinate[] positions)
         {
             return this.Board.GetNextPositionCandidates(positions);
         }

@@ -4,5 +4,5 @@
 
 extern "C" 
 {
-	__declspec(dllexport) void KalmiaCore_Test();
+	DLL_EXPORT void KalmiaCore_Test();
 }

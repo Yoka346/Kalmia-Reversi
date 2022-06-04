@@ -84,6 +84,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\KalmiaCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

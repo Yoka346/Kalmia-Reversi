@@ -10,29 +10,17 @@ void BoardFeature::static_initializer()
 	
 }
 
-uint16_t BoardFeature::symmetric_transform_feature(FeatureKind kind, uint16_t feature)
-{
-	constexpr int TABLE_FOR_CORNER_3X3[9] = { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
-	constexpr int TABLE_FOR_CORNER_EDGE_X[10] = { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
-
-	if (kind == FeatureKind::Corner3x3)
-		return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_3X3, FEATURE_SIZE[kind]);
-	if(kind == FeatureKind::CornerEdgeX)
-		return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_EDGE_X, FEATURE_SIZE[kind]);
-	return mirror_feature(feature, FEATURE_SIZE[kind]);
-}
-
 BoardFeature::BoardFeature(Board& board) { init(board); }
 BoardFeature::BoardFeature(BoardFeature& board_feature) { board_feature.copy_to(*this); }
 
 void BoardFeature::init(reversi::Board& board)
 {
-	for (auto i = 0; i < FEATURE_NUM; i++)
+	for (int32_t i = 0; i < FEATURE_NUM; i++)
 	{
 		auto feature_info = FEATURE_INFO[i];
-		uint16_t* feature_value = &this->feature_values[i];
+		uint16_t* pattern_ptr = &this->patterns[i];
 		for (auto j = 0; j < feature_info.size; j++)
-			*feature_value = *feature_value * 3 + board.get_square_color(feature_info.coordinates[j]);
+			*pattern_ptr = *pattern_ptr * 3 + board.get_square_color(feature_info.coordinates[j]);
 	}
 	this->side_to_move = board.get_side_to_move();
 	this->empty_square_count = board.get_empty_square_count();
@@ -42,82 +30,48 @@ void BoardFeature::update(Move& move)
 {
 	static void (* const UPDATE[])(uint16_t*, Move&) = { BoardFeature::update_after_black_move, BoardFeature::update_after_white_move };
 	
-	UPDATE[move.color](this->feature_values, move);
+	UPDATE[move.color](this->patterns, move);
 }
 
 // private
-uint16_t BoardFeature::calc_opponent_feature(uint16_t feature, int size)
+void BoardFeature::update_after_black_move(uint16_t* patterns, Move& move)
 {
-	uint16_t feature_inv = 0;
-	for (auto i = 0; i < size; i++)
+	auto coord_to_f = COORD_TO_PATTERN[move.coord];
+	for (int32_t i = 0; i < coord_to_f.length; i++)
 	{
-		auto color = static_cast<DiscColor>((feature / fastmath::pow3(i)) % 3);
-		if (color == DiscColor::EMPTY)
-			feature_inv += static_cast<uint16_t>(color) * fastmath::pow3(i);
-		else
-			feature_inv += static_cast<uint16_t>(opponent_disc_color(color)) * fastmath::pow3(i);
-	}
-	return feature_inv;
-}
-
-uint16_t BoardFeature::mirror_feature(uint16_t feature, int size)
-{
-	uint16_t mirrored = 0;
-	for (auto i = 0; i < size; i++)
-		mirrored += ((feature / fastmath::pow3(size - (i + 1))) % 3) * fastmath::pow3(i);
-	return mirrored;
-}
-
-uint16_t BoardFeature::shuffle_feature_with_table(uint16_t feature, const int* table, int size)
-{
-	uint16_t shuffled = 0;
-	for (auto i = 0; i < size; i ++)
-	{
-		auto idx = table[i];
-		auto tmp = (feature / fastmath::pow3(idx)) % 3;
-		shuffled += tmp * fastmath::pow3(i);
-	}
-	return shuffled;
-}
-
-void BoardFeature::update_after_black_move(uint16_t* feature_values, Move& move)
-{
-	auto coord_to_f = COORD_TO_FEATURE_VALUE[move.coord];
-	for (auto i = 0; i < coord_to_f.length; i++)
-	{
-		auto value = coord_to_f.feature_values[i];
-		feature_values[value.feature_id] -= DiscColor::EMPTY * value.n;
+		auto value = coord_to_f.patterns[i];
+		patterns[value.feature_id] -= DiscColor::EMPTY * value.n;
 	}
 
 	auto coord = 0;
 	foreach_bit(coord, move.flipped) 
 	{
-		coord_to_f = COORD_TO_FEATURE_VALUE[coord];
-		for (auto i = 0; i < coord_to_f.length; i++) 
+		coord_to_f = COORD_TO_PATTERN[coord];
+		for (int32_t i = 0; i < coord_to_f.length; i++) 
 		{
-			auto value = coord_to_f.feature_values[i];
-			feature_values[value.feature_id] -= value.n;
+			auto value = coord_to_f.patterns[i];
+			patterns[value.feature_id] -= value.n;
 		}
 	}
 }
 
-void BoardFeature::update_after_white_move(uint16_t* feature_values, Move& move)
+void BoardFeature::update_after_white_move(uint16_t* patterns, Move& move)
 {
-	auto coord_to_f = COORD_TO_FEATURE_VALUE[move.coord];
-	for (auto i = 0; i < coord_to_f.length; i++)
+	auto coord_to_f = COORD_TO_PATTERN[move.coord];
+	for (int32_t i = 0; i < coord_to_f.length; i++)
 	{
-		auto value = coord_to_f.feature_values[i];
-		feature_values[value.feature_id] -= value.n;
+		auto value = coord_to_f.patterns[i];
+		patterns[value.feature_id] -= value.n;
 	}
 
 	auto coord = 0;
 	foreach_bit(coord, move.flipped)
 	{
-		coord_to_f = COORD_TO_FEATURE_VALUE[coord];
-		for (auto i = 0; i < coord_to_f.length; i++)
+		coord_to_f = COORD_TO_PATTERN[coord];
+		for (int32_t i = 0; i < coord_to_f.length; i++)
 		{
-			auto value = coord_to_f.feature_values[i];
-			feature_values[value.feature_id] += value.n;
+			auto value = coord_to_f.patterns[i];
+			patterns[value.feature_id] += value.n;
 		}
 	}
 }

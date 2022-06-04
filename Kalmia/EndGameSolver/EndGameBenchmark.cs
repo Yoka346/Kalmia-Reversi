@@ -71,7 +71,7 @@ namespace Kalmia.EndGameSolver
                 };
 
                 if (color != DiscColor.Null)
-                    board.PutStoneWithoutFlip(color, (BoardPosition)i);
+                    board.PutStoneWithoutFlip(color, (BoardCoordinate)i);
             }
             return board;
         }

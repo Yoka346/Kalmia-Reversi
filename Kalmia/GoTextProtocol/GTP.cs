@@ -120,17 +120,17 @@ namespace Kalmia.GoTextProtocol
         {
             if (move == Move.Null)
                 return move;
-            return new Move(move.Color, ConvertCoordinateRule(move.Pos));
+            return new Move(move.Color, ConvertCoordinateRule(move.Coord));
         }
 
-        public static BoardPosition ConvertCoordinateRule(BoardPosition pos)
+        public static BoardCoordinate ConvertCoordinateRule(BoardCoordinate pos)
         {
-            if (pos == BoardPosition.Pass || pos == BoardPosition.Null)
+            if (pos == BoardCoordinate.Pass || pos == BoardCoordinate.Null)
                 return pos;
 
             (var posX, var posY) = ((int)pos % Board.BOARD_SIZE, (int)pos / Board.BOARD_SIZE);
             posY = (Board.BOARD_SIZE - 1) - posY;
-            return (BoardPosition)(posX + posY * Board.BOARD_SIZE);
+            return (BoardCoordinate)(posX + posY * Board.BOARD_SIZE);
         }
 
         static void GTPSuccess(int id, string msg = "")
@@ -397,7 +397,7 @@ namespace Kalmia.GoTextProtocol
                 return;
             }
             var move = new Move(DiscColor.Black, args[0]);
-            var color = Engine.GetColor(move.PosX, move.PosY);
+            var color = Engine.GetColor(move.CoordX, move.CoordY);
             if(color == DiscColor.Null)
             {
                 GTPSuccess(id, "empty");
@@ -496,7 +496,7 @@ namespace Kalmia.GoTextProtocol
                 return;
             }
 
-            var board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            var board = new Board(DiscColor.Black);
             var node = SGFFile.LoadSGFFile(args[0]);
             var coordinates = new StringBuilder();
             while (true)
@@ -514,7 +514,7 @@ namespace Kalmia.GoTextProtocol
                     var move = new Move(board.SideToMove, SGFFile.SGFCoordinateToBoardPos(sgfCoord));
                     if (!board.Update(move))
                         throw new GTPException("specified SGF file contains invalid move.");
-                    if (move.Pos != BoardPosition.Pass)
+                    if (move.Coord != BoardCoordinate.Pass)
                         coordinates.Append(move);
                 }
 
@@ -558,7 +558,7 @@ namespace Kalmia.GoTextProtocol
             str = str.ToLower();
             if (str == "pass")
             {
-                coord = ((int)BoardPosition.Pass, 0);
+                coord = ((int)BoardCoordinate.Pass, 0);
                 return true;
             }
 

@@ -13,7 +13,7 @@ namespace KalmiaTest
         public static FastBoard CreateRandomBoard(Random rand, int emptyCount)
         {
             var board = new FastBoard();
-            Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            Span<BoardCoordinate> positions = stackalloc BoardCoordinate[Board.MAX_MOVE_CANDIDATE_COUNT];
             while (board.GetEmptyCount() != emptyCount && board.GetGameResult() == GameResult.NotOver)
             {
                 var num = board.GetNextPositionCandidates(positions);

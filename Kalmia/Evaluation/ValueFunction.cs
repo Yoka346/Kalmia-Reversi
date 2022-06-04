@@ -73,7 +73,7 @@ namespace Kalmia.Evaluation
             this.Header = new EvalParamsFileHeader(fs);
             var packedWeight = LoadPackedWeight(fs);
             this.StageNum = packedWeight.Length;
-            this.MoveCountPerStage = Board.SQUARE_NUM / (this.StageNum - 1);
+            this.MoveCountPerStage = (Board.SQUARE_NUM - 4) / (this.StageNum - 1);
             this.Weight = new float[2][][];
             for (var color = 0; color < this.Weight.Length; color++)
             {

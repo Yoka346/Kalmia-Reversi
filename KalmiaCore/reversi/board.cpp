@@ -19,6 +19,7 @@ inline BoardCoordinate Mobility::get_coord_at(int idx)
 	foreach_bit(i, this->mobility)
 		if (count++ == idx)
 			return static_cast<BoardCoordinate>(i);
+	return BoardCoordinate::NULL_COORD;
 }
 
 inline bool Mobility::move_to_next_coord(BoardCoordinate& coord)
@@ -37,8 +38,8 @@ void Board::static_initializer()
 
 	std::random_device seed;
 	std::mt19937_64 rand(seed());
-	for (auto i = 0; i < 16; i++)
-		for (auto j = 0; j < 256; j++)
+	for (int32_t i = 0; i < 16; i++)
+		for (int32_t j = 0; j < 256; j++)
 			hash_rank[i][j] = rand();
 	Board::initialized = true;
 }
@@ -279,10 +280,10 @@ inline uint64_t Board::calc_mobility_AVX2(uint64_t p, uint64_t o)
 inline uint64_t Board::calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoordinate coord)
 {
 	auto coord_bit = COORD_TO_BIT[coord];
-	auto coord_bit_2 = _mm_set_epi64x(_byteswap_uint64(coord_bit), coord_bit);
-	auto p_2 = _mm_set_epi64x(_byteswap_uint64(p), p);
+	auto coord_bit_2 = _mm_set_epi64x(_uint8_tswap_uint64(coord_bit), coord_bit);
+	auto p_2 = _mm_set_epi64x(_uint8_tswap_uint64(p), p);
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
-	auto masked_o_2 = _mm_set_epi64x(_byteswap_uint64(masked_o), masked_o);
+	auto masked_o_2 = _mm_set_epi64x(_uint8_tswap_uint64(masked_o), masked_o);
 
 	// left
 	auto flipped_diag_left_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(coord_bit_2, 7));
@@ -354,11 +355,11 @@ inline uint64_t Board::calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoord
 	auto flipped_2 = _mm_or_si128(flipped_diag_left_2, flipped_diag_right_2);
 	auto flipped = flipped_horizontal_left | flipped_horizontal_right | flipped_vertical_left | flipped_vertical_right;
 #ifdef USE_X64
-	flipped |= _mm_cvtsi128_si64(flipped_2) | _byteswap_uint64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(flipped_2, flipped_2)));
+	flipped |= _mm_cvtsi128_si64(flipped_2) | _uint8_tswap_uint64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(flipped_2, flipped_2)));
 #else
 	uint64_t data[2];
 	std::memcpy(data, &flipped_2, 16);
-	flipped |= data[0] | _byteswap_uint64(data[1]);
+	flipped |= data[0] | _uint8_tswap_uint64(data[1]);
 #endif
 	return flipped;
 }
@@ -384,9 +385,9 @@ inline uint64_t Board::calc_flipped_discs_SSE(uint64_t p, uint64_t o, BoardCoord
 */
 inline uint64_t Board::calc_mobility_SSE(uint64_t p, uint64_t o)
 {
-	auto p_2 = _mm_set_epi64x(_byteswap_uint64(p), p);
+	auto p_2 = _mm_set_epi64x(_uint8_tswap_uint64(p), p);
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
-	auto masked_o_2 = _mm_set_epi64x(_byteswap_uint64(masked_o), masked_o);
+	auto masked_o_2 = _mm_set_epi64x(_uint8_tswap_uint64(masked_o), masked_o);
 
 	auto flip_diag_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(p_2, 7));
 	auto flip_horizontal = masked_o & (p << 1);
@@ -435,11 +436,11 @@ inline uint64_t Board::calc_mobility_SSE(uint64_t p, uint64_t o)
 	mobility |= (flip_horizontal >> 1) | (flip_vertical >> 8);
 
 #ifdef USE_X64
-	mobility |= _mm_cvtsi128_si64(mobility_2) | _byteswap_uint64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(mobility_2, mobility_2)));
+	mobility |= _mm_cvtsi128_si64(mobility_2) | _uint8_tswap_uint64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(mobility_2, mobility_2)));
 #else
 	uint64_t data[2];
 	std::memcpy(data, &mobility_2, 16);
-	mobility |= data[0] | _byteswap_uint64(data[1]);
+	mobility |= data[0] | _uint8_tswap_uint64(data[1]);
 #endif
 	return mobility & ~(p | o);
 }
@@ -644,7 +645,7 @@ inline uint64_t Board::calc_mobility_CPU(uint64_t p, uint64_t o)
  */
 uint64_t Board::calc_hash_code_SSE()
 {
-	auto rank = (byte*)&this->bitboard;
+	auto rank = (uint8_t*)&this->bitboard;
 
 	__m128	h_0, h_1, h_2, h_3;
 
@@ -691,7 +692,7 @@ uint64_t Board::calc_hash_code_SSE()
 uint64_t Board::calc_hash_code_CPU()
 {
 	unsigned long long h_1, h_2;
-	const auto rank = (byte*)&this->bitboard;
+	const auto rank = (uint8_t*)&this->bitboard;
 
 	h_1 = hash_rank[0][rank[0]];
 	h_2 = hash_rank[1][rank[1]];

@@ -33,7 +33,7 @@ namespace fastmath
 	constexpr float log2(float x)
 	{
 		auto tmp = *(uint32_t*)&x;
-		auto expb = tmp >> 32;
+		auto expb = tmp >> 23;
 		tmp = (tmp & 0x7fffff) | (0x7f << 23);
 		auto out = *(float*)&tmp;
 		out -= 1.0f;
@@ -46,4 +46,5 @@ namespace fastmath
 	inline int log2(uint32_t n) { return 31 ^ (int)count_leading_zero(n | 1); }	
 	inline int log2(uint64_t n) { return 63 ^ (int)count_leading_zero(n | 1); }
 	inline int log2_ceiling(uint32_t n) { auto result = log2(n); return (popcount(n) == 1) ? result : result + 1; }
+	inline int log2_ceiling(uint64_t n) { auto result = log2(n); return (popcount(n) == 1) ? result : result + 1; }
 }

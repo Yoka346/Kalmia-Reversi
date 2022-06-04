@@ -7,7 +7,10 @@ namespace evaluation
     constexpr int MAX_FEATURE_SIZE = 10;
     constexpr int FEATURE_NUM = 47;
     constexpr int FEATURE_KIND_NUM = 13;
+    constexpr int EACH_FEATURE_NUM[FEATURE_KIND_NUM] = { 4, 4, 4, 4, 4, 4, 4, 2, 4, 4, 4, 4, 1 };
     constexpr int FEATURE_SIZE[FEATURE_KIND_NUM] = { 9, 10, 10, 10, 8, 8, 8, 8, 7, 6, 5, 4, 0 };
+    constexpr int PATTERN_NUM[FEATURE_KIND_NUM] = { 19683, 59049, 59049, 59049, 6561, 6561, 6561, 6561, 2187, 729, 243, 81, 1 };
+    constexpr int PACKED_PATTERN_NUM[FEATURE_KIND_NUM] = { 10206, 29889, 29646, 29646, 3321, 3321, 3321, 3321, 1134, 378, 135, 45, 1 };
 
     enum FeatureKind
     {
@@ -32,13 +35,13 @@ namespace evaluation
 		reversi::BoardCoordinate coordinates[MAX_FEATURE_SIZE];
 	};
 
-    struct FeatureValue 
+    struct Pattern 
     {
         int feature_id;
         uint16_t n;
 
-        constexpr FeatureValue() :feature_id(-1), n(0) { ; }
-        constexpr FeatureValue(int feature_id, uint16_t n) : feature_id(feature_id), n(n) { ; }
+        constexpr Pattern() :feature_id(-1), n(0) { ; }
+        constexpr Pattern(int feature_id, uint16_t n) : feature_id(feature_id), n(n) { ; }
     };
 
     constexpr FeatureInfo FEATURE_INFO[FEATURE_NUM] =
@@ -117,16 +120,16 @@ namespace evaluation
         { FEATURE_SIZE[Bias], {}}
     };
 
-    struct CoordinateToFeatureValue
+    struct CoordinateToPattern
     {
         int length;
-        FeatureValue feature_values[FEATURE_NUM];
+        Pattern patterns[FEATURE_NUM];
 
-        constexpr CoordinateToFeatureValue() :length(0), feature_values() { ; }
+        constexpr CoordinateToPattern() :length(0), patterns() { ; }
     };
 
-    constexpr ConstantArray<CoordinateToFeatureValue, reversi::SQUARE_NUM + 1> COORD_TO_FEATURE_VALUE(
-        [](CoordinateToFeatureValue* table, int length)
+    constexpr ConstantArray<CoordinateToPattern, reversi::SQUARE_NUM + 1> COORD_TO_PATTERN(
+        [](CoordinateToPattern* table, size_t length)
         {
             for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::PASS; coord++)
             {
@@ -139,12 +142,58 @@ namespace evaluation
                     auto idx = arraymanipulation::index_of(coords, 0, size, coord);
                     if (idx == -1)
                         continue;
-                    table[coord].feature_values[count++] = FeatureValue(featureID, fastmath::pow3(size - idx - 1));
+                    table[coord].patterns[count++] = Pattern(featureID, fastmath::pow3(size - idx - 1));
                 }
                 table[coord].length = count;
             }
         }
     );
+
+    constexpr uint16_t calc_opponent_pattern(uint16_t feature, int size)
+    {
+        uint16_t pattern_inv = 0;
+        for (auto i = 0; i < size; i++)
+        {
+            auto color = static_cast<reversi::DiscColor>((feature / fastmath::pow3(i)) % 3);
+            if (color == reversi::DiscColor::EMPTY)
+                pattern_inv += static_cast<uint16_t>(color) * fastmath::pow3(i);
+            else
+                pattern_inv += static_cast<uint16_t>(opponent_disc_color(color)) * fastmath::pow3(i);
+        }
+        return pattern_inv;
+    }
+
+    constexpr uint16_t mirror_pattern(uint16_t feature, int size)
+    {
+        uint16_t mirrored = 0;
+        for (auto i = 0; i < size; i++)
+            mirrored += ((feature / fastmath::pow3(size - (i + 1))) % 3) * fastmath::pow3(i);
+        return mirrored;
+    }
+
+    constexpr uint16_t shuffle_pattern_with_table(uint16_t feature, const int* table, int size)
+    {
+        uint16_t shuffled = 0;
+        for (auto i = 0; i < size; i++)
+        {
+            auto idx = table[i];
+            auto tmp = (feature / fastmath::pow3(idx)) % 3;
+            shuffled += tmp * fastmath::pow3(i);
+        }
+        return shuffled;
+    }
+
+    constexpr uint16_t to_symmetric_pattern(FeatureKind kind, uint16_t feature)
+    {
+        constexpr int TABLE_FOR_CORNER_3X3[9] = { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
+        constexpr int TABLE_FOR_CORNER_EDGE_X[10] = { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
+
+        if (kind == FeatureKind::Corner3x3)
+            return shuffle_pattern_with_table(feature, TABLE_FOR_CORNER_3X3, FEATURE_SIZE[kind]);
+        if (kind == FeatureKind::CornerEdgeX)
+            return shuffle_pattern_with_table(feature, TABLE_FOR_CORNER_EDGE_X, FEATURE_SIZE[kind]);
+        return mirror_pattern(feature, FEATURE_SIZE[kind]);
+    }
 
     /**
      * @class
@@ -159,31 +208,26 @@ namespace evaluation
     public:
         static bool initialized;
 
-        uint16_t feature_values[FEATURE_NUM];
+        uint16_t patterns[FEATURE_NUM];
 
         inline reversi::DiscColor get_side_to_move() { return this->side_to_move; }
-        inline int get_empty_squares_count() { return this->empty_square_count; }
+        inline int get_empty_square_count() { return this->empty_square_count; }
 
         static void static_initializer();
 
         BoardFeature(reversi::Board& board);
         BoardFeature(BoardFeature& board_feature);
 
-        static uint16_t symmetric_transform_feature(FeatureKind kind, uint16_t feature);
-
-        __declspec(dllexport) void init(reversi::Board& board);
-        __declspec(dllexport) void update(reversi::Move& move);
-        __declspec(dllexport) void pass() { this->side_to_move = opponent_disc_color(this->side_to_move); }
-        __declspec(dllexport) void copy_to(BoardFeature& dest) { memmove(&dest, this, sizeof(BoardFeature)); }
+        DLL_EXPORT void init(reversi::Board& board);
+        DLL_EXPORT void update(reversi::Move& move);
+        DLL_EXPORT void pass() { this->side_to_move = opponent_disc_color(this->side_to_move); }
+        DLL_EXPORT void copy_to(BoardFeature& dest) { memmove(&dest, this, sizeof(BoardFeature)); }
 
     private:
         reversi::DiscColor side_to_move;
         int empty_square_count;
 
-        static uint16_t calc_opponent_feature(uint16_t feature, int size);
-        static uint16_t mirror_feature(uint16_t feature, int size);
-        static uint16_t shuffle_feature_with_table(uint16_t feature, const int* table, int size);
-        static void update_after_black_move(uint16_t* feature_values, reversi::Move& move);
-        static void update_after_white_move(uint16_t* feature_values, reversi::Move& move);
+        static void update_after_black_move(uint16_t* patterns, reversi::Move& move);
+        static void update_after_white_move(uint16_t* patterns, reversi::Move& move);
 	};
 }

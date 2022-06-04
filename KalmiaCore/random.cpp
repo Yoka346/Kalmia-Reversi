@@ -1,5 +1,7 @@
 #include "random.h"
 
+std::random_device Random::rand_device = std::random_device();
+
 inline uint32_t Random::next(uint32_t max) { return (uint32_t)next_64(max); }
 
 inline uint64_t Random::next_64(uint64_t max)

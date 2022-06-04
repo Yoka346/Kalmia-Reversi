@@ -1,6 +1,8 @@
 ﻿#ifndef PCH_H
 #define PCH_H
 
+#define DLL_EXPORT __declspec(dllexport)
+
 #include "config.h"
 
 #include <stddef.h>
@@ -23,10 +25,10 @@
 
 #include "initialize_callback.h"
 #include "constantarray.h"
+#include "readonlyarray.h"
+#include "mathfunction/mathfunction.h"
 #include "fastmath/fastmath.h"
 #include "arraymanipulation/arraymanipulation.h"
-
-typedef unsigned char byte;
 
 #endif //PCH_H
 

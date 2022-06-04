@@ -157,10 +157,10 @@ namespace Kalmia.IO
                 var i = 8;
                 foreach(var move in gameRecord.MoveRecord)
                 {
-                    if (move.Pos == BoardPosition.Pass)
+                    if (move.Coord == BoardCoordinate.Pass)
                         continue;
-                    var x = (byte)((int)move.Pos % Board.BOARD_SIZE + 1);
-                    var y = (byte)((int)move.Pos / Board.BOARD_SIZE + 1);
+                    var x = (byte)((int)move.Coord % Board.BOARD_SIZE + 1);
+                    var y = (byte)((int)move.Coord / Board.BOARD_SIZE + 1);
                     data[i++] = (byte)(x * 10 + y);
                 }
                 wtbFs.Write(data);
@@ -210,15 +210,15 @@ namespace Kalmia.IO
         List<Move> CreateMoveRecord(Span<byte> data)
         {
             var moveRecord = new List<Move>();
-            var board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            var board = new Board(DiscColor.Black);
             foreach (var d in data)
             {
                 if (d == 0)
                     break;
-                if (board.GetNextMoves()[0].Pos == BoardPosition.Pass)     // because pass is not described in WTHOR file, check if current board can be passed
+                if (board.GetNextMoves()[0].Coord == BoardCoordinate.Pass)     // because pass is not described in WTHOR file, check if current board can be passed
                                                                                                    // and if so add pass to move record.
                 {
-                    var pass = new Move(board.SideToMove, BoardPosition.Pass);
+                    var pass = new Move(board.SideToMove, BoardCoordinate.Pass);
                     board.Update(pass);
                     moveRecord.Add(pass);
                 }

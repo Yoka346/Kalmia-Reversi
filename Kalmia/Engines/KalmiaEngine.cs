@@ -364,7 +364,7 @@ namespace Kalmia.Engines
                 timeLimitCentiSec = (int)(this.timeController.RemainingTimeCentiSec[(int)color] * 0.7);
 
             IEndGameSolver solver;
-            BoardPosition movePos;
+            BoardCoordinate movePos;
             string resultStr;
             bool timeout;
             var foundWin = false;

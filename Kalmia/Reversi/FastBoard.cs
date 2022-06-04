@@ -233,7 +233,7 @@ namespace Kalmia.Reversi
             }
         }
 
-        public FastBoard() : this(new Board(DiscColor.Black, InitialBoardState.Cross)) { }
+        public FastBoard() : this(new Board(DiscColor.Black)) { }
 
         public FastBoard(Board board) : this(board.SideToMove, board.GetBitBoard()) { }
 
@@ -303,7 +303,7 @@ namespace Kalmia.Reversi
         /// <param name="pos"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetLastFlippedDiscDoubleCount(BoardPosition pos)
+        public int GetLastFlippedDiscDoubleCount(BoardCoordinate pos)
         {
             var colIdx = (int)pos & 7;  // same as (int)pos % 8
             var rowIdx = (int)pos >> 3; // same as (int)pos / 8
@@ -317,7 +317,7 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public DiscColor GetDiscColor(BoardPosition pos)
+        public DiscColor GetDiscColor(BoardCoordinate pos)
         {
             var x = (int)pos;
             var sideToMove = (ulong)this.SideToMove + 1UL;
@@ -326,7 +326,7 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PutCurrentPlayerDisc(BoardPosition pos)
+        public void PutCurrentPlayerDisc(BoardCoordinate pos)
         {
             var x = 1UL << (int)pos;
             this.bitboard.CurrentPlayer |= x;
@@ -334,7 +334,7 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PutOpponentPlayerDisc(BoardPosition pos)
+        public void PutOpponentPlayerDisc(BoardCoordinate pos)
         {
             var x = 1UL << (int)pos;
             this.bitboard.OpponentPlayer |= x;
@@ -342,14 +342,14 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsLegalPosition(BoardPosition pos)
+        public bool IsLegalPosition(BoardCoordinate pos)
         {
             var x = 1UL << (int)pos;
             var mobility = GetCurrentPlayerMobility();
-            return (PopCount(mobility) == 0 && pos == BoardPosition.Pass) || (mobility & x) != 0UL;
+            return (PopCount(mobility) == 0 && pos == BoardCoordinate.Pass) || (mobility & x) != 0UL;
         }
 
-        public void PutStoneWithoutFlip(DiscColor color, BoardPosition pos)
+        public void PutStoneWithoutFlip(DiscColor color, BoardCoordinate pos)
         {
             if (this.SideToMove == color)
             {
@@ -368,10 +368,10 @@ namespace Kalmia.Reversi
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ulong Update(BoardPosition pos)
+        public ulong Update(BoardCoordinate pos)
         {
             var flipped = 0UL;
-            if (pos != BoardPosition.Pass)
+            if (pos != BoardCoordinate.Pass)
             {
                 var x = 1UL << (byte)pos;
                 flipped = CalculateFlippedDiscs((byte)pos);
@@ -410,16 +410,16 @@ namespace Kalmia.Reversi
             this.SideToMove ^= DiscColor.White;
         }
 
-        public int GetNextPositionCandidates(BoardPosition[] positions) => GetNextPositionCandidates(positions.AsSpan());
+        public int GetNextPositionCandidates(BoardCoordinate[] positions) => GetNextPositionCandidates(positions.AsSpan());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetNextPositionCandidates(Span<BoardPosition> positions)
+        public int GetNextPositionCandidates(Span<BoardCoordinate> positions)
         {
             var mobility = GetCurrentPlayerMobility();
             var posCount = (int)PopCount(mobility);
             if (posCount == 0)
             {
-                positions[0] = BoardPosition.Pass;
+                positions[0] = BoardCoordinate.Pass;
                 return 1;
             }
 
@@ -428,17 +428,17 @@ namespace Kalmia.Reversi
             for (byte i = 0; idx < posCount; i++)
             {
                 if ((mobility & mask) != 0)
-                    positions[idx++] = (BoardPosition)i;
+                    positions[idx++] = (BoardCoordinate)i;
                 mask <<= 1;
             }
             return posCount;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetNextPositionsCandidatesNumAfter(BoardPosition pos)
+        public int GetNextPositionsCandidatesNumAfter(BoardCoordinate pos)
         {
             var bitboard = this.bitboard;
-            if (pos != BoardPosition.Pass)
+            if (pos != BoardCoordinate.Pass)
             {
                 var flipped = CalculateFlippedDiscs((int)pos);
                 bitboard.CurrentPlayer |= (flipped | (1UL << (int)pos));

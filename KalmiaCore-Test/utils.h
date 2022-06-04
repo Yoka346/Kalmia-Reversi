@@ -2,7 +2,8 @@
 #include "reversi/board.h"
 #include "random.h"
 
-Random& const SHARED_RAND;
+Random SHARED_RAND = Random();
+std::random_device Random::rand_device;
 
 void create_random_board(reversi::Board& board, int empty_square_count) 
 {

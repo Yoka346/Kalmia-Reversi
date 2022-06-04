@@ -58,20 +58,20 @@ namespace Kalmia.IO
             return root;
         }
 
-        public static BoardPosition SGFCoordinateToBoardPos(string sgfCoord)
+        public static BoardCoordinate SGFCoordinateToBoardPos(string sgfCoord)
         {
             if (sgfCoord == "tt" || sgfCoord == string.Empty)
-                return BoardPosition.Pass;
+                return BoardCoordinate.Pass;
 
             if (sgfCoord.Length != 2)
-                return BoardPosition.Null;
+                return BoardCoordinate.Null;
 
             var chars = sgfCoord.ToLower().ToCharArray();
             var x = chars[0] - 'a';
             var y = 7 - (chars[1] - 'a');
             if (x < 0 || y < 0 || x >= Board.BOARD_SIZE || y >= Board.BOARD_SIZE)
-                return BoardPosition.Null;
-            return (BoardPosition)(x + y * Board.BOARD_SIZE);
+                return BoardCoordinate.Null;
+            return (BoardCoordinate)(x + y * Board.BOARD_SIZE);
         }
 
         static void LoadNodes(SGFNode node, string text, ref int loc)

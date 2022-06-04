@@ -20,7 +20,7 @@ namespace KalmiaTest
             {
                 var board = new FastBoard();
                 var boardTest = new SlowBoard(DiscColor.Black, InitialBoardState.Cross);
-                var positons = new BoardPosition[SQUARE_NUM];
+                var positons = new BoardCoordinate[SQUARE_NUM];
                 var rand = new Random();
 
                 while (!boardTest.IsGameover())
@@ -30,7 +30,7 @@ namespace KalmiaTest
                     Assert.AreEqual(moves.Length, moveCount);
                     AssertMovesAreEqual(boardTest, moves, positons.Select(p => new Move(board.SideToMove, p)).ToArray(), moveCount);
                     var nextMove = moves[rand.Next(moveCount)];
-                    board.Update(nextMove.Pos);
+                    board.Update(nextMove.Coord);
                     boardTest.Update(nextMove);
                     AssertDiscsAreEqual(boardTest, board);
                 }
@@ -42,12 +42,12 @@ namespace KalmiaTest
         {
             const int SAMPLE_NUM = 1000;
             var rand = new Random();
-            var pos = new BoardPosition[1];
+            var pos = new BoardCoordinate[1];
             for (var i = 0; i < SAMPLE_NUM; i++)
             {
                 var board = CreateRandomBoard(rand, 1);
-                var num = board.GetNextPositionCandidates((Span<BoardPosition>)pos);
-                if (num == 0 || pos[0] == BoardPosition.Pass)
+                var num = board.GetNextPositionCandidates((Span<BoardCoordinate>)pos);
+                if (num == 0 || pos[0] == BoardCoordinate.Pass)
                     continue;
                 var actual = board.GetLastFlippedDiscDoubleCount(pos[0]) / 2;
                 var discCount = board.GetOpponentPlayerDiscCount();
@@ -86,7 +86,7 @@ namespace KalmiaTest
             bool equal = true;
             for(var x = 0; x < BOARD_SIZE; x++)
                 for(var y = 0; y < BOARD_SIZE; y++)
-                    if(expected.GetDiscColor(x, y) != actual.GetDiscColor((BoardPosition)(x + y * BOARD_SIZE)))
+                    if(expected.GetDiscColor(x, y) != actual.GetDiscColor((BoardCoordinate)(x + y * BOARD_SIZE)))
                     {
                         equal = false;
                         break;
@@ -126,7 +126,7 @@ namespace KalmiaTest
         FastBoard CreateRandomBoard(Random rand, int emptyCount)
         {
             var board = new FastBoard();
-            Span<BoardPosition> positions = stackalloc BoardPosition[MAX_MOVE_CANDIDATE_COUNT];
+            Span<BoardCoordinate> positions = stackalloc BoardCoordinate[MAX_MOVE_CANDIDATE_COUNT];
             while(board.GetEmptyCount() != emptyCount && board.GetGameResult() == GameResult.NotOver)
             {
                 var num = board.GetNextPositionCandidates(positions);

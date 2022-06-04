@@ -19,80 +19,80 @@ namespace Kalmia.Evaluation
         public const int PATTERN_TYPE_NUM = 13;
         public const int PATTERN_NUM_SUM = 47;
 
-        static readonly BoardPosition[][] PATTERN_POSITIONS = new BoardPosition[PATTERN_NUM_SUM][]
+        static readonly BoardCoordinate[][] PATTERN_POSITIONS = new BoardCoordinate[PATTERN_NUM_SUM][]
         {
            // corner3x3 
-           new BoardPosition[]{ BoardPosition.A1, BoardPosition.B1, BoardPosition.A2, BoardPosition.B2, BoardPosition.C1, BoardPosition.A3, BoardPosition.C2, BoardPosition.B3, BoardPosition.C3 },
-           new BoardPosition[]{ BoardPosition.H1, BoardPosition.G1, BoardPosition.H2, BoardPosition.G2, BoardPosition.F1, BoardPosition.H3, BoardPosition.F2, BoardPosition.G3, BoardPosition.F3 },
-           new BoardPosition[]{ BoardPosition.A8, BoardPosition.A7, BoardPosition.B8, BoardPosition.B7, BoardPosition.A6, BoardPosition.C8, BoardPosition.B6, BoardPosition.C7, BoardPosition.C6 },
-           new BoardPosition[]{ BoardPosition.H8, BoardPosition.H7, BoardPosition.G8, BoardPosition.G7, BoardPosition.H6, BoardPosition.F8, BoardPosition.G6, BoardPosition.F7, BoardPosition.F6 },
+           new BoardCoordinate[]{ BoardCoordinate.A1, BoardCoordinate.B1, BoardCoordinate.A2, BoardCoordinate.B2, BoardCoordinate.C1, BoardCoordinate.A3, BoardCoordinate.C2, BoardCoordinate.B3, BoardCoordinate.C3 },
+           new BoardCoordinate[]{ BoardCoordinate.H1, BoardCoordinate.G1, BoardCoordinate.H2, BoardCoordinate.G2, BoardCoordinate.F1, BoardCoordinate.H3, BoardCoordinate.F2, BoardCoordinate.G3, BoardCoordinate.F3 },
+           new BoardCoordinate[]{ BoardCoordinate.A8, BoardCoordinate.A7, BoardCoordinate.B8, BoardCoordinate.B7, BoardCoordinate.A6, BoardCoordinate.C8, BoardCoordinate.B6, BoardCoordinate.C7, BoardCoordinate.C6 },
+           new BoardCoordinate[]{ BoardCoordinate.H8, BoardCoordinate.H7, BoardCoordinate.G8, BoardCoordinate.G7, BoardCoordinate.H6, BoardCoordinate.F8, BoardCoordinate.G6, BoardCoordinate.F7, BoardCoordinate.F6 },
           
            // corner edge x 
-           new BoardPosition[]{ BoardPosition.A5, BoardPosition.A4, BoardPosition.A3, BoardPosition.A2, BoardPosition.A1, BoardPosition.B2, BoardPosition.B1, BoardPosition.C1, BoardPosition.D1, BoardPosition.E1 },
-           new BoardPosition[]{ BoardPosition.H5, BoardPosition.H4, BoardPosition.H3, BoardPosition.H2, BoardPosition.H1, BoardPosition.G2, BoardPosition.G1, BoardPosition.F1, BoardPosition.E1, BoardPosition.D1 },
-           new BoardPosition[]{ BoardPosition.A4, BoardPosition.A5, BoardPosition.A6, BoardPosition.A7, BoardPosition.A8, BoardPosition.B7, BoardPosition.B8, BoardPosition.C8, BoardPosition.D8, BoardPosition.E8 },
-           new BoardPosition[]{ BoardPosition.H4, BoardPosition.H5, BoardPosition.H6, BoardPosition.H7, BoardPosition.H8, BoardPosition.G7, BoardPosition.G8, BoardPosition.F8, BoardPosition.E8, BoardPosition.D8 },
+           new BoardCoordinate[]{ BoardCoordinate.A5, BoardCoordinate.A4, BoardCoordinate.A3, BoardCoordinate.A2, BoardCoordinate.A1, BoardCoordinate.B2, BoardCoordinate.B1, BoardCoordinate.C1, BoardCoordinate.D1, BoardCoordinate.E1 },
+           new BoardCoordinate[]{ BoardCoordinate.H5, BoardCoordinate.H4, BoardCoordinate.H3, BoardCoordinate.H2, BoardCoordinate.H1, BoardCoordinate.G2, BoardCoordinate.G1, BoardCoordinate.F1, BoardCoordinate.E1, BoardCoordinate.D1 },
+           new BoardCoordinate[]{ BoardCoordinate.A4, BoardCoordinate.A5, BoardCoordinate.A6, BoardCoordinate.A7, BoardCoordinate.A8, BoardCoordinate.B7, BoardCoordinate.B8, BoardCoordinate.C8, BoardCoordinate.D8, BoardCoordinate.E8 },
+           new BoardCoordinate[]{ BoardCoordinate.H4, BoardCoordinate.H5, BoardCoordinate.H6, BoardCoordinate.H7, BoardCoordinate.H8, BoardCoordinate.G7, BoardCoordinate.G8, BoardCoordinate.F8, BoardCoordinate.E8, BoardCoordinate.D8 },
 
            // edge 2x 
-           new BoardPosition[]{ BoardPosition.B2, BoardPosition.A1, BoardPosition.B1, BoardPosition.C1, BoardPosition.D1, BoardPosition.E1, BoardPosition.F1, BoardPosition.G1, BoardPosition.H1, BoardPosition.G2 },
-           new BoardPosition[]{ BoardPosition.B7, BoardPosition.A8, BoardPosition.B8, BoardPosition.C8, BoardPosition.D8, BoardPosition.E8, BoardPosition.F8, BoardPosition.G8, BoardPosition.H8, BoardPosition.G7 },
-           new BoardPosition[]{ BoardPosition.B2, BoardPosition.A1, BoardPosition.A2, BoardPosition.A3, BoardPosition.A4, BoardPosition.A5, BoardPosition.A6, BoardPosition.A7, BoardPosition.A8, BoardPosition.B7 },
-           new BoardPosition[]{ BoardPosition.G2, BoardPosition.H1, BoardPosition.H2, BoardPosition.H3, BoardPosition.H4, BoardPosition.H5, BoardPosition.H6, BoardPosition.H7, BoardPosition.H8, BoardPosition.G7 },
+           new BoardCoordinate[]{ BoardCoordinate.B2, BoardCoordinate.A1, BoardCoordinate.B1, BoardCoordinate.C1, BoardCoordinate.D1, BoardCoordinate.E1, BoardCoordinate.F1, BoardCoordinate.G1, BoardCoordinate.H1, BoardCoordinate.G2 },
+           new BoardCoordinate[]{ BoardCoordinate.B7, BoardCoordinate.A8, BoardCoordinate.B8, BoardCoordinate.C8, BoardCoordinate.D8, BoardCoordinate.E8, BoardCoordinate.F8, BoardCoordinate.G8, BoardCoordinate.H8, BoardCoordinate.G7 },
+           new BoardCoordinate[]{ BoardCoordinate.B2, BoardCoordinate.A1, BoardCoordinate.A2, BoardCoordinate.A3, BoardCoordinate.A4, BoardCoordinate.A5, BoardCoordinate.A6, BoardCoordinate.A7, BoardCoordinate.A8, BoardCoordinate.B7 },
+           new BoardCoordinate[]{ BoardCoordinate.G2, BoardCoordinate.H1, BoardCoordinate.H2, BoardCoordinate.H3, BoardCoordinate.H4, BoardCoordinate.H5, BoardCoordinate.H6, BoardCoordinate.H7, BoardCoordinate.H8, BoardCoordinate.G7 },
 
            // edge4x2 2x 
-           new BoardPosition[]{ BoardPosition.A1, BoardPosition.C1, BoardPosition.D1, BoardPosition.C2, BoardPosition.D2, BoardPosition.E2, BoardPosition.F2, BoardPosition.E1, BoardPosition.F1, BoardPosition.H1 },
-           new BoardPosition[]{ BoardPosition.A8, BoardPosition.C8, BoardPosition.D8, BoardPosition.C7, BoardPosition.D7, BoardPosition.E7, BoardPosition.F7, BoardPosition.E8, BoardPosition.F8, BoardPosition.H8 },
-           new BoardPosition[]{ BoardPosition.A1, BoardPosition.A3, BoardPosition.A4, BoardPosition.B3, BoardPosition.B4, BoardPosition.B5, BoardPosition.B6, BoardPosition.A5, BoardPosition.A6, BoardPosition.A8 },
-           new BoardPosition[]{ BoardPosition.H1, BoardPosition.H3, BoardPosition.H4, BoardPosition.G3, BoardPosition.G4, BoardPosition.G5, BoardPosition.G6, BoardPosition.H5, BoardPosition.H6, BoardPosition.H8 },
+           new BoardCoordinate[]{ BoardCoordinate.A1, BoardCoordinate.C1, BoardCoordinate.D1, BoardCoordinate.C2, BoardCoordinate.D2, BoardCoordinate.E2, BoardCoordinate.F2, BoardCoordinate.E1, BoardCoordinate.F1, BoardCoordinate.H1 },
+           new BoardCoordinate[]{ BoardCoordinate.A8, BoardCoordinate.C8, BoardCoordinate.D8, BoardCoordinate.C7, BoardCoordinate.D7, BoardCoordinate.E7, BoardCoordinate.F7, BoardCoordinate.E8, BoardCoordinate.F8, BoardCoordinate.H8 },
+           new BoardCoordinate[]{ BoardCoordinate.A1, BoardCoordinate.A3, BoardCoordinate.A4, BoardCoordinate.B3, BoardCoordinate.B4, BoardCoordinate.B5, BoardCoordinate.B6, BoardCoordinate.A5, BoardCoordinate.A6, BoardCoordinate.A8 },
+           new BoardCoordinate[]{ BoardCoordinate.H1, BoardCoordinate.H3, BoardCoordinate.H4, BoardCoordinate.G3, BoardCoordinate.G4, BoardCoordinate.G5, BoardCoordinate.G6, BoardCoordinate.H5, BoardCoordinate.H6, BoardCoordinate.H8 },
 
            // horizontal and vertical line (row = 2 or column = 2)
-           new BoardPosition[]{ BoardPosition.A2, BoardPosition.B2, BoardPosition.C2, BoardPosition.D2, BoardPosition.E2, BoardPosition.F2, BoardPosition.G2, BoardPosition.H2 },
-           new BoardPosition[]{ BoardPosition.A7, BoardPosition.B7, BoardPosition.C7, BoardPosition.D7, BoardPosition.E7, BoardPosition.F7, BoardPosition.G7, BoardPosition.H7 },
-           new BoardPosition[]{ BoardPosition.B1, BoardPosition.B2, BoardPosition.B3, BoardPosition.B4, BoardPosition.B5, BoardPosition.B6, BoardPosition.B7, BoardPosition.B8 },
-           new BoardPosition[]{ BoardPosition.G1, BoardPosition.G2, BoardPosition.G3, BoardPosition.G4, BoardPosition.G5, BoardPosition.G6, BoardPosition.G7, BoardPosition.G8 },
+           new BoardCoordinate[]{ BoardCoordinate.A2, BoardCoordinate.B2, BoardCoordinate.C2, BoardCoordinate.D2, BoardCoordinate.E2, BoardCoordinate.F2, BoardCoordinate.G2, BoardCoordinate.H2 },
+           new BoardCoordinate[]{ BoardCoordinate.A7, BoardCoordinate.B7, BoardCoordinate.C7, BoardCoordinate.D7, BoardCoordinate.E7, BoardCoordinate.F7, BoardCoordinate.G7, BoardCoordinate.H7 },
+           new BoardCoordinate[]{ BoardCoordinate.B1, BoardCoordinate.B2, BoardCoordinate.B3, BoardCoordinate.B4, BoardCoordinate.B5, BoardCoordinate.B6, BoardCoordinate.B7, BoardCoordinate.B8 },
+           new BoardCoordinate[]{ BoardCoordinate.G1, BoardCoordinate.G2, BoardCoordinate.G3, BoardCoordinate.G4, BoardCoordinate.G5, BoardCoordinate.G6, BoardCoordinate.G7, BoardCoordinate.G8 },
 
            // horizontal and vertical line (row = 3 or column = 3)
-           new BoardPosition[]{ BoardPosition.A3, BoardPosition.B3, BoardPosition.C3, BoardPosition.D3, BoardPosition.E3, BoardPosition.F3, BoardPosition.G3, BoardPosition.H3 },
-           new BoardPosition[]{ BoardPosition.A6, BoardPosition.B6, BoardPosition.C6, BoardPosition.D6, BoardPosition.E6, BoardPosition.F6, BoardPosition.G6, BoardPosition.H6 },
-           new BoardPosition[]{ BoardPosition.C1, BoardPosition.C2, BoardPosition.C3, BoardPosition.C4, BoardPosition.C5, BoardPosition.C6, BoardPosition.C7, BoardPosition.C8 },
-           new BoardPosition[]{ BoardPosition.F1, BoardPosition.F2, BoardPosition.F3, BoardPosition.F4, BoardPosition.F5, BoardPosition.F6, BoardPosition.F7, BoardPosition.F8 },
+           new BoardCoordinate[]{ BoardCoordinate.A3, BoardCoordinate.B3, BoardCoordinate.C3, BoardCoordinate.D3, BoardCoordinate.E3, BoardCoordinate.F3, BoardCoordinate.G3, BoardCoordinate.H3 },
+           new BoardCoordinate[]{ BoardCoordinate.A6, BoardCoordinate.B6, BoardCoordinate.C6, BoardCoordinate.D6, BoardCoordinate.E6, BoardCoordinate.F6, BoardCoordinate.G6, BoardCoordinate.H6 },
+           new BoardCoordinate[]{ BoardCoordinate.C1, BoardCoordinate.C2, BoardCoordinate.C3, BoardCoordinate.C4, BoardCoordinate.C5, BoardCoordinate.C6, BoardCoordinate.C7, BoardCoordinate.C8 },
+           new BoardCoordinate[]{ BoardCoordinate.F1, BoardCoordinate.F2, BoardCoordinate.F3, BoardCoordinate.F4, BoardCoordinate.F5, BoardCoordinate.F6, BoardCoordinate.F7, BoardCoordinate.F8 },
 
            // horizontal and vertical line (row = 4 or column = 4)
-           new BoardPosition[]{ BoardPosition.A4, BoardPosition.B4, BoardPosition.C4, BoardPosition.D4, BoardPosition.E4, BoardPosition.F4, BoardPosition.G4, BoardPosition.H4 },
-           new BoardPosition[]{ BoardPosition.A5, BoardPosition.B5, BoardPosition.C5, BoardPosition.D5, BoardPosition.E5, BoardPosition.F5, BoardPosition.G5, BoardPosition.H5 },
-           new BoardPosition[]{ BoardPosition.D1, BoardPosition.D2, BoardPosition.D3, BoardPosition.D4, BoardPosition.D5, BoardPosition.D6, BoardPosition.D7, BoardPosition.D8 },
-           new BoardPosition[]{ BoardPosition.E1, BoardPosition.E2, BoardPosition.E3, BoardPosition.E4, BoardPosition.E5, BoardPosition.E6, BoardPosition.E7, BoardPosition.E8 },
+           new BoardCoordinate[]{ BoardCoordinate.A4, BoardCoordinate.B4, BoardCoordinate.C4, BoardCoordinate.D4, BoardCoordinate.E4, BoardCoordinate.F4, BoardCoordinate.G4, BoardCoordinate.H4 },
+           new BoardCoordinate[]{ BoardCoordinate.A5, BoardCoordinate.B5, BoardCoordinate.C5, BoardCoordinate.D5, BoardCoordinate.E5, BoardCoordinate.F5, BoardCoordinate.G5, BoardCoordinate.H5 },
+           new BoardCoordinate[]{ BoardCoordinate.D1, BoardCoordinate.D2, BoardCoordinate.D3, BoardCoordinate.D4, BoardCoordinate.D5, BoardCoordinate.D6, BoardCoordinate.D7, BoardCoordinate.D8 },
+           new BoardCoordinate[]{ BoardCoordinate.E1, BoardCoordinate.E2, BoardCoordinate.E3, BoardCoordinate.E4, BoardCoordinate.E5, BoardCoordinate.E6, BoardCoordinate.E7, BoardCoordinate.E8 },
 
            // diagonal line 0
-           new BoardPosition[]{ BoardPosition.A1, BoardPosition.B2, BoardPosition.C3, BoardPosition.D4, BoardPosition.E5, BoardPosition.F6, BoardPosition.G7, BoardPosition.H8 },
-           new BoardPosition[]{ BoardPosition.A8, BoardPosition.B7, BoardPosition.C6, BoardPosition.D5, BoardPosition.E4, BoardPosition.F3, BoardPosition.G2, BoardPosition.H1 },
+           new BoardCoordinate[]{ BoardCoordinate.A1, BoardCoordinate.B2, BoardCoordinate.C3, BoardCoordinate.D4, BoardCoordinate.E5, BoardCoordinate.F6, BoardCoordinate.G7, BoardCoordinate.H8 },
+           new BoardCoordinate[]{ BoardCoordinate.A8, BoardCoordinate.B7, BoardCoordinate.C6, BoardCoordinate.D5, BoardCoordinate.E4, BoardCoordinate.F3, BoardCoordinate.G2, BoardCoordinate.H1 },
 
            // diagonal line 1
-           new BoardPosition[]{ BoardPosition.B1, BoardPosition.C2, BoardPosition.D3, BoardPosition.E4, BoardPosition.F5, BoardPosition.G6, BoardPosition.H7 },
-           new BoardPosition[]{ BoardPosition.H2, BoardPosition.G3, BoardPosition.F4, BoardPosition.E5, BoardPosition.D6, BoardPosition.C7, BoardPosition.B8 },
-           new BoardPosition[]{ BoardPosition.A2, BoardPosition.B3, BoardPosition.C4, BoardPosition.D5, BoardPosition.E6, BoardPosition.F7, BoardPosition.G8 },
-           new BoardPosition[]{ BoardPosition.G1, BoardPosition.F2, BoardPosition.E3, BoardPosition.D4, BoardPosition.C5, BoardPosition.B6, BoardPosition.A7 },
+           new BoardCoordinate[]{ BoardCoordinate.B1, BoardCoordinate.C2, BoardCoordinate.D3, BoardCoordinate.E4, BoardCoordinate.F5, BoardCoordinate.G6, BoardCoordinate.H7 },
+           new BoardCoordinate[]{ BoardCoordinate.H2, BoardCoordinate.G3, BoardCoordinate.F4, BoardCoordinate.E5, BoardCoordinate.D6, BoardCoordinate.C7, BoardCoordinate.B8 },
+           new BoardCoordinate[]{ BoardCoordinate.A2, BoardCoordinate.B3, BoardCoordinate.C4, BoardCoordinate.D5, BoardCoordinate.E6, BoardCoordinate.F7, BoardCoordinate.G8 },
+           new BoardCoordinate[]{ BoardCoordinate.G1, BoardCoordinate.F2, BoardCoordinate.E3, BoardCoordinate.D4, BoardCoordinate.C5, BoardCoordinate.B6, BoardCoordinate.A7 },
 
            // diagonal line 2
-           new BoardPosition[]{ BoardPosition.C1, BoardPosition.D2, BoardPosition.E3, BoardPosition.F4, BoardPosition.G5, BoardPosition.H6 },
-           new BoardPosition[]{ BoardPosition.A3, BoardPosition.B4, BoardPosition.C5, BoardPosition.D6, BoardPosition.E7, BoardPosition.F8 },
-           new BoardPosition[]{ BoardPosition.F1, BoardPosition.E2, BoardPosition.D3, BoardPosition.C4, BoardPosition.B5, BoardPosition.A6 },
-           new BoardPosition[]{ BoardPosition.H3, BoardPosition.G4, BoardPosition.F5, BoardPosition.E6, BoardPosition.D7, BoardPosition.C8 },
+           new BoardCoordinate[]{ BoardCoordinate.C1, BoardCoordinate.D2, BoardCoordinate.E3, BoardCoordinate.F4, BoardCoordinate.G5, BoardCoordinate.H6 },
+           new BoardCoordinate[]{ BoardCoordinate.A3, BoardCoordinate.B4, BoardCoordinate.C5, BoardCoordinate.D6, BoardCoordinate.E7, BoardCoordinate.F8 },
+           new BoardCoordinate[]{ BoardCoordinate.F1, BoardCoordinate.E2, BoardCoordinate.D3, BoardCoordinate.C4, BoardCoordinate.B5, BoardCoordinate.A6 },
+           new BoardCoordinate[]{ BoardCoordinate.H3, BoardCoordinate.G4, BoardCoordinate.F5, BoardCoordinate.E6, BoardCoordinate.D7, BoardCoordinate.C8 },
 
            // diagonal line 3
-           new BoardPosition[]{ BoardPosition.D1, BoardPosition.E2, BoardPosition.F3, BoardPosition.G4, BoardPosition.H5 },
-           new BoardPosition[]{ BoardPosition.A4, BoardPosition.B5, BoardPosition.C6, BoardPosition.D7, BoardPosition.E8 },
-           new BoardPosition[]{ BoardPosition.E1, BoardPosition.D2, BoardPosition.C3, BoardPosition.B4, BoardPosition.A5 },
-           new BoardPosition[]{ BoardPosition.H4, BoardPosition.G5, BoardPosition.F6, BoardPosition.E7, BoardPosition.D8 },
+           new BoardCoordinate[]{ BoardCoordinate.D1, BoardCoordinate.E2, BoardCoordinate.F3, BoardCoordinate.G4, BoardCoordinate.H5 },
+           new BoardCoordinate[]{ BoardCoordinate.A4, BoardCoordinate.B5, BoardCoordinate.C6, BoardCoordinate.D7, BoardCoordinate.E8 },
+           new BoardCoordinate[]{ BoardCoordinate.E1, BoardCoordinate.D2, BoardCoordinate.C3, BoardCoordinate.B4, BoardCoordinate.A5 },
+           new BoardCoordinate[]{ BoardCoordinate.H4, BoardCoordinate.G5, BoardCoordinate.F6, BoardCoordinate.E7, BoardCoordinate.D8 },
 
            // diagonal line 4
-           new BoardPosition[]{ BoardPosition.D1, BoardPosition.C2, BoardPosition.B3, BoardPosition.A4 },
-           new BoardPosition[]{ BoardPosition.A5, BoardPosition.B6, BoardPosition.C7, BoardPosition.D8 },
-           new BoardPosition[]{ BoardPosition.E1, BoardPosition.F2, BoardPosition.G3, BoardPosition.H4 },
-           new BoardPosition[]{ BoardPosition.H5, BoardPosition.G6, BoardPosition.F7, BoardPosition.E8 },
+           new BoardCoordinate[]{ BoardCoordinate.D1, BoardCoordinate.C2, BoardCoordinate.B3, BoardCoordinate.A4 },
+           new BoardCoordinate[]{ BoardCoordinate.A5, BoardCoordinate.B6, BoardCoordinate.C7, BoardCoordinate.D8 },
+           new BoardCoordinate[]{ BoardCoordinate.E1, BoardCoordinate.F2, BoardCoordinate.G3, BoardCoordinate.H4 },
+           new BoardCoordinate[]{ BoardCoordinate.H5, BoardCoordinate.G6, BoardCoordinate.F7, BoardCoordinate.E8 },
 
            // bias
-           new BoardPosition[0]
+           new BoardCoordinate[0]
         };
 
         // the number of square of each pattern. e.g.) corner3x3 has 9 squares.
@@ -124,7 +124,7 @@ namespace Kalmia.Evaluation
         public static ReadOnlySpan<int> PackedPatternFeatureNum { get { return PACKED_PATTERN_FEATURE_NUM; } }
 
         readonly int[] FEATURES = new int[PATTERN_NUM_SUM];
-        readonly Action<BoardPosition, ulong>[] UPDATE_CALLBACKS;
+        readonly Action<BoardCoordinate, ulong>[] UPDATE_CALLBACKS;
 
         public DiscColor SideToMove { get; private set; }
         public int EmptyCount { get; private set; }
@@ -149,7 +149,7 @@ namespace Kalmia.Evaluation
                 {
                     var positions = PATTERN_POSITIONS[patternIdx];
                     var size = positions.Length;
-                    var idx = Array.IndexOf(positions, (BoardPosition)pos);
+                    var idx = Array.IndexOf(positions, (BoardCoordinate)pos);
                     if (idx == -1)
                         continue;
                     featureList.Add((patternIdx, FastMath.Pow3(size - idx - 1)));
@@ -163,13 +163,13 @@ namespace Kalmia.Evaluation
         public BoardFeature(FastBoard board)
         {
             InitFeatures(board);
-            this.UPDATE_CALLBACKS = new Action<BoardPosition, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
+            this.UPDATE_CALLBACKS = new Action<BoardCoordinate, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
         }
 
         public BoardFeature(BoardFeature board)
         {
             board.CopyTo(this);
-            this.UPDATE_CALLBACKS = new Action<BoardPosition, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
+            this.UPDATE_CALLBACKS = new Action<BoardCoordinate, ulong>[2] { UpdateAfterBlackMove, UpdateAfterWhiteMove };
         }
 
         public void InitFeatures(FastBoard board)
@@ -184,9 +184,9 @@ namespace Kalmia.Evaluation
             this.EmptyCount = board.GetEmptyCount();
         }
 
-        public void Update(BoardPosition pos, ulong flipped)   
+        public void Update(BoardCoordinate pos, ulong flipped)   
         {
-            if (pos != BoardPosition.Pass)
+            if (pos != BoardCoordinate.Pass)
             {
                 this.UPDATE_CALLBACKS[(int)this.SideToMove](pos, flipped);
                 this.EmptyCount--;
@@ -224,7 +224,7 @@ namespace Kalmia.Evaluation
             return base.GetHashCode();
         }
 
-        void UpdateAfterBlackMove(BoardPosition pos, ulong flipped)
+        void UpdateAfterBlackMove(BoardCoordinate pos, ulong flipped)
         {
             var features = this.FEATURES;
             var posToFeature = POSITION_TO_FEATURE[(int)pos];
@@ -240,7 +240,7 @@ namespace Kalmia.Evaluation
             }
         }
 
-        void UpdateAfterWhiteMove(BoardPosition pos, ulong flipped)
+        void UpdateAfterWhiteMove(BoardCoordinate pos, ulong flipped)
         {
             var features = this.FEATURES;
             var posToFeature = POSITION_TO_FEATURE[(int)pos];

@@ -17,7 +17,7 @@ namespace Kalmia.GoTextProtocol
         {
             this.NAME = name;
             this.VERSION = version;
-            this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            this.board = new Board(DiscColor.Black);
         }
 
         public abstract void Quit();
@@ -39,7 +39,7 @@ namespace Kalmia.GoTextProtocol
 
         public virtual void ClearBoard()
         {
-            this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            this.board = new Board(DiscColor.Black);
         }
 
         public DiscColor GetColor(int posX, int posY)
@@ -123,22 +123,22 @@ namespace Kalmia.GoTextProtocol
 
         public virtual string LoadSGF(string path)
         {
-            return LoadSGF(path, int.MaxValue, BoardPosition.Null);
+            return LoadSGF(path, int.MaxValue, BoardCoordinate.Null);
         }
 
         public virtual string LoadSGF(string path, int posX, int posY)
         {
-            return LoadSGF(path, int.MaxValue, (BoardPosition)(posX + posY * Board.BOARD_SIZE));
+            return LoadSGF(path, int.MaxValue, (BoardCoordinate)(posX + posY * Board.BOARD_SIZE));
         }
 
         public virtual string LoadSGF(string path, int moveCount) 
         {
-            return LoadSGF(path, moveCount, BoardPosition.Null);
+            return LoadSGF(path, moveCount, BoardCoordinate.Null);
         }
 
-        string LoadSGF(string path, int moveCount, BoardPosition pos)
+        string LoadSGF(string path, int moveCount, BoardCoordinate pos)
         {
-            this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            this.board = new Board(DiscColor.Black);
             var node = SGFFile.LoadSGFFile(path);
             var currentMoveCount = 0;
             while (true)
@@ -157,7 +157,7 @@ namespace Kalmia.GoTextProtocol
 
                     var sgfCoord = node.GetMove(this.board.SideToMove);
                     var move = new Move(this.board.SideToMove, SGFFile.SGFCoordinateToBoardPos(sgfCoord));
-                    if (move.Pos == pos)
+                    if (move.Coord == pos)
                         break;
                     if (!this.board.Update(move))
                         throw new GTPException("specified SGF file contains invalid move.");

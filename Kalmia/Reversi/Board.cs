@@ -1,23 +1,106 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Numerics;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
+
+using static Kalmia.Reversi.Board;
 
 namespace Kalmia.Reversi
 {
-    public enum InitialBoardState
-    {
-        Cross,
-        Parallel
-    }
-
     public enum GameResult : sbyte
     {
         Win = 1,
-        Draw = 0,
         Loss = -1,
+        Draw = 0,
         NotOver = -2
     }
-  
+
+    public enum DiscColor : sbyte
+    {
+        Black = 0,
+        Null = 2,
+        White = 1
+    }
+
+    public enum BoardCoordinate : byte
+    {
+        A1, B1, C1, D1, E1, F1, G1, H1,
+        A2, B2, C2, D2, E2, F2, G2, H2,
+        A3, B3, C3, D3, E3, F3, G3, H3,
+        A4, B4, C4, D4, E4, F4, G4, H4,
+        A5, B5, C5, D5, E5, F5, G5, H5,
+        A6, B6, C6, D6, E6, F6, G6, H6,
+        A7, B7, C7, D7, E7, F7, G7, H7,
+        A8, B8, C8, D8, E8, F8, G8, H8,
+        Pass, Null
+    }
+
+    public struct Move
+    {
+        public static Move Null { get; } = new Move(DiscColor.Null, BoardCoordinate.Null);
+
+        public DiscColor Color;
+        public BoardCoordinate Coord;
+
+        public int CoordX { get { return (byte)this.Coord % BOARD_SIZE; } }
+        public int CoordY { get { return (byte)this.Coord / BOARD_SIZE; } }
+
+        public Move(DiscColor color, string pos) : this(color, StringToPosition(pos)) { }
+
+        public Move(DiscColor color, (int x, int y) coord) : this(color, coord.x, coord.y) { }
+
+        public Move(DiscColor color, int x, int y) : this(color, (BoardCoordinate)(x + y * BOARD_SIZE)) { }
+
+        public Move(DiscColor color, BoardCoordinate coord)
+        {
+            this.Color = color;
+            this.Coord = coord;
+        }
+
+        public override string ToString()
+        {
+            if (this.Coord == BoardCoordinate.Pass)
+                return "pass";
+
+            var posX = (char)('A' + (byte)this.Coord % BOARD_SIZE);
+            var posY = (byte)this.Coord / BOARD_SIZE;
+            return $"{char.ToUpper(posX)}{posY + 1}";
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Move))
+                return false;
+            return this == (Move)obj;
+        }
+
+        public override int GetHashCode()   // This method will not be used. I implemented this just to suppress a caution.
+        {
+            return (int)this.Color * (byte)this.Coord;
+        }
+
+        public static bool operator ==(Move left, Move right)
+        {
+            return (left.Color == right.Color) && (left.Coord == right.Coord);
+        }
+
+        public static bool operator !=(Move left, Move right)
+        {
+            return !(left == right);
+        }
+
+        public static BoardCoordinate StringToPosition(string pos)
+        {
+            if (pos.ToLower() == "pass")
+                return BoardCoordinate.Pass;
+            var posX = char.ToLower(pos[0]) - 'a';
+            var posY = int.Parse(pos[1].ToString()) - 1;
+            return (BoardCoordinate)(posX + posY * BOARD_SIZE);
+        }
+    }
+
     public class Board
     {
         public const int BOARD_SIZE = 8;
@@ -31,22 +114,12 @@ namespace Kalmia.Reversi
         public DiscColor SideToMove { get { return fastBoard.SideToMove; } }
         public DiscColor Opponent { get { return fastBoard.Opponent; } }
 
-        public Board(DiscColor sideToMove, InitialBoardState initState) : this(sideToMove, 0UL, 0UL)
+        public Board(DiscColor sideToMove) : this (sideToMove, 0UL, 0UL)
         {
-            if(initState == InitialBoardState.Cross)
-            {
-                this.fastBoard.PutCurrentPlayerDisc(BoardPosition.E4);
-                this.fastBoard.PutCurrentPlayerDisc(BoardPosition.D5);
-                this.fastBoard.PutOpponentPlayerDisc(BoardPosition.D4);
-                this.fastBoard.PutOpponentPlayerDisc(BoardPosition.E5);
-            }
-            else
-            {
-                this.fastBoard.PutCurrentPlayerDisc(BoardPosition.D5);
-                this.fastBoard.PutCurrentPlayerDisc(BoardPosition.E5);
-                this.fastBoard.PutOpponentPlayerDisc(BoardPosition.D4);
-                this.fastBoard.PutOpponentPlayerDisc(BoardPosition.E4);
-            }
+            this.fastBoard.PutCurrentPlayerDisc(BoardCoordinate.E4);
+            this.fastBoard.PutCurrentPlayerDisc(BoardCoordinate.D5);
+            this.fastBoard.PutOpponentPlayerDisc(BoardCoordinate.D4);
+            this.fastBoard.PutOpponentPlayerDisc(BoardCoordinate.E5);
         }
 
         public Board(DiscColor sideToMove, Bitboard bitboard):this(sideToMove, bitboard.CurrentPlayer, bitboard.OpponentPlayer) { }
@@ -95,10 +168,10 @@ namespace Kalmia.Reversi
 
         public DiscColor GetColor(int posX, int posY)
         {
-            return GetDiscColor((BoardPosition)(posX + posY * BOARD_SIZE));
+            return GetDiscColor((BoardCoordinate)(posX + posY * BOARD_SIZE));
         }
 
-        public DiscColor GetDiscColor(BoardPosition pos)
+        public DiscColor GetDiscColor(BoardCoordinate pos)
         {
             return this.fastBoard.GetDiscColor(pos);
         }
@@ -140,10 +213,10 @@ namespace Kalmia.Reversi
 
         public void Put(DiscColor color, int posX, int posY)
         {
-            Put(color, (BoardPosition)(posX + posY * BOARD_SIZE));
+            Put(color, (BoardCoordinate)(posX + posY * BOARD_SIZE));
         }
 
-        public void Put(DiscColor color, BoardPosition pos)
+        public void Put(DiscColor color, BoardCoordinate pos)
         {
             this.boardHistory.Push(this.fastBoard.GetBitboard());
             if (color == this.SideToMove)
@@ -154,10 +227,10 @@ namespace Kalmia.Reversi
 
         public bool Update(Move move)
         {
-            if (move.Color != this.SideToMove || !this.fastBoard.IsLegalPosition(move.Pos))
+            if (move.Color != this.SideToMove || !this.fastBoard.IsLegalPosition(move.Coord))
                 return false;
             this.boardHistory.Push(this.fastBoard.GetBitboard());
-            this.fastBoard.Update(move.Pos);
+            this.fastBoard.Update(move.Coord);
             return true;
         }
 
@@ -174,12 +247,12 @@ namespace Kalmia.Reversi
         {
             if (move.Color != this.SideToMove)
                 return false;
-            return fastBoard.IsLegalPosition(move.Pos);
+            return fastBoard.IsLegalPosition(move.Coord);
         }
 
         public Move[] GetNextMoves()
         {
-            var positions = new BoardPosition[MAX_MOVE_CANDIDATE_COUNT];
+            var positions = new BoardCoordinate[MAX_MOVE_CANDIDATE_COUNT];
             var count = this.fastBoard.GetNextPositionCandidates(positions);
             return (from pos in positions[..count] select new Move(this.SideToMove, pos)).ToArray();
         }
@@ -222,11 +295,11 @@ namespace Kalmia.Reversi
             return sb.ToString();
         }
 
-        static BoardPosition StringToPos(string pos)
+        static BoardCoordinate StringToPos(string pos)
         {
             var posX = char.ToLower(pos[0]) - 'a';
             var posY = int.Parse(pos[1].ToString()) - 1;
-            return (BoardPosition)(posX + posY * BOARD_SIZE);
+            return (BoardCoordinate)(posX + posY * BOARD_SIZE);
         }
     }
 }

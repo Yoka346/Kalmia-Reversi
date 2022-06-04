@@ -14,12 +14,12 @@
 
 inline int popcount(uint64_t bits)
 {
-	bits = ((bits & 0xaaaaaaaaaaaaaaaaUL) >> 1) + (bits & 0x5555555555555555UL);
-	bits = ((bits & 0xccccccccccccccccUL) >> 2) + (bits & 0x3333333333333333UL);
-	bits = ((bits & 0xf0f0f0f0f0f0f0f0UL) >> 4) + (bits & 0x0f0f0f0f0f0f0f0fUL);
-	bits = ((bits & 0xff00ff00ff00ff00UL) >> 8) + (bits & 0x00ff00ff00ff00ffUL);
-	bits = ((bits & 0xffff0000ffff0000UL) >> 16) + (bits & 0x0000ffff0000ffffUL);
-	bits = ((bits & 0xffffffff00000000UL) >> 32) + (bits & 0x00000000ffffffffUL);
+	bits = ((bits & 0xaaaaaaaaaaaaaaaaULL) >> 1) + (bits & 0x5555555555555555ULL);
+	bits = ((bits & 0xccccccccccccccccULL) >> 2) + (bits & 0x3333333333333333ULL);
+	bits = ((bits & 0xf0f0f0f0f0f0f0f0ULL) >> 4) + (bits & 0x0f0f0f0f0f0f0f0fULL);
+	bits = ((bits & 0xff00ff00ff00ff00ULL) >> 8) + (bits & 0x00ff00ff00ff00ffULL);
+	bits = ((bits & 0xffff0000ffff0000ULL) >> 16) + (bits & 0x0000ffff0000ffffULL);
+	bits = ((bits & 0xffffffff00000000ULL) >> 32) + (bits & 0x00000000ffffffffULL);
 	return bits;
 }
 
@@ -55,7 +55,7 @@ inline int count_leading_zero(uint64_t bits)
 
 int find_first_set(uint64_t bits)
 {
-	constexpr byte DE_BRUIJN_TABLE[64] =
+	constexpr uint8_t DE_BRUIJN_TABLE[64] =
 	{
 		63, 0, 58, 1, 59, 47, 53, 2,
 		60, 39, 48, 27, 54, 33, 42, 3,
@@ -72,7 +72,7 @@ int find_first_set(uint64_t bits)
 
 int count_leading_zero_32(uint32_t bits)
 {
-	constexpr byte DE_BRUIJN_TABLE[32] =
+	constexpr uint8_t DE_BRUIJN_TABLE[32] =
 	{
 		31, 22, 30, 21, 18, 10, 29, 2, 20, 17, 15, 13, 9, 6, 28, 1,
 		23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0

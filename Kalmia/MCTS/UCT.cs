@@ -34,7 +34,7 @@ namespace Kalmia.MCTS
         /// <summary>
         /// Where player put disc.
         /// </summary>
-        public BoardPosition Pos;
+        public BoardCoordinate Pos;
 
         /// <summary>
         /// The number of visits to this edge.
@@ -168,12 +168,12 @@ namespace Kalmia.MCTS
     class Searcher
     {
         public GameInfo GameInfo;
-        public BoardPosition[] Positions;
+        public BoardCoordinate[] Positions;
 
         public Searcher(GameInfo gameInfo)
         {
             this.GameInfo = new GameInfo(gameInfo);
-            this.Positions = new BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            this.Positions = new BoardCoordinate[Board.MAX_MOVE_CANDIDATE_COUNT];
         }
     }
 
@@ -322,7 +322,7 @@ namespace Kalmia.MCTS
 
             if (this.root is not null && this.root.Edges != null)
                 for (var i = 0; i < this.root.Edges.Length; i++)
-                    if (move.Pos == this.root.Edges[i].Pos && this.root.ChildNodes is not null && this.root.ChildNodes[i] is not null)
+                    if (move.Coord == this.root.Edges[i].Pos && this.root.ChildNodes is not null && this.root.ChildNodes[i] is not null)
                     {
                         var prevRoot = this.root;
                         this.root = prevRoot.ChildNodes[i];

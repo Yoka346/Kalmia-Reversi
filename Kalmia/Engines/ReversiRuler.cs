@@ -21,7 +21,7 @@ namespace Kalmia.Engines
 
         public override void Quit() { }
 
-        public override void ClearBoard() => this.board = new Board(DiscColor.Black, InitialBoardState.Cross);
+        public override void ClearBoard() => this.board = new Board(DiscColor.Black);
 
         public override bool SetBoardSize(int size) => size == Board.BOARD_SIZE;
 

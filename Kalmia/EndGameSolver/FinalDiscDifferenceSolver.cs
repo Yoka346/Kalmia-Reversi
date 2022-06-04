@@ -34,11 +34,11 @@ namespace Kalmia.EndGameSolver
             this.transpositionTable.Clear();
         }
 
-        public BoardPosition SolveBestMove(FastBoard rootState, int timeLimitSentiSec, out sbyte finalDiscDiff, out bool timeout)
+        public BoardCoordinate SolveBestMove(FastBoard rootState, int timeLimitSentiSec, out sbyte finalDiscDiff, out bool timeout)
         {
             var board = new FastBoard(rootState);
             var bitboard = board.GetBitboard();
-            Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            Span<BoardCoordinate> positions = stackalloc BoardCoordinate[Board.MAX_MOVE_CANDIDATE_COUNT];
             var posNum = board.GetNextPositionCandidates(positions);
             SortPositions(board, positions, posNum);
 
@@ -46,7 +46,7 @@ namespace Kalmia.EndGameSolver
             {
                 finalDiscDiff = (sbyte)(board.GetCurrentPlayerDiscCount() - board.GetOpponentPlayerDiscCount());
                 timeout = false;
-                return BoardPosition.Null;
+                return BoardCoordinate.Null;
             }
 
             var bestPos = positions[0];
@@ -115,9 +115,9 @@ namespace Kalmia.EndGameSolver
                     beta = ttEntry.Value.UpperBound;
             }
 
-            Span<BoardPosition> positions = stackalloc BoardPosition[Board.MAX_MOVE_CANDIDATE_COUNT];
+            Span<BoardCoordinate> positions = stackalloc BoardCoordinate[Board.MAX_MOVE_CANDIDATE_COUNT];
             var posNum = board.GetNextPositionCandidates(positions);
-            if (posNum == 1 && positions[0] == BoardPosition.Pass && board.GetNextPositionsCandidatesNumAfter(BoardPosition.Pass) == 0)  // gameover
+            if (posNum == 1 && positions[0] == BoardCoordinate.Pass && board.GetNextPositionsCandidatesNumAfter(BoardCoordinate.Pass) == 0)  // gameover
             {
                 this.LeafNodeCount++;
                 var playerCount = board.GetCurrentPlayerDiscCount();
@@ -179,7 +179,7 @@ namespace Kalmia.EndGameSolver
             var mobility = board.GetCurrentPlayerMobility(out int mobilityNum);
             if (mobilityNum == 0)
             {
-                if (board.GetNextPositionsCandidatesNumAfter(BoardPosition.Pass) == 0)  // gameover
+                if (board.GetNextPositionsCandidatesNumAfter(BoardCoordinate.Pass) == 0)  // gameover
                 {
                     this.LeafNodeCount++;
                     return (sbyte)(board.GetCurrentPlayerDiscCount() - board.GetOpponentPlayerDiscCount());
@@ -197,7 +197,7 @@ namespace Kalmia.EndGameSolver
             var bitboard = board.GetBitboard();
             var posCount = 0;
             var mask = 1UL;
-            for (var pos = BoardPosition.A1; posCount < mobilityNum; pos++)
+            for (var pos = BoardCoordinate.A1; posCount < mobilityNum; pos++)
             {
                 if ((mobility & mask) != 0)
                 {
@@ -220,7 +220,7 @@ namespace Kalmia.EndGameSolver
 
         [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe void SortPositions(FastBoard board, Span<BoardPosition> positions, int posNum)
+        unsafe void SortPositions(FastBoard board, Span<BoardCoordinate> positions, int posNum)
         {
             Span<int> nextPosNums = stackalloc int[posNum];
             for (var i = 0; i < nextPosNums.Length; i++)

@@ -39,7 +39,7 @@ namespace KalmiaTest
             this.SideToMove = firstPlayer;
         }
 
-        public static (int x, int y) ConvertBoardPositionToCoordinate(BoardPosition pos)
+        public static (int x, int y) ConvertBoardPositionToCoordinate(BoardCoordinate pos)
         {
             return ((int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE);
         }
@@ -76,7 +76,7 @@ namespace KalmiaTest
 
         public void Update(Move move)
         {
-            foreach (var pos in FlipDiscs(this.SideToMove, move.Pos))
+            foreach (var pos in FlipDiscs(this.SideToMove, move.Coord))
                 this.DISCS[(int)pos % BOARD_SIZE, (int)pos / BOARD_SIZE] = this.SideToMove ^ DiscColor.White;
             SwitchSideToMove();
         }
@@ -101,26 +101,26 @@ namespace KalmiaTest
             if (mobility.Length == 0)
             {
                 if (CalculateMobility(this.SideToMove ^ DiscColor.White).Length > 0)
-                    return new Move[1] { new Move(this.SideToMove, BoardPosition.Pass) };
+                    return new Move[1] { new Move(this.SideToMove, BoardCoordinate.Pass) };
                 return new Move[0];
             }
             return (from pos in mobility select new Move(this.SideToMove, pos)).ToArray();
         }
 
-        BoardPosition[] CalculateMobility(DiscColor color)
+        BoardCoordinate[] CalculateMobility(DiscColor color)
         {
-            var mobility = new List<BoardPosition>();
+            var mobility = new List<BoardCoordinate>();
             for (var pos = 0; pos < this.DISCS.Length; pos++)
             {
                 if (this.DISCS[pos % BOARD_SIZE, pos / BOARD_SIZE] != DiscColor.Null)
                     continue;
-                if (CheckMobility(color, (BoardPosition)pos))
-                    mobility.Add((BoardPosition)pos);
+                if (CheckMobility(color, (BoardCoordinate)pos))
+                    mobility.Add((BoardCoordinate)pos);
             }
             return mobility.ToArray();
         }
 
-        bool CheckMobility(DiscColor color, BoardPosition pos)
+        bool CheckMobility(DiscColor color, BoardCoordinate pos)
         {
             return CheckMobility(color, pos, 1, 0)
                 || CheckMobility(color, pos, -1, 0)
@@ -132,9 +132,9 @@ namespace KalmiaTest
                 || CheckMobility(color, pos, 1, -1);
         }
 
-        BoardPosition[] FlipDiscs(DiscColor color, BoardPosition pos)
+        BoardCoordinate[] FlipDiscs(DiscColor color, BoardCoordinate pos)
         {
-            var flipped = new List<BoardPosition>();
+            var flipped = new List<BoardCoordinate>();
             FlipDiscs(color, pos, 1, 0, flipped);
             FlipDiscs(color, pos, -1, 0, flipped);
             FlipDiscs(color, pos, 0, 1, flipped);
@@ -146,7 +146,7 @@ namespace KalmiaTest
             return flipped.ToArray();
         }
 
-        void FlipDiscs(DiscColor color, BoardPosition pos, int dirX, int dirY, List<BoardPosition> flipped)
+        void FlipDiscs(DiscColor color, BoardCoordinate pos, int dirX, int dirY, List<BoardCoordinate> flipped)
         {
             var oppColor = (DiscColor)(-(int)color);
             (int x, int y) = ConvertBoardPositionToCoordinate(pos);
@@ -159,13 +159,13 @@ namespace KalmiaTest
             {
                 var flippedPos = nextX + nextY * BOARD_SIZE;
                 this.DISCS[flippedPos % BOARD_SIZE, flippedPos / BOARD_SIZE] = color;
-                flipped.Add((BoardPosition)flippedPos);
+                flipped.Add((BoardCoordinate)flippedPos);
                 nextX += dirX;
                 nextY += dirY;
             }
         }
 
-        bool CheckMobility(DiscColor color, BoardPosition pos, int dirX, int dirY)
+        bool CheckMobility(DiscColor color, BoardCoordinate pos, int dirX, int dirY)
         {
             var oppColor = (DiscColor)(-(int)color);
             (int x, int y) = ConvertBoardPositionToCoordinate(pos);

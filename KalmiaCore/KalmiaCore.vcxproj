@@ -127,6 +127,8 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <AdditionalOptions>/constexpr:steps10000000 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,18 +161,24 @@
   <ItemGroup>
     <ClInclude Include="arraymanipulation\arraymanipulation.h" />
     <ClInclude Include="constantarray.h" />
+    <ClInclude Include="datetime.h" />
     <ClInclude Include="evaluation\eval.h" />
     <ClInclude Include="fastmath\fastmath.h" />
     <ClInclude Include="evaluation\feature.h" />
+    <ClInclude Include="mathfunction\mathfunction.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="bitmanipulation.h" />
     <ClInclude Include="random.h" />
+    <ClInclude Include="readonlyarray.h" />
     <ClInclude Include="reversi\board.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="initialize_callback.h" />
     <ClInclude Include="test.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="evaluation\eval.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="evaluation\feature.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

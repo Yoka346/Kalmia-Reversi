@@ -1,4 +1,4 @@
-﻿//#define DEVELOP
+﻿#define DEVELOP
 
 using System;
 using System.IO;
@@ -12,6 +12,7 @@ using Kalmia.EndGameSolver;
 using Kalmia.GoTextProtocol;
 using Kalmia.Evaluation;
 using Kalmia.Learning;
+using Kalmia.Reversi;
 
 namespace Kalmia
 {
@@ -44,7 +45,26 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            // write some test code.
+            const int DATA_NUM = 10000;
+            var sw = new StreamWriter("eval_func_test_data.csv");
+            var vf = new ValueFunction(@"C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Params\kalmia_value_func.dat");
+            for(var i = 0; i < DATA_NUM; i++)
+            {
+                var board = CreateRandomBoard(Random.Shared, Random.Shared.Next(1, 61));
+                sw.WriteLine($"{board.GetBitboard().CurrentPlayer},{board.GetBitboard().OpponentPlayer},{vf.F(new BoardFeature(board))}");
+            }
+        }
+
+        static FastBoard CreateRandomBoard(Random rand, int emptyCount)
+        {
+            var board = new FastBoard();
+            Span<BoardCoordinate> positions = stackalloc BoardCoordinate[46];
+            while (board.GetEmptyCount() != emptyCount && board.GetGameResult() == GameResult.NotOver)
+            {
+                var num = board.GetNextPositionCandidates(positions);
+                board.Update(positions[rand.Next(num)]);
+            }
+            return board;
         }
 #endif
 

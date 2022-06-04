@@ -72,14 +72,14 @@ namespace Kalmia.Learning
             var moves = gameRecord.MoveRecord;
             var bestResult = GetGameResult(gameRecord.BestBlackDiscCount);
             var result = GetGameResult(gameRecord.BlackDiscCount);
-            var board = new Board(DiscColor.Black, InitialBoardState.Cross);
+            var board = new Board(DiscColor.Black);
             var k = 0;
             while (true)
             {
                 var blackBoard = board.GetBitboard(DiscColor.Black);
                 var whiteBoard = board.GetBitboard(DiscColor.White);
                 var res = (board.GetEmptyCount() >= depth) ? bestResult : result;
-                var nextMove = (k != moves.Count) ? moves[k] : new Move(DiscColor.Black, BoardPosition.Null);
+                var nextMove = (k != moves.Count) ? moves[k] : new Move(DiscColor.Black, BoardCoordinate.Null);
 
                 if (k >= moveCountThreshold)
                 {
@@ -89,7 +89,7 @@ namespace Kalmia.Learning
                         sw.WriteLine($"{whiteBoard},{blackBoard},{nextMove},{(sbyte)InvertGameResult(res)}");
                 }
 
-                if (nextMove.Pos != BoardPosition.Null)
+                if (nextMove.Coord != BoardCoordinate.Null)
                     board.Update(moves[k++]);
                 else
                     break;

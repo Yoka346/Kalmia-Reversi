@@ -19,7 +19,7 @@ namespace reversi
 		1ULL << 56, 1ULL << 57, 1ULL << 58, 1ULL << 59, 1ULL << 60, 1ULL << 61, 1ULL << 62, 1ULL << 63
 	};
 
-	enum BoardCoordinate : byte
+	enum BoardCoordinate : uint8_t
 	{
 		A1, B1, C1, D1, E1, F1, G1, H1,
 		A2, B2, C2, D2, E2, F2, G2, H2,
@@ -45,13 +45,13 @@ namespace reversi
 		return prev;
 	}
 
-	__declspec(dllexport) std::string coordinate_to_string(BoardCoordinate coord);
+	DLL_EXPORT std::string coordinate_to_string(BoardCoordinate coord);
 
-	enum DiscColor : byte
+	enum DiscColor : uint8_t
 	{
-		BLACK,
-		WHITE,
-		EMPTY
+		BLACK = 0,
+		WHITE = 1,
+		EMPTY = 2
 	};
 
 #define opponent_disc_color(color) static_cast<reversi::DiscColor>(color ^ reversi::DiscColor::WHITE)
@@ -62,12 +62,12 @@ namespace reversi
 		OPPONENT,
 	};
 
-	enum GameResult : int
+	enum GameResult : int8_t
 	{
 		WIN = 1,
 		LOSS = -1,
 		DRAW = 0,
-		NOT_OVER = 2
+		NOT_OVER = -2
 	};
 
 	class Mobility
@@ -78,15 +78,15 @@ namespace reversi
 		inline uint64_t get_raw_mobility() const { return this->mobility; }
 		inline void set_raw_mobility(uint64_t raw_mobility) { this->mobility = raw_mobility; }
 		inline int count() { return popcount(this->mobility); }
-		__declspec(dllexport) BoardCoordinate get_coord_at(int idx);
-		__declspec(dllexport) bool move_to_next_coord(BoardCoordinate& coord);
+		DLL_EXPORT BoardCoordinate get_coord_at(int idx);
+		DLL_EXPORT bool move_to_next_coord(BoardCoordinate& coord);
 
 	private:
 		uint64_t mobility;
 		uint64_t mask = 1ULL;
 	};
 
-	typedef struct Move
+	struct Move
 	{
 		DiscColor color;
 		BoardCoordinate coord;
@@ -97,7 +97,7 @@ namespace reversi
 
 #define foreach_mobility(coord, mobility) while(mobility.move_to_next_coord(coord))
 
-	typedef struct Bitboard
+	struct Bitboard
 	{
 		uint64_t current_player;
 		uint64_t opponent_player;
@@ -114,7 +114,7 @@ namespace reversi
 			this->current_player == right.current_player && this->opponent_player == right.opponent_player;
 		}
 
-		inline bool operator !=(const Bitboard& right) const { !(*this == right); }
+		inline bool operator !=(const Bitboard& right) const { return !(*this == right); }
 	};
 
 	class Board
@@ -145,14 +145,14 @@ namespace reversi
 			return static_cast<Player>(2 - 2 * ((this->bitboard.current_player >> coord) & 1) - ((this->bitboard.opponent_player >> coord) & 1)); 
 		}
 
-		__declspec(dllexport) DiscColor get_square_color(BoardCoordinate coord);
-		__declspec(dllexport) void get_move(BoardCoordinate coord, Move& move);
-		__declspec(dllexport) void get_current_player_mobility(Mobility& mobility);
-		__declspec(dllexport) void get_opponent_player_mobility(Mobility& mobility);
-		__declspec(dllexport) void update(Move& move);
-		__declspec(dllexport) uint64_t get_hash_code();
-		__declspec(dllexport) GameResult get_game_result();
-		__declspec(dllexport) std::string to_string();
+		DLL_EXPORT DiscColor get_square_color(BoardCoordinate coord);
+		DLL_EXPORT void get_move(BoardCoordinate coord, Move& move);
+		DLL_EXPORT void get_current_player_mobility(Mobility& mobility);
+		DLL_EXPORT void get_opponent_player_mobility(Mobility& mobility);
+		DLL_EXPORT void update(Move& move);
+		DLL_EXPORT uint64_t get_hash_code();
+		DLL_EXPORT GameResult get_game_result();
+		DLL_EXPORT std::string to_string();
 
 	private:
 		static const int HASH_RANK_LEN_0 = 16;	// Rank is a chess term which means horizontal line.
