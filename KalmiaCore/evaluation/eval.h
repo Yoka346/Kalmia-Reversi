@@ -65,14 +65,12 @@ namespace evaluation
 		}
 	);
 
-	constexpr int32_t BIAS_IDX = calc_feature_vector_len() - 1;
-
 	typedef struct EvalParamsFileHeader
 	{
 	public:
 		static constexpr int HEADER_SIZE = 29;
 
-		EvalParamsFileHeader() { ; }
+		EvalParamsFileHeader() : label(), version(), released_time() { ; }
 		EvalParamsFileHeader(const std::string& label, int32_t version, DateTime& releasedTime);
 		EvalParamsFileHeader(const std::string path);
 		EvalParamsFileHeader(std::ifstream& ifs);
@@ -113,10 +111,10 @@ namespace evaluation
 	class EvalFunction
 	{
 	public:
-		EvalFunction(const std::string& label, int32_t version, int32_t move_count_per_stage);
-		EvalFunction(const std::string& path);
-		EvalFunction(const EvalFunction& eval_func);
-		~EvalFunction();
+		DLL_EXPORT EvalFunction(const std::string& label, int32_t version, int32_t move_count_per_stage);
+		DLL_EXPORT EvalFunction(const std::string& path);
+		DLL_EXPORT EvalFunction(const EvalFunction& eval_func);
+		DLL_EXPORT ~EvalFunction();
 
 		inline EvalParamsFileHeader& get_header() { this->header; }
 		inline int32_t get_stage_num() { this->stage_num; }

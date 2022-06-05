@@ -19,6 +19,7 @@ void BoardFeature::init(reversi::Board& board)
 	{
 		auto feature_info = FEATURE_INFO[i];
 		uint16_t* pattern_ptr = &this->patterns[i];
+		*pattern_ptr = 0;
 		for (auto j = 0; j < feature_info.size; j++)
 			*pattern_ptr = *pattern_ptr * 3 + board.get_square_color(feature_info.coordinates[j]);
 	}

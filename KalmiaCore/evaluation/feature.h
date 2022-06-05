@@ -54,9 +54,9 @@ namespace evaluation
 
         // corner edge x 
         { FEATURE_SIZE[CornerEdgeX], {reversi::A5, reversi::A4, reversi::A3, reversi::A2, reversi::A1, reversi::B2, reversi::B1, reversi::C1, reversi::D1, reversi::E1}},
-        { FEATURE_SIZE[Corner3x3], {reversi::H5, reversi::H4, reversi::H3, reversi::H2, reversi::H1, reversi::G2, reversi::G1, reversi::F1, reversi::E1, reversi::D1}},
-        { FEATURE_SIZE[Corner3x3], {reversi::A4, reversi::A5, reversi::A6, reversi::A7, reversi::A8, reversi::B7, reversi::B8, reversi::C8, reversi::D8, reversi::E8}},
-        { FEATURE_SIZE[Corner3x3], {reversi::H4, reversi::H5, reversi::H6, reversi::H7, reversi::H8, reversi::G7, reversi::G8, reversi::F8, reversi::E8, reversi::D8}},
+        { FEATURE_SIZE[CornerEdgeX], {reversi::H5, reversi::H4, reversi::H3, reversi::H2, reversi::H1, reversi::G2, reversi::G1, reversi::F1, reversi::E1, reversi::D1}},
+        { FEATURE_SIZE[CornerEdgeX], {reversi::A4, reversi::A5, reversi::A6, reversi::A7, reversi::A8, reversi::B7, reversi::B8, reversi::C8, reversi::D8, reversi::E8}},
+        { FEATURE_SIZE[CornerEdgeX], {reversi::H4, reversi::H5, reversi::H6, reversi::H7, reversi::H8, reversi::G7, reversi::G8, reversi::F8, reversi::E8, reversi::D8}},
 
         // edge 2x 
         { FEATURE_SIZE[Edge2X], {reversi::B2, reversi::A1, reversi::B1, reversi::C1, reversi::D1, reversi::E1, reversi::F1, reversi::G1, reversi::H1, reversi::G2}},
@@ -215,8 +215,8 @@ namespace evaluation
 
         static void static_initializer();
 
-        BoardFeature(reversi::Board& board);
-        BoardFeature(BoardFeature& board_feature);
+        DLL_EXPORT BoardFeature(reversi::Board& board);
+        DLL_EXPORT BoardFeature(BoardFeature& board_feature);
 
         DLL_EXPORT void init(reversi::Board& board);
         DLL_EXPORT void update(reversi::Move& move);

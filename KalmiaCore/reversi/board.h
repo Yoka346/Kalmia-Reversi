@@ -70,11 +70,11 @@ namespace reversi
 		NOT_OVER = -2
 	};
 
-	class Mobility
+	class MoveCoordinateIterator	// mobilityƒNƒ‰ƒX‚É–â‘è‚ ‚è.
 	{
 	public:
-		Mobility() :mobility(0ULL) { ; }
-		Mobility(uint64_t mobility) :mobility(mobility) { ; }
+		MoveCoordinateIterator() :mobility(0ULL){ ; }
+		MoveCoordinateIterator(uint64_t mobility) :mobility(mobility) { ; }
 		inline uint64_t get_raw_mobility() const { return this->mobility; }
 		inline void set_raw_mobility(uint64_t raw_mobility) { this->mobility = raw_mobility; }
 		inline int count() { return popcount(this->mobility); }
@@ -83,7 +83,6 @@ namespace reversi
 
 	private:
 		uint64_t mobility;
-		uint64_t mask = 1ULL;
 	};
 
 	struct Move
@@ -95,7 +94,7 @@ namespace reversi
 		Move(DiscColor color, BoardCoordinate coord, uint64_t flipped) :color(color), coord(coord), flipped(flipped) { ; }
 	};
 
-#define foreach_mobility(coord, mobility) while(mobility.move_to_next_coord(coord))
+#define foreach_move_coord(coord, mobility) while(mobility.move_to_next_coord(coord))
 
 	struct Bitboard
 	{
@@ -147,8 +146,8 @@ namespace reversi
 
 		DLL_EXPORT DiscColor get_square_color(BoardCoordinate coord);
 		DLL_EXPORT void get_move(BoardCoordinate coord, Move& move);
-		DLL_EXPORT void get_current_player_mobility(Mobility& mobility);
-		DLL_EXPORT void get_opponent_player_mobility(Mobility& mobility);
+		DLL_EXPORT void get_current_player_move_coords(MoveCoordinateIterator& move_coords);
+		DLL_EXPORT void get_opponent_player_move_coords(MoveCoordinateIterator& move_coords);
 		DLL_EXPORT void update(Move& move);
 		DLL_EXPORT uint64_t get_hash_code();
 		DLL_EXPORT GameResult get_game_result();

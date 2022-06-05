@@ -12,7 +12,7 @@ std::string reversi::coordinate_to_string(BoardCoordinate coord)
 	return ss.str();
 }
 
-inline BoardCoordinate Mobility::get_coord_at(int idx) 
+inline BoardCoordinate MoveCoordinateIterator::get_coord_at(int idx) 
 {
 	auto count = 0;
 	auto i = 0;
@@ -22,10 +22,10 @@ inline BoardCoordinate Mobility::get_coord_at(int idx)
 	return BoardCoordinate::NULL_COORD;
 }
 
-inline bool Mobility::move_to_next_coord(BoardCoordinate& coord)
+inline bool MoveCoordinateIterator::move_to_next_coord(BoardCoordinate& coord)
 {
 	coord = static_cast<BoardCoordinate>(find_first_set(this->mobility));
-	return find_next_set(this->mobility);
+	return this->mobility &= this->mobility - 1;
 }
 
 bool Board::initialized = false;
@@ -60,14 +60,14 @@ inline void Board::get_move(BoardCoordinate coord, Move& move)
 	move.flipped = calc_flipped_discs(this->bitboard.current_player, this->bitboard.opponent_player, coord);
 }
 
-inline void Board::get_current_player_mobility(Mobility& mobility)
+inline void Board::get_current_player_move_coords(MoveCoordinateIterator& move_coords)
 {
-	mobility.set_raw_mobility(calc_mobility(this->bitboard.current_player, this->bitboard.opponent_player));
+	move_coords.set_raw_mobility(calc_mobility(this->bitboard.current_player, this->bitboard.opponent_player));
 }
 
-inline void Board::get_opponent_player_mobility(Mobility& mobility)
+inline void Board::get_opponent_player_move_coords(MoveCoordinateIterator& move_coords)
 {
-	mobility.set_raw_mobility(calc_mobility(this->bitboard.opponent_player, this->bitboard.current_player));
+	move_coords.set_raw_mobility(calc_mobility(this->bitboard.opponent_player, this->bitboard.current_player));
 }
 
 inline void Board::update(Move& move)

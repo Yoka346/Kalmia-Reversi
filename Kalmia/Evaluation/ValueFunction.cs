@@ -161,6 +161,7 @@ namespace Kalmia.Evaluation
             var stageNum = fs.ReadByte();
             var weight = new float[stageNum][][];
             var buffer = new byte[sizeof(float)];
+            var countDebug = 0;
             for (var stage = 0; stage < weight.Length; stage++)
             {
                 weight[stage] = new float[BoardFeature.PATTERN_TYPE_NUM][];
@@ -170,6 +171,7 @@ namespace Kalmia.Evaluation
                     for (var i = 0; i < weight[stage][patternType].Length; i++)
                     {
                         fs.Read(buffer, 0, buffer.Length);
+                        countDebug++;
                         weight[stage][patternType][i] = BitConverter.ToSingle(buffer);
                     }
                 }

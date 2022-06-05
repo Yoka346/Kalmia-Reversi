@@ -15,27 +15,17 @@ namespace KalmiaTest
 
         public DiscColor SideToMove { get; private set; }
 
-        public SlowBoard(DiscColor firstPlayer, InitialBoardState initState)
+        public SlowBoard(DiscColor firstPlayer)
         {
             for (var i = 0; i < this.DISCS.GetLength(0); i++)
                 for (var j = 0; j < this.DISCS.GetLength(1); j++)
                     this.DISCS[i, j] = DiscColor.Null;
 
             var secondPlayer = firstPlayer ^ DiscColor.White;
-            if (initState == InitialBoardState.Cross)
-            {
-                Put(firstPlayer, "E4");
-                Put(firstPlayer, "D5");
-                Put(secondPlayer, "D4");
-                Put(secondPlayer, "E5");
-            }
-            else
-            {
-                Put(firstPlayer, "D5");
-                Put(firstPlayer, "E5");
-                Put(secondPlayer, "D4");
-                Put(secondPlayer, "E4");
-            }
+            Put(firstPlayer, "E4");
+            Put(firstPlayer, "D5");
+            Put(secondPlayer, "D4");
+            Put(secondPlayer, "E5");
             this.SideToMove = firstPlayer;
         }
 

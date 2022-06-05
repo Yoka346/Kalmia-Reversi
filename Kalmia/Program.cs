@@ -45,14 +45,22 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            const int DATA_NUM = 10000;
-            var sw = new StreamWriter("eval_func_test_data.csv");
-            var vf = new ValueFunction(@"C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Params\kalmia_value_func.dat");
-            for(var i = 0; i < DATA_NUM; i++)
-            {
-                var board = CreateRandomBoard(Random.Shared, Random.Shared.Next(1, 61));
-                sw.WriteLine($"{board.GetBitboard().CurrentPlayer},{board.GetBitboard().OpponentPlayer},{vf.F(new BoardFeature(board))}");
-            }
+            using var sw = new StreamWriter("exp.txt");
+            foreach (var n in Kalmia.Evaluation.ValueFunction.ToSymmetricFeatureIdx)
+                sw.Write($"{n}\n");
+            //var board = new FastBoard(DiscColor.Black, new Bitboard(4432742849556UL, 1184721665973494273UL));
+            //var bf = new BoardFeature(board);
+            //var vf = new ValueFunction(@"C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Params\kalmia_value_func.dat");
+            //float sum = 0.0f;
+            //Console.WriteLine(vf.F(bf));
+            //const int DATA_NUM = 10000;
+            //var sw = new StreamWriter("eval_func_test_data.csv");
+            //var vf = new ValueFunction(@"C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Params\kalmia_value_func.dat");
+            //for(var i = 0; i < DATA_NUM; i++)
+            //{
+            //    var board = CreateRandomBoard(Random.Shared, Random.Shared.Next(1, 61));
+            //    sw.WriteLine($"{board.GetBitboard().CurrentPlayer},{board.GetBitboard().OpponentPlayer},{vf.F(new BoardFeature(board))}");
+            //}
         }
 
         static FastBoard CreateRandomBoard(Random rand, int emptyCount)

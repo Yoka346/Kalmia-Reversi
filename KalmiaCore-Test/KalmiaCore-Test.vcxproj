@@ -39,6 +39,9 @@
     <ClCompile Include="board_test.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="eval_func_test.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KalmiaCore\KalmiaCore.vcxproj">
@@ -51,6 +54,7 @@
   <ItemGroup>
     <ClInclude Include="board_feature_test.h" />
     <ClInclude Include="board_test.h" />
+    <ClInclude Include="eval_func_test.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemDefinitionGroup />

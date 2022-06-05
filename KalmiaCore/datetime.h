@@ -2,6 +2,8 @@
 #include "pch.h"
 #include <ctime>
 
+#pragma warning(disable : 4996)
+
 struct DateTime
 {
 public:

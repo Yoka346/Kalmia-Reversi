@@ -5,11 +5,11 @@
 #include "pch.h"
 #include "reversi/board.h"
 
-reversi::BoardCoordinate sample_move(reversi::Mobility& mobility, std::mt19937& rand);
+reversi::BoardCoordinate sample_move(reversi::MoveCoordinateIterator& mobility, std::mt19937& rand);
 
 int count_true(bool* b);
 
-void assert_mobility_equal(reversi::Board board, bool* expected, reversi::Mobility& actual, bool& success);
+void assert_mobility_equal(reversi::Board board, bool* expected, reversi::MoveCoordinateIterator& actual, bool& success);
 
 void assert_board_are_equal(reversi::DiscColor* expected, reversi::Board actual, bool& success);
 

@@ -9,7 +9,7 @@ TEST(Board_Test, FlippAndMobilityTest)
 	DiscColor board_test[SQUARE_NUM];
 	bool mobility_test[SQUARE_NUM];
 	bool flipped_test[SQUARE_NUM];
-	Mobility mobility;
+	MoveCoordinateIterator move_coords;
 	Move move;
 	std::random_device seed;
 	auto rand = std::mt19937(seed());
@@ -32,15 +32,15 @@ TEST(Board_Test, FlippAndMobilityTest)
 			if (!success)
 				return;
 
-			board.get_current_player_mobility(mobility);
+			board.get_current_player_move_coords(move_coords);
 			board_calc_mobility(board_test, side_to_move, mobility_test);
 
 			success = false;
-			assert_mobility_equal(board, mobility_test, mobility, success);
+			assert_mobility_equal(board, mobility_test, move_coords, success);
 			if (!success)
 				return;
 
-			if (!mobility.count())
+			if (!move_coords.count())
 			{
 				board.pass();
 				side_to_move = opponent_disc_color(side_to_move);
@@ -49,7 +49,7 @@ TEST(Board_Test, FlippAndMobilityTest)
 			}
 			pass_count = 0;
 
-			auto coord = sample_move(mobility, rand);
+			auto coord = sample_move(move_coords, rand);
 			board.get_move(coord, move);
 			board_calc_flipped_discs(board_test, side_to_move, coord, flipped_test);
 			board_update(board_test, side_to_move, coord, flipped_test);
@@ -59,12 +59,12 @@ TEST(Board_Test, FlippAndMobilityTest)
 	}
 }
 
-BoardCoordinate sample_move(Mobility& mobility, std::mt19937& rand)
+BoardCoordinate sample_move(MoveCoordinateIterator& mobility, std::mt19937& rand)
 {
 	auto idx = rand() % mobility.count();
 	auto count = 0;
 	BoardCoordinate coord = BoardCoordinate::A1;
-	foreach_mobility(coord, mobility)
+	foreach_move_coord(coord, mobility)
 		if (count++ == idx)
 			return coord;
 }
@@ -94,12 +94,12 @@ void assert_board_are_equal(DiscColor* expected, Board actual, bool& success)
 	success = true;
 }
 
-void assert_mobility_equal(Board board, bool* expected, Mobility& actual, bool& success)
+void assert_mobility_equal(Board board, bool* expected, MoveCoordinateIterator& actual, bool& success)
 {
 	BoardCoordinate coord;
 
 	std::vector<BoardCoordinate> actual_mobility;
-	foreach_mobility(coord, actual)
+	foreach_move_coord(coord, actual)
 		actual_mobility.push_back(coord);
 	std::sort(actual_mobility.begin(), actual_mobility.end());
 

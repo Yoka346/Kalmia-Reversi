@@ -73,7 +73,7 @@ void EvalParamsFileHeader::datetime_to_buffer(DateTime& datetime, char* buffer)
 
 void EvalParamsFileHeader::load(const string path, char* buffer)
 {
-	ifstream ifs(path);
+	ifstream ifs(path, ios_base::binary);
 	load(ifs, buffer);
 }
 
@@ -109,7 +109,7 @@ EvalFunction::EvalFunction(const string& label, int32_t version, int32_t move_co
 
 EvalFunction::EvalFunction(const string& path) : weight()
 {
-	ifstream ifs(path);
+	ifstream ifs(path, ios_base::binary);
 	this->header = EvalParamsFileHeader(ifs);
 	auto packed_weight = load_packed_weight(ifs, this->stage_num);
 	this->move_count_per_stage = (SQUARE_NUM - 4) / (this->stage_num - 1);
@@ -142,8 +142,8 @@ EvalFunction::~EvalFunction()
 	{
 		float** w = this->weight[color];
 		for (int32_t stage = 0; stage < this->stage_num; stage++)
-			delete w[stage];
-		delete w;
+			delete[] w[stage];
+		delete[] w;
 	}
 }
 
@@ -163,24 +163,27 @@ inline float EvalFunction::f(int32_t stage, BoardFeature& bf)
 	return mathfunction::std_sigmoid(score);
 }
 
-//private
+// private
 shared_ptr<shared_ptr<shared_ptr<float>>> EvalFunction::load_packed_weight(ifstream& ifs, int32_t& stage_num)
 {
 	ifs.seekg(EvalParamsFileHeader::HEADER_SIZE, ios_base::beg);
 	char tmp;
 	ifs.read(&tmp, 1);
 	stage_num = tmp;
-	shared_ptr<shared_ptr<shared_ptr<float>>> weight(new shared_ptr<shared_ptr<float>>[stage_num]);
+	shared_ptr<shared_ptr<shared_ptr<float>>> weight(new shared_ptr<shared_ptr<float>>[stage_num], 
+													 default_delete<shared_ptr<shared_ptr<float>>[]>());
 	char buffer[sizeof(float)];
 	for (int32_t stage = 0; stage < stage_num; stage++)
 	{
-		weight.get()[stage] = shared_ptr<shared_ptr<float>>(new shared_ptr<float>[FEATURE_KIND_NUM]);
+		weight.get()[stage] = shared_ptr<shared_ptr<float>>(new shared_ptr<float>[FEATURE_KIND_NUM],
+															default_delete<shared_ptr<float>[]>());
 		auto w = weight.get()[stage];
+		auto count_debug = 0;
 		for (int32_t kind = 0; kind < FEATURE_KIND_NUM; kind++)
 		{
-			const int32_t PAT_NUM = PACKED_PATTERN_NUM[kind];
-			auto ww = w.get()[kind] = shared_ptr<float>(new float[PAT_NUM]);
-			for (int32_t i = 0; i < PAT_NUM; i++)
+			int32_t pat_num = PACKED_PATTERN_NUM[kind];
+			auto ww = w.get()[kind] = shared_ptr<float>(new float[pat_num], default_delete<float[]>());
+			for (int32_t i = 0; i < pat_num; i++)
 			{
 				ifs.read(buffer, sizeof(float));
 				ww.get()[i] = *(float*)buffer;
@@ -201,7 +204,7 @@ void EvalFunction::expand_packed_weight(shared_ptr<shared_ptr<shared_ptr<float>>
 		for (int32_t kind = 0; kind < FEATURE_KIND_NUM - 1; kind++)
 		{
 			auto pw = packed_weight.get()[stage].get()[kind].get();
-			for (int32_t pattern = 0; pattern < PATTERN_NUM[kind]; pattern++)
+			for (int32_t pattern = i = 0; pattern < PATTERN_NUM[kind]; pattern++)
 			{
 				auto idx = pattern + offset;
 				auto symmetric_idx = TO_SYMMETRIC_PATTERN_IDX[idx];
