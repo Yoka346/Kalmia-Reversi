@@ -1,7 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Kalmia",
+    "\\Kalmia\\Kalmia",
+    "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\archive",
+  "SelectedNode": "\\Kalmia\\Kalmia\\utils\\array.h",
   "PreviewInSolutionExplorer": false
 }
