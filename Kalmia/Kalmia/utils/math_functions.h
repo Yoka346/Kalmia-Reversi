@@ -49,5 +49,11 @@ namespace utils
 	}
 
 	constexpr float log(float x) { return  0.6931471805599453f * log2(x); }
+
+	// ®””Ålog2ŠÖ”‚Å‚Í, log2(0) = 0 ‚Æ‚·‚é.
+	inline int log2(uint32_t n) { return 31 ^ (int)std::countl_zero(n | 1); }
+	inline int log2(uint64_t n) { return 63 ^ (int)std::countl_zero(n | 1); }
+	inline int log2_ceiling(uint32_t n) { int res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
+	inline int log2_ceiling(uint64_t n) { int res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
 }
 

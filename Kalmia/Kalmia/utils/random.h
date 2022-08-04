@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common.h"
+#include "math_functions.h"
 #include <random>
 
 namespace utils

@@ -23,7 +23,6 @@
 
 // defineされた命令セットよりも古い命令セットを全てdefineする.
 #ifdef USE_AVX2
-#define X64
 #define USE_SSE42
 #elif defined(USE_SSE42)
 #define defined(USE_SSE41)
