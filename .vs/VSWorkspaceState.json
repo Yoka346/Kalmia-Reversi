@@ -3,6 +3,7 @@
     "",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
+    "\\Kalmia\\Kalmia\\reversi",
     "\\Kalmia\\Kalmia\\utils"
   ],
   "SelectedNode": "\\Kalmia\\Kalmia\\utils\\math_functions.h",

@@ -15,20 +15,20 @@
 #include <emmintrin.h>
 #endif
 
-#define find_first_set(bits) std::countr_zero(bits)
-#define find_next_set(bits) find_first_set(bits &= (bits - 1))
+#define FIND_FIRST_SET(bits) std::countr_zero(bits)
+#define FIND_NEXT_SET(bits) FIND_FIRST_SET(bits &= (bits - 1))
 
 // LSBから順に立っているビットの位置を列挙する
-#define foreach_bit(i, bits) for (i = find_first_set(bits); bits; i = find_next_set(bits))
+#define FOREACH_BIT(i, bits) for (i = FIND_FIRST_SET(bits); bits; i = FIND_NEXT_SET(bits))
 
 #if defined(USE_AVX2) && defined(USE_BMI2)
 
-#define pext_32(bits, mask) _pext_u32(bits, mask)
+#define PEXT_32(bits, mask) _pext_u32(bits, mask)
 
 #ifdef X64
-#define pext_64(bits, mask) _pext_u64(bits, mask)
+#define PEXT_64(bits, mask) _pext_u64(bits, mask)
 #else
-#define pext_64(bits, mask) (uint64_t)(pext_32(bits >> 32, mask >> 32) << std::popcount((uint32_t)mask)) | (uint64_t)pext_32((uint32_t)bits, (uint32_t)mask)
+#define PEXT_64(bits, mask) (uint64_t)(PEXT_32(bits >> 32, mask >> 32) << std::popcount((uint32_t)mask)) | (uint64_t)PEXT_32((uint32_t)bits, (uint32_t)mask)
 #endif
 
 #else
@@ -51,7 +51,23 @@ inline uint64_t pext(uint64_t bits, uint64_t mask)
     return res;
 }
 
-#define pext_32(bits, mask) (uint32_t)pext(bits, mask)
-#define pext_64(bits, mask) pext(bits, mask)
+#define PEXT_32(bits, mask) (uint32_t)pext(bits, mask)
+#define PEXT_64(bits, mask) pext(bits, mask)
+
+#endif
+
+#ifdef _MSC_VER
+#define BYTE_SWAP_64(bits) _byteswap_uint64(bits)
+#elif defined(__GNUC__)
+#define BYTE_SWAP_64(bits) __builtin_bswap64(bits)
+#else
+
+inline uint64_t byte_swap_64(uint64_t bits)
+{
+    uint64_t swapped = (bits >> 32) | (bits << 32);
+    swapped = ((swapped & 0xffff0000ffff0000ULL) >> 16) | ((swapped & 0x0000ffff0000ffffULL) << 16);
+    swapped = ((swapped & 0xff00ff00ff00ff00ULL) >> 8) | ((swapped & 0x00ff00ff00ff00ffULL) << 8);
+    return swapped;
+}
 
 #endif

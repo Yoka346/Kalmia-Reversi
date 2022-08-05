@@ -1,5 +1,6 @@
 #pragma once
 #include "../common.h"
+#include "constant.h"
 
 namespace reversi
 {
@@ -16,6 +17,28 @@ namespace reversi
 		PASS, NULL_COORD
 	};
 
+	constexpr BoardCoordinate& operator++(BoardCoordinate& coord)
+	{
+		coord = (BoardCoordinate)((uint8_t)coord + 1);
+		return coord;
+	}
+
+	constexpr BoardCoordinate operator++(BoardCoordinate& coord, int)
+	{
+		auto prev = coord;
+		++coord;
+		return prev;
+	}
+
+	std::string coordinate_to_string(BoardCoordinate coord)
+	{
+		auto x = coord % BOARD_SIZE;
+		auto y = coord / BOARD_SIZE;
+		std::stringstream ss;
+		ss << (char)('A' + x) << y + 1;
+		return ss.str();
+	}
+
 	enum SquareState
 	{
 		BLACK,
@@ -24,7 +47,7 @@ namespace reversi
 	};
 
 // Î‚ÌF‚ð”½“]‚³‚¹‚éƒ}ƒNƒ
-#define opponent_color(color) static_cast<reversi::SquareState>(color ^ reversi::DiscColor::WHITE)
+#define OPPONENT_COLOR(color) static_cast<reversi::SquareState>(color ^ reversi::DiscColor::WHITE)
 
 	enum GameResult : int8_t
 	{
