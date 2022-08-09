@@ -136,6 +136,7 @@
     <ClCompile Include="reversi\bitboard.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
+    <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />
     <ClCompile Include="utils\random.cpp" />
@@ -145,6 +146,7 @@
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />
     <ClInclude Include="reversi\mobility.h" />
+    <ClInclude Include="test\flip_test.h" />
     <ClInclude Include="test\test_common.h" />
     <ClInclude Include="utils\bitmanip.h" />
     <ClInclude Include="config.h" />

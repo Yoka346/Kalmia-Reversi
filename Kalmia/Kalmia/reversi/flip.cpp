@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 
 #include "flip.h"
 
@@ -8,13 +8,13 @@ using namespace reversi;
 
 /**
 * @fn
-* @brief AVX2ã‚’ç”¨ã„ã¦, ç€æ‰‹å¯èƒ½ä½ç½®ã‚’è¨ˆç®—ã™ã‚‹.
-* @param (p) ç¾åœ¨ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ç›¤é¢.
-* @param (o) ç›¸æ‰‹ã®ç›¤é¢.
-* @return ç€æ‰‹å¯èƒ½ä½ç½®ã‚’ç¤ºã™ãƒ“ãƒƒãƒˆãƒœãƒ¼ãƒ‰
+* @brief AVX2‚ğ—p‚¢‚Ä, ’…è‚É‚æ‚Á‚Ä— •Ô‚éÎ‚ğŒvZ‚·‚é.
+* @param (p) Œ»İ‚ÌƒvƒŒƒCƒ„[‚Ì”Õ–Ê.
+* @param (o) ‘Šè‚Ì”Õ–Ê.
+* @return — •Ô‚Á‚½Î‚ÌˆÊ’u‚ğ•\‚·ƒrƒbƒgƒ{[ƒh.
 * @detail
-* ç€æ‰‹å¯èƒ½ä½ç½®ã¯parallel prefix ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã‚’ç”¨ã„ã¦ç”Ÿæˆã•ã‚Œã‚‹.
-* 4æ–¹å‘ã«ã¤ã„ã¦, AVX2ã‚’ç”¨ã„ã¦åŒæ™‚ã«è¨ˆç®—ã™ã‚‹.
+* ’…è‰Â”\ˆÊ’u‚Íparallel prefix ƒAƒ‹ƒSƒŠƒYƒ€(1’i kogge stone)‚ğ—p‚¢‚Ä¶¬‚³‚ê‚é.
+* 4•ûŒü‚É‚Â‚¢‚Ä, AVX2‚ğ—p‚¢‚Ä“¯‚ÉŒvZ‚·‚é.
 *
 * @cite
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
@@ -50,7 +50,7 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 	auto outflank_left_4 = _mm256_and_si256(p_4, _mm256_sllv_epi64(flipped_left_4, SHIFT));
 	auto outflank_right_4 = _mm256_and_si256(p_4, _mm256_srlv_epi64(flipped_right_4, SHIFT));
 
-	flipped_left_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_left_4, ZERO), flipped_left_4);	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½error
+	flipped_left_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_left_4, ZERO), flipped_left_4);	// ??????error
 	flipped_right_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_right_4, ZERO), flipped_right_4);
 
 	auto flipped_4 = _mm256_or_si256(flipped_left_4, flipped_right_4);
@@ -63,34 +63,115 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 
 /**
 * @fn
-* @brief SSEã‚’ç”¨ã„ã¦, ç€æ‰‹å¯èƒ½ä½ç½®ã‚’è¨ˆç®—ã™ã‚‹.
-* @param (p) ç¾åœ¨ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ç›¤é¢.
-* @param (o) ç›¸æ‰‹ã®ç›¤é¢.
-* @return ç€æ‰‹å¯èƒ½ä½ç½®ã‚’ç¤ºã™ãƒ“ãƒƒãƒˆãƒœãƒ¼ãƒ‰
+* @brief SSE‚ğ—p‚¢‚Ä, ’…è‚É‚æ‚Á‚Ä— •Ô‚éÎ‚ğŒvZ‚·‚é.
+* @param (p) Œ»İ‚ÌƒvƒŒƒCƒ„[‚Ì”Õ–Ê.
+* @param (o) ‘Šè‚Ì”Õ–Ê.
+* @return — •Ô‚Á‚½Î‚ÌˆÊ’u‚ğ•\‚·ƒrƒbƒgƒ{[ƒh.
 * @detail
-* ç€æ‰‹å¯èƒ½ä½ç½®ã¯parallel prefix ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã‚’ç”¨ã„ã¦ç”Ÿæˆã•ã‚Œã‚‹.
-* 2æ–¹å‘ã«ã¤ã„ã¦, SSEã‚’ç”¨ã„ã¦åŒæ™‚ã«è¨ˆç®—ã™ã‚‹.
+* ’…è‰Â”\ˆÊ’u‚Íparallel prefix ƒAƒ‹ƒSƒŠƒYƒ€(1’i kogge stone)‚ğ—p‚¢‚Ä¶¬‚³‚ê‚é.
+* 2•ûŒü‚É‚Â‚¢‚Ä, SSE‚ğ—p‚¢‚Ä“¯‚ÉŒvZ‚·‚é.
 *
 * @cite
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
 uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
-}
 {
-	
+	auto coord_bit = COORD_TO_BIT[coord];
+	auto coord_bit_2 = _mm_set_epi64x(BYTE_SWAP_64(coord_bit), coord_bit);
+	auto p_2 = _mm_set_epi64x(BYTE_SWAP_64(p), p);
+	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
+	auto masked_o_2 = _mm_set_epi64x(BYTE_SWAP_64(masked_o), masked_o);
+
+	// left
+	auto flipped_diag_left_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(coord_bit_2, 7));
+	auto flipped_horizontal_left = masked_o & (coord_bit << 1);
+	auto flipped_vertical_left = o & (coord_bit << 8);
+
+	flipped_diag_left_2 = _mm_or_si128(flipped_diag_left_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flipped_diag_left_2, 7)));
+	flipped_horizontal_left |= masked_o & (flipped_horizontal_left << 1);
+	flipped_vertical_left |= o & (flipped_vertical_left << 8);
+
+	auto prefix_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(masked_o_2, 7));
+	auto prefix_horizontal = masked_o & (masked_o << 1);
+	auto prefix_vertical = o & (o << 8);
+
+	flipped_diag_left_2 = _mm_or_si128(flipped_diag_left_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_left_2, 14)));
+	flipped_horizontal_left |= prefix_horizontal & (flipped_horizontal_left << 2);
+	flipped_vertical_left |= prefix_vertical & (flipped_vertical_left << 16);
+
+	flipped_diag_left_2 = _mm_or_si128(flipped_diag_left_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_left_2, 14)));
+	flipped_horizontal_left |= prefix_horizontal & (flipped_horizontal_left << 2);
+	flipped_vertical_left |= prefix_vertical & (flipped_vertical_left << 16);
+
+	// right
+	auto flipped_diag_right_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(coord_bit_2, 9));
+	auto flipped_horizontal_right = masked_o & (coord_bit >> 1);
+	auto flipped_vertical_right = o & (coord_bit >> 8);
+
+	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flipped_diag_right_2, 9)));
+	flipped_horizontal_right |= masked_o & (flipped_horizontal_right >> 1);
+	flipped_vertical_right |= o & (flipped_vertical_right >> 8);
+
+	prefix_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(masked_o_2, 9));
+	prefix_horizontal = masked_o & (masked_o >> 1);
+	prefix_vertical = o & (o >> 8);
+
+	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_right_2, 18)));
+	flipped_horizontal_right |= prefix_horizontal & (flipped_horizontal_right >> 2);
+	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
+
+	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_right_2, 18)));
+	flipped_horizontal_right |= prefix_horizontal & (flipped_horizontal_right >> 2);
+	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
+
+	auto outflank_diag_left_2 = _mm_and_si128(p_2, _mm_slli_epi64(flipped_diag_left_2, 7));
+	auto outflank_horizontal_left = p & (flipped_horizontal_left << 1);
+	auto outflank_vertical_left = p & (flipped_vertical_left << 8);
+
+	auto outflank_diag_right_2 = _mm_and_si128(p_2, _mm_slli_epi64(flipped_diag_right_2, 9));
+	auto outflank_horizontal_right = p & (flipped_horizontal_right >> 1);
+	auto outflank_vertical_right = p & (flipped_vertical_right >> 8);
+
+#ifdef USE_SSE41
+	flipped_diag_left_2 = _mm_andnot_si128(_mm_cmpeq_epi64(outflank_diag_left_2, _mm_setzero_si128()), flipped_diag_left_2);
+	flipped_horizontal_left &= -(int)(outflank_horizontal_left != 0);
+	flipped_vertical_left &= -(int)(outflank_vertical_left != 0);
+
+	flipped_diag_right_2 = _mm_andnot_si128(_mm_cmpeq_epi64(outflank_diag_right_2, _mm_setzero_si128()), flipped_diag_right_2);
+	flipped_horizontal_right &= -(int)(outflank_horizontal_right != 0);
+	flipped_vertical_right &= -(int)(outflank_vertical_right != 0);
+#else
+	flipped_diag_left_2 = _mm_and_si128(_mm_castpd_si128(_mm_cmpneq_pd(_mm_castsi128_pd(outflank_diag_left_2), _mm_setzero_pd())), flipped_diag_left_2);
+	flipped_horizontal_left &= -(int)(outflank_horizontal_left != 0);
+	flipped_vertical_left &= -(int)(outflank_vertical_left != 0);
+
+	flipped_diag_right_2 = _mm_and_si128(_mm_castpd_si128(_mm_cmpneq_pd(_mm_castsi128_pd(outflank_diag_right_2), _mm_setzero_pd())), flipped_diag_right_2);
+	flipped_horizontal_right &= -(int)(outflank_horizontal_right != 0);
+	flipped_vertical_right &= -(int)(outflank_vertical_right != 0);
+#endif
+	auto flipped_2 = _mm_or_si128(flipped_diag_left_2, flipped_diag_right_2);
+	auto flipped = flipped_horizontal_left | flipped_horizontal_right | flipped_vertical_left | flipped_vertical_right;
+#ifdef USE_X64
+	flipped |= _mm_cvtsi128_si64(flipped_2) | BYTE_SWAP_64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(flipped_2, flipped_2)));
+#else
+	uint64_t data[2];
+	std::memcpy(data, &flipped_2, 16);
+	flipped |= data[0] | BYTE_SWAP_64(data[1]);
+#endif
+	return flipped;
 }
 
 #else
 
 /**
 * @fn
-* @brief ç€æ‰‹å¯èƒ½ä½ç½®ã‚’è¨ˆç®—ã™ã‚‹.
-* @param (p) ç¾åœ¨ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ç›¤é¢.
-* @param (o) ç›¸æ‰‹ã®ç›¤é¢.
-* @return ç€æ‰‹å¯èƒ½ä½ç½®ã‚’ç¤ºã™ãƒ“ãƒƒãƒˆãƒœãƒ¼ãƒ‰
+* @brief ’…è‚É‚æ‚Á‚Ä— •Ô‚éÎ‚ğŒvZ‚·‚é.
+* @param (p) Œ»İ‚ÌƒvƒŒƒCƒ„[‚Ì”Õ–Ê.
+* @param (o) ‘Šè‚Ì”Õ–Ê.
+* @return — •Ô‚Á‚½Î‚ÌˆÊ’u‚ğ•\‚·ƒrƒbƒgƒ{[ƒh.
 * @detail
-* ç€æ‰‹å¯èƒ½ä½ç½®ã¯parallel prefix ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ ã‚’ç”¨ã„ã¦ç”Ÿæˆã•ã‚Œã‚‹.
+* ’…è‰Â”\ˆÊ’u‚Íparallel prefix ƒAƒ‹ƒSƒŠƒYƒ€(1’i kogge stone)‚ğ—p‚¢‚Ä¶¬‚³‚ê‚é.
 *
 * @cite
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
@@ -98,7 +179,84 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 **/
 uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
 {
-	
+	auto coord_bit = COORD_TO_BIT[coord];
+	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
+
+	// left
+	auto flipped_horizontal = masked_o & (coord_bit << 1);
+	auto flipped_diag_A1H8 = masked_o & (coord_bit << 9);
+	auto flipped_diag_A8H1 = masked_o & (coord_bit << 7);
+	auto flipped_vertical = o & (coord_bit << 8);
+
+	flipped_horizontal |= masked_o & (flipped_horizontal << 1);
+	flipped_diag_A1H8 |= masked_o & (flipped_diag_A1H8 << 9);
+	flipped_diag_A8H1 |= masked_o & (flipped_diag_A8H1 << 7);
+	flipped_vertical |= o & (flipped_vertical << 8);
+
+	auto prefix_horizontal = masked_o & (masked_o << 1);
+	auto prefix_diag_A1H8 = masked_o & (masked_o << 9);
+	auto prefix_diag_A8H1 = masked_o & (masked_o << 7);
+	auto prefix_vertical = o & (o << 8);
+
+	flipped_horizontal |= prefix_horizontal & (flipped_horizontal << 2);
+	flipped_diag_A1H8 |= prefix_diag_A1H8 & (flipped_diag_A1H8 << 18);
+	flipped_diag_A8H1 |= prefix_diag_A8H1 & (flipped_diag_A8H1 << 14);
+	flipped_vertical |= prefix_vertical & (flipped_vertical << 16);
+
+	flipped_horizontal |= prefix_horizontal & (flipped_horizontal << 2);
+	flipped_diag_A1H8 |= prefix_diag_A1H8 & (flipped_diag_A1H8 << 18);
+	flipped_diag_A8H1 |= prefix_diag_A8H1 & (flipped_diag_A8H1 << 14);
+	flipped_vertical |= prefix_vertical & (flipped_vertical << 16);
+
+	auto outflank_horizontal = p & (flipped_horizontal << 1);
+	auto outflank_diag_A1H8 = p & (flipped_diag_A1H8 << 9);
+	auto outflank_diag_A8H1 = p & (flipped_diag_A8H1 << 7);
+	auto outflank_vertical = p & (flipped_vertical << 8);
+
+	flipped_horizontal &= -(int)(outflank_horizontal != 0);
+	flipped_diag_A1H8 &= -(int)(outflank_diag_A1H8 != 0);
+	flipped_diag_A8H1 &= -(int)(outflank_diag_A8H1 != 0);
+	flipped_vertical &= -(int)(outflank_vertical != 0);
+
+	auto flipped = flipped_horizontal | flipped_diag_A1H8 | flipped_diag_A8H1 | flipped_vertical;
+
+	// right
+	flipped_horizontal = masked_o & (coord_bit >> 1);
+	flipped_diag_A1H8 = masked_o & (coord_bit >> 9);
+	flipped_diag_A8H1 = masked_o & (coord_bit >> 7);
+	flipped_vertical = o & (coord_bit >> 8);
+
+	flipped_horizontal |= masked_o & (flipped_horizontal >> 1);
+	flipped_diag_A1H8 |= masked_o & (flipped_diag_A1H8 >> 9);
+	flipped_diag_A8H1 |= masked_o & (flipped_diag_A8H1 >> 7);
+	flipped_vertical |= o & (flipped_vertical >> 8);
+
+	prefix_horizontal = masked_o & (masked_o >> 1);
+	prefix_diag_A1H8 = masked_o & (masked_o >> 9);
+	prefix_diag_A8H1 = masked_o & (masked_o >> 7);
+	prefix_vertical = o & (o >> 8);
+
+	flipped_horizontal |= prefix_horizontal & (flipped_horizontal >> 2);
+	flipped_diag_A1H8 |= prefix_diag_A1H8 & (flipped_diag_A1H8 >> 18);
+	flipped_diag_A8H1 |= prefix_diag_A8H1 & (flipped_diag_A8H1 >> 14);
+	flipped_vertical |= prefix_vertical & (flipped_vertical >> 16);
+
+	flipped_horizontal |= prefix_horizontal & (flipped_horizontal >> 2);
+	flipped_diag_A1H8 |= prefix_diag_A1H8 & (flipped_diag_A1H8 >> 18);
+	flipped_diag_A8H1 |= prefix_diag_A8H1 & (flipped_diag_A8H1 >> 14);
+	flipped_vertical |= prefix_vertical & (flipped_vertical >> 16);
+
+	auto outflank_horizontal_right = p & (flipped_horizontal >> 1);
+	auto outflank_diag_A1H8_right = p & (flipped_diag_A1H8 >> 9);
+	auto outflank_diag_A8H1_right = p & (flipped_diag_A8H1 >> 7);
+	auto outflank_vertical_right = p & (flipped_vertical >> 8);
+
+	flipped_horizontal &= -(int)(outflank_horizontal_right != 0);
+	flipped_diag_A1H8 &= -(int)(outflank_diag_A1H8_right != 0);
+	flipped_diag_A8H1 &= -(int)(outflank_diag_A8H1_right != 0);
+	flipped_vertical &= -(int)(outflank_vertical_right != 0);
+
+	return flipped | flipped_horizontal | flipped_diag_A1H8 | flipped_diag_A8H1 | flipped_vertical;
 }
 
 #endif

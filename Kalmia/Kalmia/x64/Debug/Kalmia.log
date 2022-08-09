@@ -3,8 +3,9 @@
   コンパイルしています...
   mobility_test.h
   main.cpp
-  bitboard.cpp
+  flip.cpp
   mobility.cpp
+  flip_test.cpp
   mobility_test.cpp
   random.cpp
   コードを生成中...

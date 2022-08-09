@@ -32,8 +32,8 @@ namespace reversi
 
 	inline std::string coordinate_to_string(BoardCoordinate coord)
 	{
-		auto x = coord % BOARD_SIZE;
-		auto y = coord / BOARD_SIZE;
+		auto x = coord % reversi::BOARD_SIZE;
+		auto y = coord / reversi::BOARD_SIZE;
 		std::stringstream ss;
 		ss << (char)('A' + x) << y + 1;
 		return ss.str();
@@ -53,7 +53,7 @@ namespace reversi
 	**/
 	inline reversi::SquareState to_opponent_color(reversi::SquareState color)
 	{
-		static_cast<reversi::SquareState>(color ^ reversi::SquareState::WHITE);
+		return static_cast<reversi::SquareState>(color ^ reversi::SquareState::WHITE);
 	}
 
 	enum class GameResult : int8_t

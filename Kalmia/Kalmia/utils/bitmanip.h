@@ -70,4 +70,6 @@ inline uint64_t byte_swap_64(uint64_t bits)
     return swapped;
 }
 
+#define BYTE_SWAP_64(bits) byte_swap_64(bits)
+
 #endif

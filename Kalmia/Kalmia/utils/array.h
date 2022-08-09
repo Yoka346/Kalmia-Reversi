@@ -19,7 +19,7 @@ namespace utils
 		Array(ElementType* data, size_t data_len = LEN) : data()
 		{
 			if (data_len >= LEN)
-				throw out_of_range("The length of \"data\" cannnot be greater than \"LEN\".");
+				throw std::out_of_range("The length of \"data\" cannnot be greater than \"LEN\".");
 
 			for (int i = 0; i < data_len; i++)
 				this->data[i] = data[i];

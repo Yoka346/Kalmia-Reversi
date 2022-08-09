@@ -49,17 +49,53 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            using var sw = new StreamWriter("mobility_test_data.csv");
-            sw.WriteLine("player,opponent,mobility");
+            using var sw = new StreamWriter("flip_test_data.csv");
+            sw.WriteLine("player,opponent,move,flipped");
 
+            Span<Reversi.BoardPosition> moves = stackalloc Reversi.BoardPosition[48];
             var rand = new Random();
             for(int i = 0; i < 1000; i++)
             {
                 var p = (ulong)rand.NextInt64();
                 var o = (ulong)rand.NextInt64();
                 p ^= o;
-                var mobility = CalculateMobility_AVX2(p, o);
-                sw.WriteLine($"{p},{o},{mobility}");
+                var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
+                var num = board.GetNextPositionCandidates(moves);
+                var move = (int)moves[rand.Next(num)];
+                var flipped = CalculateFilippedDiscs_AVX2(p, o, move);
+                sw.WriteLine($"{p},{o},{move},{flipped}");
+            }
+
+            static ulong CalculateFilippedDiscs_AVX2(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
+            {
+                var shift = Vector256.Create(1UL, 8UL, 9UL, 7UL);
+                var shift2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
+                var flipMask = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
+
+                var x = 1UL << pos;
+                var x4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(x));
+                var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
+                var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), flipMask);
+                var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
+                var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
+
+                var flipLeft = Avx2.And(Avx2.ShiftLeftLogicalVariable(x4, shift), maskedO4);
+                var flipRight = Avx2.And(Avx2.ShiftRightLogicalVariable(x4, shift), maskedO4);
+                flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift)));
+                flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, shift)));
+                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+
+                var outflankLeft = Avx2.And(p4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift));
+                var outflankRight = Avx2.And(p4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
+                flipLeft = Avx2.AndNot(Avx2.CompareEqual(outflankLeft, Vector256<ulong>.Zero), flipLeft);
+                flipRight = Avx2.AndNot(Avx2.CompareEqual(outflankRight, Vector256<ulong>.Zero), flipRight);
+                var flip4 = Avx2.Or(flipLeft, flipRight);
+                var flip2 = Sse2.Or(Avx2.ExtractVector128(flip4, 0), Avx2.ExtractVector128(flip4, 1));
+                flip2 = Sse2.Or(flip2, Sse2.UnpackHigh(flip2, flip2));
+                return Sse2.X64.ConvertToUInt64(flip2);
             }
 
             ulong CalculateMobility_AVX2(ulong p, ulong o)   // p is current player's board      o is opponent player's board
