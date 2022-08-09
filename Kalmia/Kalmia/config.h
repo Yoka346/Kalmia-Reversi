@@ -5,11 +5,11 @@
 #pragma once
 
 // CPUのバス幅が64bitの場合にdefineする. これがdefineされていないときは, 32bit CPUとみなす.
-#define X64
+#define USE_X64
 
 // 用いる命令セットのみdefineする. ある命令セットがdefineされたら, それより古いものは自動的にdefineされる.
-//#define USE_AVX2
-#define USE_SSE42
+#define USE_AVX2
+//#define USE_SSE42
 //#define USE_SSE41
 //#define USE_SSSE3
 //#define USE_SSE2
@@ -25,10 +25,10 @@
 #ifdef USE_AVX2
 #define USE_SSE42
 #elif defined(USE_SSE42)
-#define defined(USE_SSE41)
-#elif defined(USE_SSE41)
+#define USE_SSE41
+#elif USE_SSE41
 #define USE_SSSE3
-#elif defined(USE_SSSE3)
+#elif USE_SSSE3
 #define USE_SSE2
 #endif
 

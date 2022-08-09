@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../common.h"
-#include "enum.h"
+#include "types.h"
 
 namespace reversi
 {

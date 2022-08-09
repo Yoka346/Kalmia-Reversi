@@ -25,7 +25,7 @@
 
 #define PEXT_32(bits, mask) _pext_u32(bits, mask)
 
-#ifdef X64
+#ifdef USE_X64
 #define PEXT_64(bits, mask) _pext_u64(bits, mask)
 #else
 #define PEXT_64(bits, mask) (uint64_t)(PEXT_32(bits >> 32, mask >> 32) << std::popcount((uint32_t)mask)) | (uint64_t)PEXT_32((uint32_t)bits, (uint32_t)mask)

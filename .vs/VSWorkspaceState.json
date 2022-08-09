@@ -4,8 +4,9 @@
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
     "\\Kalmia\\Kalmia\\reversi",
+    "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\utils\\math_functions.h",
+  "SelectedNode": "\\Kalmia\\Kalmia\\reversi\\constant.h",
   "PreviewInSolutionExplorer": false
 }

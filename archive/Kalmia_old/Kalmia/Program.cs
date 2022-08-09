@@ -1,4 +1,4 @@
-﻿//#define DEVELOP
+﻿#define DEVELOP
 
 using System;
 using System.IO;
@@ -12,6 +12,11 @@ using Kalmia.EndGameSolver;
 using Kalmia.GoTextProtocol;
 using Kalmia.Evaluation;
 using Kalmia.Learning;
+
+#if DEVELOP
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 namespace Kalmia
 {
@@ -44,7 +49,45 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            // write some test code.
+            using var sw = new StreamWriter("mobility_test_data.csv");
+            sw.WriteLine("player,opponent,mobility");
+
+            var rand = new Random();
+            for(int i = 0; i < 1000; i++)
+            {
+                var p = (ulong)rand.NextInt64();
+                var o = (ulong)rand.NextInt64();
+                p ^= o;
+                var mobility = CalculateMobility_AVX2(p, o);
+                sw.WriteLine($"{p},{o},{mobility}");
+            }
+
+            ulong CalculateMobility_AVX2(ulong p, ulong o)   // p is current player's board      o is opponent player's board
+            {
+                var shift = Vector256.Create(1UL, 8UL, 9UL, 7UL);
+                var shift2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
+                var flipMask = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
+
+                var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
+                var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), flipMask);
+                var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
+                var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
+
+                var flipLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(p4, shift));
+                var flipRight = Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(p4, shift));
+                flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift)));
+                flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, shift)));
+                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
+                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
+
+                var mobility4 = Avx2.ShiftLeftLogicalVariable(flipLeft, shift);
+                mobility4 = Avx2.Or(mobility4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
+                var mobility2 = Sse2.Or(Avx2.ExtractVector128(mobility4, 0), Avx2.ExtractVector128(mobility4, 1));
+                mobility2 = Sse2.Or(mobility2, Sse2.UnpackHigh(mobility2, mobility2));
+                return Sse2.X64.ConvertToUInt64(mobility2) & ~(p | o);
+            }
         }
 #endif
 

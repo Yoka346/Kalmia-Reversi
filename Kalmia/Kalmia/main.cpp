@@ -1,6 +1,7 @@
 ﻿#include <iostream>
+#include "test/mobility_test.h"
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	test::calc_mobility_test();
 }

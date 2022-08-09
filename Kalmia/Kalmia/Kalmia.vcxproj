@@ -76,6 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,10 +106,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(VCInstallDir)Auxiliary\VS\UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,18 +134,23 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="reversi\bitboard.cpp" />
+    <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
+    <ClCompile Include="test\mobility_test.cpp" />
+    <ClCompile Include="test\mobility_test.h" />
     <ClCompile Include="utils\random.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
     <ClInclude Include="reversi\bitboard.h" />
+    <ClInclude Include="reversi\flip.h" />
     <ClInclude Include="reversi\mobility.h" />
+    <ClInclude Include="test\test_common.h" />
     <ClInclude Include="utils\bitmanip.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="utils\math_functions.h" />
     <ClInclude Include="reversi\constant.h" />
-    <ClInclude Include="reversi\enum.h" />
+    <ClInclude Include="reversi\types.h" />
     <ClInclude Include="utils\array.h" />
     <ClInclude Include="utils\random.h" />
   </ItemGroup>

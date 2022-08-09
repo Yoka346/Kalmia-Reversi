@@ -4,7 +4,7 @@
 
 using namespace reversi;
 
-#ifdef USE_AVX2
+#if defined(USE_AVX2) && defined(USE_X64) 
 
 /**
 * @fn
@@ -20,7 +20,7 @@ using namespace reversi;
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility 
 **/
-inline uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
+uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
 {
 	static const __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
 	static const __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
@@ -65,7 +65,7 @@ inline uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o, BoardCoordinate
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-inline uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
+uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
 {
 	auto p_2 = _mm_set_epi64x(BYTE_SWAP_64(p), p);
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
@@ -117,7 +117,7 @@ inline uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o, BoardCoordinate
 	mobility_2 = _mm_or_si128(mobility_2, _mm_slli_epi64(flip_diag_2, 9));
 	mobility |= (flip_horizontal >> 1) | (flip_vertical >> 8);
 
-#ifdef X64
+#ifdef USE_X64
 	mobility |= _mm_cvtsi128_si64(mobility_2) | BYTE_SWAP_64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(mobility_2, mobility_2)));
 #else
 	uint64_t data[2];
@@ -142,7 +142,7 @@ inline uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o, BoardCoordinate
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-inline uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
+uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
 {
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
 
