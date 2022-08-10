@@ -5,8 +5,8 @@ using namespace utils;
 
 random_device Random::rand_device = random_device();
 
-uint32_t Random::next(uint32_t upper_bound) { return (uint32_t)(next_64(upper_bound)); }
-uint32_t Random::next(uint32_t min, uint32_t upper_bound) { return (uint32_t)(next_64(min, upper_bound)); }
+uint32_t Random::next(uint32_t upper_bound) { return static_cast<uint32_t>(next_64(upper_bound)); }
+uint32_t Random::next(uint32_t min, uint32_t upper_bound) { return static_cast<uint32_t>(next_64(min, upper_bound)); }
 
 /**
 * @fn

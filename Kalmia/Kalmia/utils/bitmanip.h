@@ -44,14 +44,14 @@ inline uint64_t pext(uint64_t bits, uint64_t mask)
     uint64_t res = 0;
     for (uint64_t bb = 1; mask; bb += bb)
     {
-        if ((int64_t)bits & (int64_t)mask & -(int64_t)mask)
+        if (static_cast<int64_t>(bits) & static_cast<int64_t>(mask) & -static_cast<int64_t>(mask))
             res |= bb;
         mask &= mask - 1;
     }
     return res;
 }
 
-#define PEXT_32(bits, mask) (uint32_t)pext(bits, mask)
+#define PEXT_32(bits, mask) (static_cast<uint32_t>(pext(bits, mask)))
 #define PEXT_64(bits, mask) pext(bits, mask)
 
 #endif

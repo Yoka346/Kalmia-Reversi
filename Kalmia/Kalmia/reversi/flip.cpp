@@ -50,7 +50,7 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 	auto outflank_left_4 = _mm256_and_si256(p_4, _mm256_sllv_epi64(flipped_left_4, SHIFT));
 	auto outflank_right_4 = _mm256_and_si256(p_4, _mm256_srlv_epi64(flipped_right_4, SHIFT));
 
-	flipped_left_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_left_4, ZERO), flipped_left_4);	// ??????error
+	flipped_left_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_left_4, ZERO), flipped_left_4);	
 	flipped_right_4 = _mm256_andnot_si256(_mm256_cmpeq_epi64(outflank_right_4, ZERO), flipped_right_4);
 
 	auto flipped_4 = _mm256_or_si256(flipped_left_4, flipped_right_4);
@@ -135,20 +135,20 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 
 #ifdef USE_SSE41
 	flipped_diag_left_2 = _mm_andnot_si128(_mm_cmpeq_epi64(outflank_diag_left_2, _mm_setzero_si128()), flipped_diag_left_2);
-	flipped_horizontal_left &= -(int)(outflank_horizontal_left != 0);
-	flipped_vertical_left &= -(int)(outflank_vertical_left != 0);
+	flipped_horizontal_left &= -static_cast<int>(outflank_horizontal_left != 0);
+	flipped_vertical_left &= -static_cast<int>(outflank_vertical_left != 0);
 
 	flipped_diag_right_2 = _mm_andnot_si128(_mm_cmpeq_epi64(outflank_diag_right_2, _mm_setzero_si128()), flipped_diag_right_2);
-	flipped_horizontal_right &= -(int)(outflank_horizontal_right != 0);
-	flipped_vertical_right &= -(int)(outflank_vertical_right != 0);
+	flipped_horizontal_right &= -static_cast<int>(outflank_horizontal_right != 0);
+	flipped_vertical_right &= -static_cast<int>(outflank_vertical_right != 0);
 #else
 	flipped_diag_left_2 = _mm_and_si128(_mm_castpd_si128(_mm_cmpneq_pd(_mm_castsi128_pd(outflank_diag_left_2), _mm_setzero_pd())), flipped_diag_left_2);
-	flipped_horizontal_left &= -(int)(outflank_horizontal_left != 0);
-	flipped_vertical_left &= -(int)(outflank_vertical_left != 0);
+	flipped_horizontal_left &= -static_cast<int>(outflank_horizontal_left != 0);
+	flipped_vertical_left &= -static_cast<int>(outflank_vertical_left != 0);
 
 	flipped_diag_right_2 = _mm_and_si128(_mm_castpd_si128(_mm_cmpneq_pd(_mm_castsi128_pd(outflank_diag_right_2), _mm_setzero_pd())), flipped_diag_right_2);
-	flipped_horizontal_right &= -(int)(outflank_horizontal_right != 0);
-	flipped_vertical_right &= -(int)(outflank_vertical_right != 0);
+	flipped_horizontal_right &= -static_cast<int>(outflank_horizontal_right != 0);
+	flipped_vertical_right &= -static_cast<int>(outflank_vertical_right != 0);
 #endif
 	auto flipped_2 = _mm_or_si128(flipped_diag_left_2, flipped_diag_right_2);
 	auto flipped = flipped_horizontal_left | flipped_horizontal_right | flipped_vertical_left | flipped_vertical_right;
@@ -213,10 +213,10 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 	auto outflank_diag_A8H1 = p & (flipped_diag_A8H1 << 7);
 	auto outflank_vertical = p & (flipped_vertical << 8);
 
-	flipped_horizontal &= -(int)(outflank_horizontal != 0);
-	flipped_diag_A1H8 &= -(int)(outflank_diag_A1H8 != 0);
-	flipped_diag_A8H1 &= -(int)(outflank_diag_A8H1 != 0);
-	flipped_vertical &= -(int)(outflank_vertical != 0);
+	flipped_horizontal &= -static_cast<int>(outflank_horizontal != 0);
+	flipped_diag_A1H8 &= -static_cast<int>(outflank_diag_A1H8 != 0);
+	flipped_diag_A8H1 &= -static_cast<int>(outflank_diag_A8H1 != 0);
+	flipped_vertical &= -static_cast<int>(outflank_vertical != 0);
 
 	auto flipped = flipped_horizontal | flipped_diag_A1H8 | flipped_diag_A8H1 | flipped_vertical;
 
@@ -251,10 +251,10 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 	auto outflank_diag_A8H1_right = p & (flipped_diag_A8H1 >> 7);
 	auto outflank_vertical_right = p & (flipped_vertical >> 8);
 
-	flipped_horizontal &= -(int)(outflank_horizontal_right != 0);
-	flipped_diag_A1H8 &= -(int)(outflank_diag_A1H8_right != 0);
-	flipped_diag_A8H1 &= -(int)(outflank_diag_A8H1_right != 0);
-	flipped_vertical &= -(int)(outflank_vertical_right != 0);
+	flipped_horizontal &= -static_cast<int>(outflank_horizontal_right != 0);
+	flipped_diag_A1H8 &= -static_cast<int>(outflank_diag_A1H8_right != 0);
+	flipped_diag_A8H1 &= -static_cast<int>(outflank_diag_A8H1_right != 0);
+	flipped_vertical &= -static_cast<int>(outflank_vertical_right != 0);
 
 	return flipped | flipped_horizontal | flipped_diag_A1H8 | flipped_diag_A8H1 | flipped_vertical;
 }

@@ -25,9 +25,9 @@ namespace utils
 
 		float out = x - exp;
 		out = 1.0f + out * (0.6602339f + 0.33976606f * out);
-		auto tmp = *(int32_t*)&out;
-		tmp += (int32_t)((uint32_t)exp << 23);
-		return *(float*)&exp;
+		auto tmp = *reinterpret_cast<int32_t*>(&out);
+		tmp += static_cast<int32_t>(static_cast<uint32_t>(exp) << 23);
+		return *reinterpret_cast<float*>(&exp);
 	}
 
 	constexpr float exp(float x) { return exp2(1.442695040f * x); }
@@ -41,10 +41,10 @@ namespace utils
 	**/
 	constexpr float log2(float x)
 	{
-		auto tmp = *(uint32_t*)&x;
+		auto tmp = *reinterpret_cast<uint32_t*>(&x);
 		auto expb = tmp >> 23;
 		tmp = (tmp & 0x7fffff) | (0x7f << 23);
-		auto out = *(float*)&tmp;
+		auto out = *reinterpret_cast<float*>(&tmp);
 		out -= 1.0f;
 		return out * (1.3465552f - 0.34655523f * out) - 127 + expb;
 	}
@@ -52,9 +52,9 @@ namespace utils
 	constexpr float log(float x) { return  0.6931471805599453f * log2(x); }
 
 	// ®””Ålog2ŠÖ”‚Å‚Í, log2(0) = 0 ‚Æ‚·‚é.
-	inline int log2(uint32_t n) { return 31 ^ (int)std::countl_zero(n | 1); }
-	inline int log2(uint64_t n) { return 63 ^ (int)std::countl_zero(n | 1); }
-	inline int log2_ceiling(uint32_t n) { int res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
-	inline int log2_ceiling(uint64_t n) { int res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
+	inline int32_t log2(uint32_t n) { return 31 ^ static_cast<int32_t>(std::countl_zero(n | 1)); }
+	inline int32_t log2(uint64_t n) { return 63 ^ static_cast<int32_t>(std::countl_zero(n | 1)); }
+	inline int32_t log2_ceiling(uint32_t n) { int32_t res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
+	inline int32_t log2_ceiling(uint64_t n) { int32_t res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
 }
 

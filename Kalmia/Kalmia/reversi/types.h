@@ -19,7 +19,7 @@ namespace reversi
 
 	constexpr BoardCoordinate& operator++(BoardCoordinate& coord)
 	{
-		coord = (BoardCoordinate)((uint8_t)coord + 1);
+		coord = static_cast<BoardCoordinate>(coord + 1);
 		return coord;
 	}
 
@@ -35,7 +35,7 @@ namespace reversi
 		auto x = coord % reversi::BOARD_SIZE;
 		auto y = coord / reversi::BOARD_SIZE;
 		std::stringstream ss;
-		ss << (char)('A' + x) << y + 1;
+		ss << static_cast<char>('A' + x) << y + 1;
 		return ss.str();
 	}
 

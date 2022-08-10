@@ -4,6 +4,6 @@
 
 int main()
 {
-	test::calc_mobility_test();
-	//test::calc_flipped_discs_test();
+	//test::calc_mobility_test();
+	test::calc_flipped_discs_test();
 }

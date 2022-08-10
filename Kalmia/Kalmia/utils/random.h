@@ -15,7 +15,7 @@ namespace utils
 	public:
 		Random() :rand(rand_device()) { ; }
 		Random(uint64_t seed) : rand(seed) { ; }
-		uint32_t next() { return (uint32_t)(this->rand() >> 32); }
+		uint32_t next() { return static_cast<uint32_t>(this->rand() >> 32); }
 		uint64_t next_64() { return this->rand(); }
 		uint32_t next(uint32_t upper_bound);
 		uint32_t next(uint32_t min, uint32_t upper_bound);
