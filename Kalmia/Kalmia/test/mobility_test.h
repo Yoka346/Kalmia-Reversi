@@ -7,6 +7,7 @@
 #include "../common.h"
 #include "../reversi/mobility.h"
 
+#include <filesystem>
 #include <fstream>
 #include <vector>
 

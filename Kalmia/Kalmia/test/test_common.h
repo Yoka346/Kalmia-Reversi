@@ -1,2 +1,7 @@
 #pragma once
-#define TEST_DATA_DIR "../../test_data/"
+
+#include "../config.h"
+
+#ifdef _DEBUG
+#define TEST_DATA_DIR "../test_data/"
+#endif
