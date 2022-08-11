@@ -155,6 +155,7 @@
     <ClInclude Include="reversi\types.h" />
     <ClInclude Include="utils\array.h" />
     <ClInclude Include="utils\random.h" />
+    <ClInclude Include="utils\static_initializer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
