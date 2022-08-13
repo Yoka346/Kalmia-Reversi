@@ -135,6 +135,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
+    <ClCompile Include="reversi\position.cpp" />
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />
@@ -142,9 +143,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
+    <ClInclude Include="engine\engine.h" />
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />
     <ClInclude Include="reversi\mobility.h" />
+    <ClInclude Include="reversi\move.h" />
     <ClInclude Include="reversi\position.h" />
     <ClInclude Include="test\flip_test.h" />
     <ClInclude Include="test\test_common.h" />

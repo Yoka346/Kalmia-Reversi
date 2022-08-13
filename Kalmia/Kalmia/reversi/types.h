@@ -1,5 +1,6 @@
 #pragma once
 #include "../common.h"
+#include "../utils/bitmanip.h"
 #include "constant.h"
 
 namespace reversi
@@ -39,7 +40,7 @@ namespace reversi
 		return ss.str();
 	}
 
-	enum SquareState
+	enum DiscColor
 	{
 		BLACK,
 		WHITE,
@@ -51,9 +52,9 @@ namespace reversi
 	* @brief Î‚ÌF‚ğ”½“]‚³‚¹‚é.
 	* @return ”½“]‚µ‚½Î‚ÌF.
 	**/
-	inline reversi::SquareState to_opponent_color(reversi::SquareState color)
+	inline reversi::DiscColor to_opponent_color(reversi::DiscColor color)
 	{
-		return static_cast<reversi::SquareState>(color ^ reversi::SquareState::WHITE);
+		return static_cast<reversi::DiscColor>(color ^ reversi::DiscColor::WHITE);
 	}
 
 	enum class GameResult : int8_t

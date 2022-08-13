@@ -49,6 +49,7 @@ namespace utils
 		return out * (1.3465552f - 0.34655523f * out) - 127 + expb;
 	}
 
+	constexpr bool sign(int x) { return x >> 31; }
 	constexpr float log(float x) { return  0.6931471805599453f * log2(x); }
 
 	// ®””Ålog2ŠÖ”‚Å‚Í, log2(0) = 0 ‚Æ‚·‚é.
