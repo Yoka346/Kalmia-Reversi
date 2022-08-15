@@ -11,7 +11,7 @@ namespace utils
 	*			leela chess zero のfastmath.hを参考に実装.
 	* @sa		https://github.com/LeelaChessZero/lc0/blob/dcc37b7203355d0a9308cac04d05b56772d07f9b/src/utils/fastmath.h#L59
 	**/
-	constexpr float exp2(float x)
+	inline float exp2(float x)
 	{
 		int32_t exp = 0;
 		if (x < 0)
@@ -30,7 +30,7 @@ namespace utils
 		return *reinterpret_cast<float*>(&exp);
 	}
 
-	constexpr float exp(float x) { return exp2(1.442695040f * x); }
+	inline float exp(float x) { return exp2(1.442695040f * x); }
 
 	/**
 	* @fn
@@ -39,7 +39,7 @@ namespace utils
 	*			leela chess zero のfastmath.hを参考に実装.
 	* @sa		https://github.com/LeelaChessZero/lc0/blob/dcc37b7203355d0a9308cac04d05b56772d07f9b/src/utils/fastmath.h#L81
 	**/
-	constexpr float log2(float x)
+	inline float log2(float x)
 	{
 		auto tmp = *reinterpret_cast<uint32_t*>(&x);
 		auto expb = tmp >> 23;
@@ -49,8 +49,8 @@ namespace utils
 		return out * (1.3465552f - 0.34655523f * out) - 127 + expb;
 	}
 
-	constexpr bool sign(int x) { return x >> 31; }
-	constexpr float log(float x) { return  0.6931471805599453f * log2(x); }
+	inline bool sign(int x) { return x >> 31; }
+    inline float log(float x) { return  0.6931471805599453f * log2(x); }
 
 	// 整数版log2関数では, log2(0) = 0 とする.
 	inline int32_t log2(uint32_t n) { return 31 ^ static_cast<int32_t>(std::countl_zero(n | 1)); }

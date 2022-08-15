@@ -22,8 +22,9 @@ bool Position::update(BoardCoordinate& coord)
 int Position::get_next_moves(Array<Move, MAX_MOVE_NUM>& moves)
 {
 	uint64_t mobility = this->_bitboard.calc_player_mobility();
-	int move_count;
+	auto move_count = 0;
 	int coord;
 	FOREACH_BIT(coord, mobility)
 		moves[move_count++].coord = static_cast<BoardCoordinate>(coord);
+	return move_count;
 }

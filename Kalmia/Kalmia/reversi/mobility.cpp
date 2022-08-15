@@ -20,7 +20,7 @@ using namespace reversi;
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility 
 **/
-uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
+uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 {
 	static const __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
 	static const __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
@@ -65,7 +65,7 @@ uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
+uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 {
 	auto p_2 = _mm_set_epi64x(BYTE_SWAP_64(p), p);
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
@@ -142,7 +142,7 @@ uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-uint64_t reversi::calc_mobility(uint64_t& p, uint64_t& o)
+uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 {
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
 

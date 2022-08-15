@@ -1,12 +1,3 @@
 ﻿  モジュール依存関係のソースをスキャンしています...
-  mobility_test.h
-  コンパイルしています...
-  mobility_test.h
-  main.cpp
-  flip.cpp
-  mobility.cpp
-  flip_test.cpp
-  mobility_test.cpp
-  random.cpp
-  コードを生成中...
+  position.cpp
   Kalmia.vcxproj -> C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\x64\Debug\Kalmia.exe

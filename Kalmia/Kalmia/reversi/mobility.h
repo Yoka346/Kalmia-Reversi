@@ -6,6 +6,6 @@
 
 namespace reversi
 {
-	uint64_t calc_mobility(uint64_t& p, uint64_t& o);
+	uint64_t calc_mobility(const uint64_t& p, const uint64_t& o);
 }
 

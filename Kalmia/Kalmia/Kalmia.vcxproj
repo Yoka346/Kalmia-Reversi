@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -139,6 +139,7 @@
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />
+    <ClCompile Include="utils\game_timer.cpp" />
     <ClCompile Include="utils\random.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -153,12 +154,14 @@
     <ClInclude Include="test\test_common.h" />
     <ClInclude Include="utils\bitmanip.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="utils\exception.h" />
     <ClInclude Include="utils\math_functions.h" />
     <ClInclude Include="reversi\constant.h" />
     <ClInclude Include="reversi\types.h" />
     <ClInclude Include="utils\array.h" />
     <ClInclude Include="utils\random.h" />
     <ClInclude Include="utils\static_initializer.h" />
+    <ClInclude Include="utils\game_timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

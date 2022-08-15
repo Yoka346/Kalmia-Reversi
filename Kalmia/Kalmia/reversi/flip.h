@@ -7,6 +7,6 @@
 
 namespace reversi
 {
-	uint64_t calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& coord);
+	uint64_t calc_flipped_discs(const uint64_t& p, const uint64_t& o, const BoardCoordinate& coord);
 }
 

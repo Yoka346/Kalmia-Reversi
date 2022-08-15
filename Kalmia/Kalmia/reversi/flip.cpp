@@ -20,7 +20,7 @@ using namespace reversi;
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
+uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const BoardCoordinate& coord)
 {
 	static const __m256i SHIFT = _mm256_set_epi64x(7ULL, 9ULL, 8ULL, 1ULL);
 	static const __m256i SHIFT_2 = _mm256_set_epi64x(14ULL, 18ULL, 16ULL, 2ULL);
@@ -75,7 +75,7 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
+uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const BoardCoordinate& coord)
 {
 	auto coord_bit = COORD_TO_BIT[coord];
 	auto coord_bit_2 = _mm_set_epi64x(BYTE_SWAP_64(coord_bit), coord_bit);
@@ -177,7 +177,7 @@ uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& 
 *  https://www.chessprogramming.org/Parallel_Prefix_Algorithms
 *  http://www.amy.hi-ho.ne.jp/okuhara/bitboard.htm#mobility
 **/
-uint64_t reversi::calc_flipped_discs(uint64_t& p, uint64_t& o, BoardCoordinate& coord)
+uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const BoardCoordinate& coord)
 {
 	auto coord_bit = COORD_TO_BIT[coord];
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;

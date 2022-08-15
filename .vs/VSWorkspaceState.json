@@ -3,10 +3,10 @@
     "",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
-    "\\Kalmia\\Kalmia\\reversi",
+    "\\Kalmia\\Kalmia\\engine",
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\reversi\\position.h",
+  "SelectedNode": "\\Kalmia\\Kalmia.sln",
   "PreviewInSolutionExplorer": false
 }
