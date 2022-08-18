@@ -1,8 +1,5 @@
 #pragma once
-
-#include "../common.h"
-#include "../utils/bitmanip.h"
-#include "types.h"
+#include <cstdint>
 
 namespace reversi
 {

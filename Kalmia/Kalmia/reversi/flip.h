@@ -1,8 +1,4 @@
 #pragma once
-
-#include "../common.h"
-#include "../utils/bitmanip.h"
-#include "constant.h"
 #include "types.h"
 
 namespace reversi

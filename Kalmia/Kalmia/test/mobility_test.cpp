@@ -1,5 +1,12 @@
 #pragma once
 #include "mobility_test.h"
+#include "test_common.h"
+#include "../reversi/mobility.h"
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <vector>
+#include <cassert>
 
 using namespace std;
 

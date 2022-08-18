@@ -1,6 +1,7 @@
 #pragma once
-
 #include "flip.h"
+#include "../utils/bitmanip.h"
+#include "constant.h"
 
 using namespace reversi;
 

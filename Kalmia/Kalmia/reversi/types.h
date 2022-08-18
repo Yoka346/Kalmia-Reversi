@@ -1,7 +1,6 @@
 #pragma once
-#include "../common.h"
-#include "../utils/bitmanip.h"
-#include "constant.h"
+#include <iostream>
+#include <cstdint>
 
 namespace reversi
 {
@@ -31,14 +30,7 @@ namespace reversi
 		return prev;
 	}
 
-	inline std::string coordinate_to_string(BoardCoordinate coord)
-	{
-		auto x = coord % reversi::BOARD_SIZE;
-		auto y = coord / reversi::BOARD_SIZE;
-		std::stringstream ss;
-		ss << static_cast<char>('A' + x) << y + 1;
-		return ss.str();
-	}
+	std::string coordinate_to_string(BoardCoordinate coord);
 
 	enum DiscColor
 	{
@@ -52,9 +44,9 @@ namespace reversi
 	* @brief Î‚ÌF‚ð”½“]‚³‚¹‚é.
 	* @return ”½“]‚µ‚½Î‚ÌF.
 	**/
-	inline reversi::DiscColor to_opponent_color(reversi::DiscColor color)
+	constexpr DiscColor to_opponent_color(DiscColor color)
 	{
-		return static_cast<reversi::DiscColor>(color ^ reversi::DiscColor::WHITE);
+		return static_cast<DiscColor>(color ^ DiscColor::WHITE);
 	}
 
 	enum class GameResult : int8_t

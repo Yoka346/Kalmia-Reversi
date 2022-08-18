@@ -1,5 +1,6 @@
 #pragma once
 #include "game_timer.h"
+#include "../utils/exception.h"
 
 using namespace utils;
 
@@ -18,7 +19,7 @@ void GameTimer::start()
 
 void GameTimer::stop()
 {
-	if (!is_ticking)
+	if (!this->_is_ticking)
 		throw utils::invalid_operation("timer is not ticking.");
 
 	auto ellapsed = duration_cast<milliseconds>(high_resolution_clock::now() - this->check_point);

@@ -1,11 +1,7 @@
 #pragma once
-
-#include "../common.h"
-#include "../config.h"
 #include "../utils/static_initializer.h"
 #include "../utils/random.h"
-#include "../utils/bitmanip.h"
-#include "../utils/math_functions.h"
+#include "../utils/array.h"
 #include "constant.h"
 #include "types.h"
 #include "move.h"
@@ -26,18 +22,7 @@ namespace reversi
 
 	public:
 		inline static size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
-
-		inline static void init()
-		{
-			HASH_RANK = utils::ConstantArray<uint64_t, HASH_RANK_LEN_0 * HASH_RANK_LEN_1>(
-				[](uint64_t* hash_rank, size_t len)
-				{
-					Random rand;
-					for (int i = 0; i < HASH_RANK_LEN_0; i++)
-						for (int j = 0; j < HASH_RANK_LEN_1; j++)
-							hash_rank[to_hash_rank_idx(i, j)] = rand.next_64();
-				});
-		}
+		static void init_hash_rank(uint64_t* hash_rank, size_t len);
 
 		Position() 
 			: _bitboard(COORD_TO_BIT[reversi::E4] | COORD_TO_BIT[reversi::D5], COORD_TO_BIT[reversi::D4] | COORD_TO_BIT[reversi::E5]),
@@ -82,6 +67,4 @@ namespace reversi
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
 		}
 	};
-
-	utils::StaticInitializer<Position, Position::init> initializer;
 }

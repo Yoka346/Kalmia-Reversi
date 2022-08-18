@@ -1,6 +1,4 @@
 #pragma once
-#include "../common.h"
-
 #include <bit>
 
 #ifdef USE_AVX2

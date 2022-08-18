@@ -1,5 +1,12 @@
 #pragma once
 #include "flip_test.h"
+#include "test_common.h"
+#include "../reversi/flip.h"
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <vector>
+#include <cassert>
 
 using namespace std;
 

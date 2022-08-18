@@ -1,5 +1,4 @@
 #pragma once
-#include "../utils/bitmanip.h"
 #include "types.h"
 
 namespace reversi

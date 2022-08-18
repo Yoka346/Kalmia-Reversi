@@ -2,15 +2,6 @@
 
 #ifdef _DEBUG
 
-#include "test_common.h"
-
-#include "../common.h"
-#include "../reversi/mobility.h"
-
-#include <filesystem>
-#include <fstream>
-#include <vector>
-
 #define MOBILITY_TEST_DATA_NAME "mobility_test_data.csv"
 
 namespace test

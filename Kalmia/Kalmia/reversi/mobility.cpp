@@ -1,6 +1,8 @@
 #pragma once
 
 #include "mobility.h"
+#include "../utils/bitmanip.h"
+#include "types.h"
 
 using namespace reversi;
 
