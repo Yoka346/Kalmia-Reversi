@@ -4,9 +4,8 @@
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
     "\\Kalmia\\Kalmia\\engine",
-    "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia.sln",
+  "SelectedNode": "\\Kalmia\\Kalmia\\engine\\engine_option.h",
   "PreviewInSolutionExplorer": false
 }

@@ -2,9 +2,14 @@
 #include "../utils//game_timer.h"
 #include "../reversi/types.h"
 #include "../reversi/position.h"
+#include "engine_option.h"
+#include <vector>
+#include <tuple>
 
 namespace engine
 {
+	using EngineOptions = std::vector<std::pair<std::string, EngineOption>>;
+
 	class Engine
 	{
 	protected:
@@ -34,6 +39,36 @@ namespace engine
 		* @return 盤面の更新に成功したらtrue.
 		**/
 		inline virtual bool update_position(reversi::BoardCoordinate move) { return this->_position.update<true>(move); }
+
+		/**
+		* @fn
+		* @brief 思考エンジンのオプション値を設定する.
+		* @param (name) オプション名.
+		* @param (value) オプション値.
+		* @param (err_msg) エラーメッセージ.
+		* @return オプション値の設定に成功したらtrue. 失敗したらエラーメッセージをerr_msgに格納してfalseを返す.
+		**/
+		virtual bool set_option(const std::string& name, const std::string& value, std::string& err_msg) = 0;
+
+		/**
+		* @fn
+		* @brief 思考エンジンのオプション値を設定する.
+		* @param (name) オプション名.
+		* @param (value) オプション値.
+		* @return オプション値の設定に成功したらtrue.
+		**/
+		inline bool set_option(const std::string name, const std::string& value)
+		{
+			std::string dummy;
+			return set_option(name, value, dummy);
+		}
+
+		/**
+		* @fn
+		* @brief エンジンのオプション名とオプション値のタプルのリストを取得する.
+		* @params (options) エンジンのオプション名とオプション値のタプルのリスト
+		**/
+		virtual void get_options(EngineOptions& options) = 0;
 
 		/**
 		* @fn

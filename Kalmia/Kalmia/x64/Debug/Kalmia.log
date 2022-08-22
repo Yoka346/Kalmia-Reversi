@@ -1,5 +1,40 @@
 ﻿  モジュール依存関係のソースをスキャンしています...
-  position.cpp
-  type.cpp
+  engine_option.cpp
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(39,15): error C2440: '既定の引数': 'const engine::EngineOption::EventHandler' から 'engine::EngineOption::EventHandler &' に変換できません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(39,15): message : 変換で修飾子が失われます。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(10,16): error C2511: 'engine::EngineOption::EngineOption(bool,size_t,engine::EngineOption::EventHandler *)': オーバーロードされたメンバー関数が 'engine::EngineOption' にありません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(12): message : 'engine::EngineOption' の宣言を確認してください
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(11,2): error C2550: 'engine::EngineOption::{ctor}': コンストラクターの初期化子リストはコンストラクターの定義だけに許されます。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(13,3): error C2671: 'engine::EngineOption::{ctor}': 静的なメンバー関数は 'this' ポインターをアクセスすることができません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(13,25): error C2671: 'engine::EngineOption::{ctor}': 静的なメンバー関数は 'this' ポインターをアクセスすることができません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(16,16): error C2511: 'engine::EngineOption::EngineOption(std::string &,size_t,engine::EngineOption::EventHandler *)': オーバーロードされたメンバー関数が 'engine::EngineOption' にありません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(12): message : 'engine::EngineOption' の宣言を確認してください
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(16,182): error C2550: 'engine::EngineOption::{ctor}': コンストラクターの初期化子リストはコンストラクターの定義だけに許されます。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(18,16): error C2511: 'engine::EngineOption::EngineOption(int32_t,int32_t,int32_t,size_t,engine::EngineOption::EventHandler *)': オーバーロードされたメンバー関数が 'engine::EngineOption' にありません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(12): message : 'engine::EngineOption' の宣言を確認してください
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(19,2): error C2550: 'engine::EngineOption::{ctor}': コンストラクターの初期化子リストはコンストラクターの定義だけに許されます。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(21,3): error C2671: 'engine::EngineOption::{ctor}': 静的なメンバー関数は 'this' ポインターをアクセスすることができません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(21,25): error C2671: 'engine::EngineOption::{ctor}': 静的なメンバー関数は 'this' ポインターをアクセスすることができません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.cpp(43,5): error C2100: 間接指定演算子 (*) の使い方が正しくありません。
+  random_mover.cpp
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine.h(68,64): error C2065: 'EngineOption': 定義されていない識別子です。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine.h(68,45): error C3544: '_Types': パラメーター パックには型テンプレート引数が必要です
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine.h(68,45): error C3203: 'tuple': 非特殊 クラス テンプレート は、テンプレート 引数として テンプレート パラメーター '_Ty' に使用できません。実際の型を指定してください
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(39,15): error C2440: '既定の引数': 'const engine::EngineOption::EventHandler' から 'engine::EngineOption::EventHandler &' に変換できません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine_option.h(39,15): message : 変換で修飾子が失われます。
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\include\tuple(189,9): error C2259: 'engine::RandomMover': 抽象クラスをインスタンス化できません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\random_mover.h(9): message : 'engine::RandomMover' の宣言を確認してください
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\include\tuple(189,9): message : 次のメンバーが原因です:
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\include\tuple(189,9): message : 'void engine::Engine::get_options(std::vector<int,std::allocator<int>> &)': は抽象型です
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\engine.h(68): message : 'engine::Engine::get_options' の宣言を確認してください
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\include\tuple(888): message : コンパイル対象の クラス テンプレート インスタンス化 'std::_Tuple_val<_This>' のリファレンスを確認してください
+          with
+          [
+              _This=engine::RandomMover
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\include\xmemory(1395): message : コンパイル対象の クラス テンプレート インスタンス化 'std::tuple<engine::RandomMover,std::_Ph<1>>' のリファレンスを確認してください
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.33.31629\include\functional(1998): message : コンパイル対象の クラス テンプレート インスタンス化 'std::_Compressed_pair<void (__cdecl engine::RandomMover::* )(const engine::EngineOption &),std::tuple<engine::RandomMover,std::_Ph<1>>,false>' のリファレンスを確認してください
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\random_mover.cpp(12): message : コンパイル対象の クラス テンプレート インスタンス化 'std::_Binder<std::_Unforced,void (__cdecl engine::RandomMover::* )(const engine::EngineOption &),engine::RandomMover &,const std::_Ph<1> &>' のリファレンスを確認してください
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\random_mover.cpp(12,113): error C2440: '<function-style-cast>': 'initializer list' から 'engine::EngineOption' に変換できません。
+C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\random_mover.cpp(12,113): message : コンストラクターはソース型を持てません、またはコンストラクターのオーバーロードの解決があいまいです。
   コードを生成中...
-  Kalmia.vcxproj -> C:\Users\Yoka\source\repos\Yoka346\Kalmia-Reversi\Kalmia\x64\Debug\Kalmia.exe

@@ -132,6 +132,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="engine\engine_option.cpp" />
+    <ClCompile Include="engine\random_mover.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
@@ -145,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine\engine.h" />
+    <ClInclude Include="engine\engine_option.h" />
     <ClInclude Include="engine\random_mover.h" />
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />
