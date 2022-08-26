@@ -113,5 +113,8 @@
     <ClInclude Include="engine\engine_option.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="protocol\gtp\gtp.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

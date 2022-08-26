@@ -5,6 +5,7 @@
 #include "engine_option.h"
 #include <vector>
 #include <tuple>
+#include <functional>
 
 namespace engine
 {
@@ -19,7 +20,20 @@ namespace engine
 		reversi::Position _position;
 		bool _is_thinking;
 
+		/**
+		* @fn
+		* @brief 文字列で表現される情報をエンジンの呼び出し元(GUIやサーバーなど)に送る.
+		* @param (msg) 送る文字列.
+		* @detail 思考ログなどの文字列で表現される情報をエンジンの呼び出し元(GUIやサーバーなど)に送る.
+		* 送った文字列は, プロトコルによって適切な形で出力される. 例えば, USIプロトコルであれば, info stringコマンドを利用し,
+		* GTPであれば, エラー出力に出力する.
+		**/
+		inline void send_text_message(std::string msg) { this->on_message_is_sent(msg); }
+
 	public:
+		// エンジンが文字列を送信するときに呼び出されるハンドラ.
+		std::function<void(std::string&)> on_message_is_sent = [](std::string&) {};
+
 		Engine(std::string name, std::string version) : _name(name), _version(version), _position(), timer(), _is_thinking(false) { ; }
 		inline const std::string& name() const { return this->_name; }
 		inline const std::string& version() const { return this->_version; }

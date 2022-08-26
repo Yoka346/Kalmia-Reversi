@@ -13,9 +13,9 @@ namespace engine
 		this->default_value = this->current_value = value_str;
 	}
 
-	EngineOption::EngineOption(string& value, size_t idx, const EventHandler& on_value_change = nullptr) : default_value(value), current_value(value), idx(0), type("string"), min(0), max(0) {}
+	EngineOption::EngineOption(string& value, size_t idx, const EventHandler& on_value_change) : default_value(value), current_value(value), idx(0), type("string"), min(0), max(0) {}
 
-	EngineOption::EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change = nullptr) : min(min), max(max), idx(idx), on_value_change(on_value_change)
+	EngineOption::EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change) : min(min), max(max), idx(idx), on_value_change(on_value_change)
 	{
 		auto valur_str = std::to_string(value);
 		this->default_value = this->current_value = valur_str;
@@ -41,6 +41,8 @@ namespace engine
 
 		if (this->on_value_change)
 			this->on_value_change(*this);
+		
+		return *this;
 	}
 
 	EngineOption::operator int() const

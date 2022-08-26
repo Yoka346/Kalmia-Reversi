@@ -1,8 +1,14 @@
 #pragma once
 #include "random_mover.h"
+#include "../utils/array.h"
+#include "../reversi/constant.h"
+#include "../reversi/types.h"
+#include "../reversi/move.h"
 #include <functional>
 
 using namespace std;
+using namespace utils;
+using namespace reversi;
 
 namespace engine
 {
@@ -30,4 +36,17 @@ namespace engine
 		for (auto& option : this->options)
 			options.push_back(option);
 	}
+
+	void RandomMover::generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move)
+	{
+		if (this->_position.side_to_move() != side_to_move)
+			this->_position.pass();
+
+		Array<Move, MAX_MOVE_NUM> moves;
+		auto num = this->_position.get_next_moves(moves);
+		move = num ? moves[this->rand.next(num)].coord : BoardCoordinate::PASS;
+	}
+
+	// ’…èŒˆ’è‚Íˆêu‚ÅI‚í‚é‚Ì‚Å“Á‚É‚â‚é‚±‚Æ‚Í‚È‚¢.
+	bool RandomMover::stop_thinking(std::chrono::milliseconds timeout_ms) {}
 }
