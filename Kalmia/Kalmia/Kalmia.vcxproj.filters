@@ -36,9 +36,6 @@
     <ClCompile Include="test\flip_test.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="reversi\position.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="utils\game_timer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -49,6 +46,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="engine\random_mover.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="io\logger.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -114,6 +114,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="protocol\gtp\gtp.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="io\logger.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

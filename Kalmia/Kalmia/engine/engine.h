@@ -17,7 +17,7 @@ namespace engine
 		std::string _name;
 		std::string _version;
 		utils::GameTimer timer;
-		reversi::Position _position;
+		reversi::Position<true> _position;
 		bool _is_thinking;
 
 		/**
@@ -34,11 +34,12 @@ namespace engine
 		// エンジンが文字列を送信するときに呼び出されるハンドラ.
 		std::function<void(std::string&)> on_message_is_sent = [](std::string&) {};
 
-		Engine(std::string name, std::string version) : _name(name), _version(version), _position(), timer(), _is_thinking(false) { ; }
+		Engine(const std::string& name, const std::string& version) : _name(name), _version(version), _position(), timer(), _is_thinking(false) { ; }
 		inline const std::string& name() const { return this->_name; }
 		inline const std::string& version() const { return this->_version; }
-		inline const reversi::Position& position() const { return this->_position; }
-		inline virtual void set_position(reversi::Position& pos) { this->_position = pos; }
+		inline const reversi::Position<true>& position() const { return this->_position; }
+		inline virtual void set_position(reversi::Position<true>& pos) { this->_position = pos; }
+		inline virtual void clear_position() { this->_position = reversi::Position<true>(); }
 		inline bool is_thinking() { return this->_is_thinking; }
 
 		inline void set_time(std::chrono::milliseconds main_time, std::chrono::milliseconds byoyomi, std::chrono::milliseconds inc)
@@ -53,6 +54,10 @@ namespace engine
 		* @return 盤面の更新に成功したらtrue.
 		**/
 		inline virtual bool update_position(reversi::BoardCoordinate move) { return this->_position.update<true>(move); }
+
+		// undo position
+		// position に着手履歴も実装しなければ.
+		// あとはgtpのundo
 
 		/**
 		* @fn

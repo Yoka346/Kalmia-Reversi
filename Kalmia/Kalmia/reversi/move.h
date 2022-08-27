@@ -8,6 +8,7 @@ namespace reversi
 		BoardCoordinate coord;
 		uint64_t flipped;
 
+		Move() : coord(BoardCoordinate::NULL_COORD), flipped(0ULL) { ; }
 		Move(BoardCoordinate coord, uint64_t flipped) : coord(coord), flipped(flipped) { ; }
 	};
 }

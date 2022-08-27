@@ -18,8 +18,8 @@ namespace engine
 		void on_rand_seed_change(const EngineOption& sender) { this->rand = Random(sender); }
 
 	public:
-		RandomMover() : Engine(NAME, VERSION), rand() { init_options(); }
-		RandomMover(uint64_t rand_seed) : Engine(NAME, VERSION), rand(rand_seed) { init_options(); }
+		RandomMover() : Engine(NAME, VERSION), rand(), options() { init_options(); }
+		RandomMover(uint64_t rand_seed) : Engine(NAME, VERSION), rand(rand_seed), options() { init_options(); }
 		void init_options();
 		bool set_option(const std::string& name, const std::string& value, std::string& err_msg);
 		void get_options(EngineOptions& options);

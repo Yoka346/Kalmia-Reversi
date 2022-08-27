@@ -39,6 +39,7 @@ namespace engine
 		EventHandler on_value_change;
 
 	public:
+		EngineOption() { ; }
 		EngineOption(bool value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(std::string& value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);

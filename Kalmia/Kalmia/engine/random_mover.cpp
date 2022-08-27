@@ -15,7 +15,7 @@ namespace engine
 	void RandomMover::init_options()
 	{
 		using namespace placeholders;
-		EventHandler func = bind(&RandomMover::on_rand_seed_change, *this, _1);
+		EventHandler func = bind(&RandomMover::on_rand_seed_change, this, _1);
 		this->options["rand_seed"] = EngineOption(12345678, 0, INT32_MAX, this->options.size(), func);
 	};
 
@@ -48,5 +48,5 @@ namespace engine
 	}
 
 	// ’…èŒˆ’è‚Íˆêu‚ÅI‚í‚é‚Ì‚Å“Á‚É‚â‚é‚±‚Æ‚Í‚È‚¢.
-	bool RandomMover::stop_thinking(std::chrono::milliseconds timeout_ms) {}
+	bool RandomMover::stop_thinking(std::chrono::milliseconds timeout_ms) { return true; }
 }

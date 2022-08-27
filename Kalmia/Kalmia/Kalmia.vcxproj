@@ -133,10 +133,10 @@
   <ItemGroup>
     <ClCompile Include="engine\engine_option.cpp" />
     <ClCompile Include="engine\random_mover.cpp" />
+    <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
-    <ClCompile Include="reversi\position.cpp" />
     <ClCompile Include="reversi\type.cpp" />
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
@@ -148,6 +148,7 @@
     <ClInclude Include="engine\engine.h" />
     <ClInclude Include="engine\engine_option.h" />
     <ClInclude Include="engine\random_mover.h" />
+    <ClInclude Include="io\logger.h" />
     <ClInclude Include="protocol\gtp\gtp.h" />
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />
