@@ -14,7 +14,7 @@ namespace io
 	{
 		char buf_[128];
 	protected:
-		virtual int overflow(int c)
+		inline virtual int overflow(int c)
 		{
 			setp(buf_, buf_ + sizeof(buf_));
 			return (c == eof()) ? '\0' : c;

@@ -37,6 +37,8 @@ namespace engine
 			options.push_back(option);
 	}
 
+	void quit() {}
+
 	void RandomMover::generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move)
 	{
 		if (this->_position.side_to_move() != side_to_move)

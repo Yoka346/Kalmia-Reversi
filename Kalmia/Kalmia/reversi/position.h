@@ -11,7 +11,10 @@
 
 namespace reversi
 {
-	template<bool SAVE_MOVE_HISTORY>
+	/**
+	* @class
+	* @brief リバーシの盤面を表現するクラス.
+	**/
 	class Position
 	{
 	private:
@@ -22,7 +25,6 @@ namespace reversi
 
 		Bitboard _bitboard;
 		DiscColor _side_to_move;
-		std::vector<Move>* move_history;
 
 	public:
 		inline static size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
@@ -37,25 +39,7 @@ namespace reversi
 
 		Position() 
 			: _bitboard(COORD_TO_BIT[reversi::E4] | COORD_TO_BIT[reversi::D5], COORD_TO_BIT[reversi::D4] | COORD_TO_BIT[reversi::E5]),
-			  _side_to_move(DiscColor::BLACK), move_history(SAVE_MOVE_HISTORY ? new std::vector<Move> : nullptr) { ; }
-
-		Position(Position<true>& pos) : _bitboard(pos._bitboard), _side_to_move(pos._side_to_move)
-		{
-			if constexpr (SAVE_MOVE_HISTORY)
-				this->move_history = pos.move_history;
-			else
-				this->move_history = nullptr;
-		}
-
-		Position(Position<false>& pos) : _bitboard(pos._bitboard), _side_to_move(pos._side_to_move)
-		{
-			if constexpr (SAVE_MOVE_HISTORY)
-				this->move_history = new std::vector<Move>();
-			else
-				this->move_history = nullptr;
-		}
-
-		~Position() { if (this->move_history) delete this->move_history; }
+			  _side_to_move(DiscColor::BLACK) { ; }
 
 		inline DiscColor side_to_move() const { return this->_side_to_move; }
 		inline DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
@@ -74,21 +58,35 @@ namespace reversi
 
 		inline bool is_legal(BoardCoordinate& coord) const { return this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
 		inline void pass() { this->_side_to_move = opponent_color(); this->_bitboard.swap(); }
-		inline bool update(Move& move) { this->_side_to_move = opponent_color(); this->_bitboard.update(move.coord, move.flipped); }
+
+		template<bool CHECK_LEGALITY>
+		inline bool update(Move& move) 
+		{
+			if constexpr (CHECK_LEGALITY)
+				if (!is_legal(move.coord))
+					return false;
+
+			this->_side_to_move = opponent_color();
+			this->_bitboard.update(move.coord, move.flipped); 
+			return true;
+		}
 
 		template<bool CHECK_LEGALITY>
 		inline bool update(BoardCoordinate& coord)
 		{
 			if constexpr (CHECK_LEGALITY)
-			{
-				uint64_t moves = this->_bitboard.calc_player_mobility();
 				if (!is_legal(coord))
 					return false;
-			}
 
 			uint64_t flipped = this->_bitboard.calc_flipped_discs(coord);
 			Move move(coord, flipped);
 			update(move);
+		}
+
+		inline void undo(Move& move)
+		{
+			this->_bitboard.undo(move.coord, move.flipped);
+			this->_side_to_move = opponent_color();
 		}
 
 		inline int get_next_moves(Array<Move, MAX_MOVE_NUM>& moves)
@@ -118,6 +116,5 @@ namespace reversi
 		}
 	};
 
-	template<bool SAVE_MOVE_HISTORY>
-	inline ConstantArray<uint64_t, Position<SAVE_MOVE_HISTORY>::HASH_RANK_LEN_0* Position<SAVE_MOVE_HISTORY>::HASH_RANK_LEN_1> Position<SAVE_MOVE_HISTORY>::HASH_RANK(Position<SAVE_MOVE_HISTORY>::init_hash_rank);
+	inline ConstantArray<uint64_t, Position::HASH_RANK_LEN_0* Position::HASH_RANK_LEN_1> Position::HASH_RANK(Position::init_hash_rank);
 }

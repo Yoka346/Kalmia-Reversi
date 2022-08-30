@@ -3,6 +3,7 @@
 
 namespace utils
 {
+	// ToDo: ƒJƒiƒ_•ûŽ®‚Ö‚Ì‘Î‰ž.
 	class GameTimer
 	{
 	private:

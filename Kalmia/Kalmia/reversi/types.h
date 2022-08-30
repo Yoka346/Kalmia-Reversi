@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <cstdint>
+#include <tuple>
 
 namespace reversi
 {
@@ -31,6 +32,7 @@ namespace reversi
 	}
 
 	std::string coordinate_to_string(BoardCoordinate coord);
+	BoardCoordinate parse_coordinate(const std::string& str);
 
 	enum DiscColor
 	{
@@ -47,6 +49,13 @@ namespace reversi
 	constexpr DiscColor to_opponent_color(DiscColor color)
 	{
 		return static_cast<DiscColor>(color ^ DiscColor::WHITE);
+	}
+
+	DiscColor parse_color(const std::string& str);
+
+	inline std::string color_to_string(DiscColor color)
+	{
+		(color == DiscColor::EMPTY) ? "empty" : ((color == DiscColor::BLACK) ? "black" : "white");
 	}
 
 	enum class GameResult : int8_t

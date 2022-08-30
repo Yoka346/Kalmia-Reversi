@@ -1,6 +1,7 @@
 #pragma once
 #include "../utils//game_timer.h"
-#include "../reversi/types.h"
+#include "../reversi/types.h"/
+#include "../reversi/move.h"
 #include "../reversi/position.h"
 #include "engine_option.h"
 #include <vector>
@@ -17,7 +18,8 @@ namespace engine
 		std::string _name;
 		std::string _version;
 		utils::GameTimer timer;
-		reversi::Position<true> _position;
+		reversi::Position _position;
+		std::vector<reversi::Move> move_history;
 		bool _is_thinking;
 
 		/**
@@ -34,13 +36,14 @@ namespace engine
 		// エンジンが文字列を送信するときに呼び出されるハンドラ.
 		std::function<void(std::string&)> on_message_is_sent = [](std::string&) {};
 
-		Engine(const std::string& name, const std::string& version) : _name(name), _version(version), _position(), timer(), _is_thinking(false) { ; }
+		Engine(const std::string& name, const std::string& version) : _name(name), _version(version), _position(), move_history(), timer(), _is_thinking(false) { ; }
 		inline const std::string& name() const { return this->_name; }
 		inline const std::string& version() const { return this->_version; }
-		inline const reversi::Position<true>& position() const { return this->_position; }
-		inline virtual void set_position(reversi::Position<true>& pos) { this->_position = pos; }
-		inline virtual void clear_position() { this->_position = reversi::Position<true>(); }
+		inline const reversi::Position& position() const { return this->_position; }
+		inline virtual void set_position(reversi::Position& pos) { this->_position = pos; this->move_history.clear(); }
+		inline virtual void clear_position() { this->_position = reversi::Position(); this->move_history.clear(); }
 		inline bool is_thinking() { return this->_is_thinking; }
+		virtual void quit() = 0;
 
 		inline void set_time(std::chrono::milliseconds main_time, std::chrono::milliseconds byoyomi, std::chrono::milliseconds inc)
 		{
@@ -50,14 +53,18 @@ namespace engine
 		/**
 		* @fn
 		* @brief 思考エンジンが保有している盤面の情報を着手moveによって更新する.
+		* @param (color) ディスクの色.
 		* @param (move) 着手(ディスクを配置する座標).
 		* @return 盤面の更新に成功したらtrue.
 		**/
-		inline virtual bool update_position(reversi::BoardCoordinate move) { return this->_position.update<true>(move); }
+		virtual bool update_position(reversi::DiscColor color, reversi::BoardCoordinate move);
 
-		// undo position
-		// position に着手履歴も実装しなければ.
-		// あとはgtpのundo
+		/**
+		* @fn
+		* @brief 思考エンジンが保有している盤面を1手前の状態に戻す.
+		* @return 盤面の更新に成功したらtrue.
+		**/
+		virtual bool undo_position();
 
 		/**
 		* @fn
