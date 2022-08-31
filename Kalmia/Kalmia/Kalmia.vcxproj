@@ -131,10 +131,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="engine\engine.cpp" />
     <ClCompile Include="engine\engine_option.cpp" />
     <ClCompile Include="engine\random_mover.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="protocol\gtp\gtp.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
     <ClCompile Include="reversi\type.cpp" />
@@ -167,6 +169,7 @@
     <ClInclude Include="utils\random.h" />
     <ClInclude Include="utils\static_initializer.h" />
     <ClInclude Include="utils\game_timer.h" />
+    <ClInclude Include="utils\string_to_type.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

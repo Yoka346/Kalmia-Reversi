@@ -4,6 +4,8 @@
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
     "\\Kalmia\\Kalmia\\engine",
+    "\\Kalmia\\Kalmia\\protocol",
+    "\\Kalmia\\Kalmia\\protocol\\gtp",
     "\\Kalmia\\Kalmia\\utils"
   ],
   "SelectedNode": "\\Kalmia\\Kalmia\\engine\\engine.h",
