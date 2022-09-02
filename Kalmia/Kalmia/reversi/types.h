@@ -56,8 +56,15 @@ namespace reversi
 
 	inline std::string color_to_string(DiscColor color)
 	{
-		(color == DiscColor::EMPTY) ? "empty" : ((color == DiscColor::BLACK) ? "black" : "white");
+		return (color == DiscColor::EMPTY) ? "empty" : ((color == DiscColor::BLACK) ? "black" : "white");
 	}
+
+	enum Player
+	{
+		CURRENT,
+		OPPONENT,
+		NULL_PLAYER
+	};
 
 	enum class GameResult : int8_t
 	{

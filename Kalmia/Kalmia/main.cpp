@@ -1,9 +1,13 @@
 #include <iostream>
-#include "test/flip_test.h"
-#include "test/mobility_test.h"
+#include "engine/random_mover.h"
+#include "protocol/gtp.h"
+
+using namespace engine;
+using namespace protocol;
 
 int main()
 {
-	//test::calc_mobility_test();
-	test::calc_flipped_discs_test();
+	RandomMover engine;
+	GTP gtp;
+	gtp.mainloop(&engine, "gtp.log");
 }

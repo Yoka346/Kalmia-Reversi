@@ -136,7 +136,7 @@
     <ClCompile Include="engine\random_mover.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="protocol\gtp\gtp.cpp" />
+    <ClCompile Include="protocol\gtp.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
     <ClCompile Include="reversi\type.cpp" />
@@ -151,7 +151,7 @@
     <ClInclude Include="engine\engine_option.h" />
     <ClInclude Include="engine\random_mover.h" />
     <ClInclude Include="io\logger.h" />
-    <ClInclude Include="protocol\gtp\gtp.h" />
+    <ClInclude Include="protocol\gtp.h" />
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />
     <ClInclude Include="reversi\mobility.h" />

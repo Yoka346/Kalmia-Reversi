@@ -1,6 +1,6 @@
 #pragma once
 #include "../utils//game_timer.h"
-#include "../reversi/types.h"/
+#include "../reversi/types.h"
 #include "../reversi/move.h"
 #include "../reversi/position.h"
 #include "engine_option.h"
@@ -10,8 +10,6 @@
 
 namespace engine
 {
-	using EngineOptions = std::vector<std::pair<std::string, EngineOption>>;
-
 	class Engine
 	{
 	protected:
@@ -19,7 +17,7 @@ namespace engine
 		std::string _version;
 		utils::GameTimer timer[2];
 		reversi::Position _position;
-		std::vector<reversi::Move> move_history;
+		std::vector<reversi::Position> position_history;
 		bool _is_thinking;
 
 		/**
@@ -36,12 +34,12 @@ namespace engine
 		// エンジンが文字列を送信するときに呼び出されるハンドラ.
 		std::function<void(std::string&)> on_message_is_sent = [](std::string&) {};
 
-		Engine(const std::string& name, const std::string& version) : _name(name), _version(version), _position(), move_history(), timer(), _is_thinking(false) { ; }
+		Engine(const std::string& name, const std::string& version) : _name(name), _version(version), _position(), position_history(), timer(), _is_thinking(false) { ; }
 		inline const std::string& name() const { return this->_name; }
 		inline const std::string& version() const { return this->_version; }
 		inline const reversi::Position& position() const { return this->_position; }
-		inline virtual void set_position(reversi::Position& pos) { this->_position = pos; this->move_history.clear(); }
-		inline virtual void clear_position() { this->_position = reversi::Position(); this->move_history.clear(); }
+		inline virtual void set_position(reversi::Position& pos) { this->_position = pos; this->position_history.clear(); }
+		inline virtual void clear_position() { this->_position = reversi::Position(); this->position_history.clear(); }
 		inline bool is_thinking() { return this->_is_thinking; }
 		virtual void quit() = 0;
 

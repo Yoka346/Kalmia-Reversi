@@ -52,8 +52,15 @@ namespace reversi
 
 		inline DiscColor square_color_at(BoardCoordinate coord) const
 		{
-			(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1))
-				? opponent_color() : this->_side_to_move;
+			auto owner = disc_owner_at(coord);
+			if (owner == Player::NULL_PLAYER)
+				return DiscColor::EMPTY;
+			return (owner == Player::CURRENT) ? this->_side_to_move : opponent_color();
+		}
+
+		inline Player disc_owner_at(BoardCoordinate coord) const
+		{
+			return static_cast<Player>(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1));
 		}
 
 		inline bool is_legal(BoardCoordinate& coord) const { return this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
@@ -99,8 +106,8 @@ namespace reversi
 			return move_count;
 		}
 
-		inline void calc_flipped_discs(Move& move) { move.flipped = this->_bitboard.calc_flipped_discs(move.coord); }
-		inline int32_t get_disc_diff() { return this->_bitboard.player_disc_count() - this->_bitboard.opponent_disc_count(); }
+		inline void calc_flipped_discs(Move& move) const { move.flipped = this->_bitboard.calc_flipped_discs(move.coord); }
+		inline int32_t get_disc_diff() const { return this->_bitboard.player_disc_count() - this->_bitboard.opponent_disc_count(); }
 		
 		inline bool is_gameover() const
 		{
@@ -108,12 +115,18 @@ namespace reversi
 				&& std::popcount(this->_bitboard.calc_opponent_mobility()) == 0;
 		}
 
+		inline bool can_pass() const
+		{
+			return std::popcount(this->_bitboard.calc_player_mobility()) == 0
+				&& std::popcount(this->_bitboard.calc_opponent_mobility()) != 0;
+		}
+
 		/**
 		* @fn
 		* @brief 現在の手番からみたゲームの勝敗を返す.
 		* @detail 処理の中身は単純にディスクの個数を比較しているだけなので, 本当に終局しているかどうかは確認していない.
 		**/
-		inline GameResult get_game_result()
+		inline GameResult get_game_result() const
 		{
 			int32_t diff = get_disc_diff();
 			if (!diff)

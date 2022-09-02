@@ -8,8 +8,8 @@ namespace engine
 	class RandomMover : public Engine
 	{
 	private:
-		const std::string NAME = "Random Mover";
-		const std::string VERSION = "0.0";
+		inline static const std::string NAME = "Random Mover";
+		inline static const std::string VERSION = "0.0";
 
 		Random rand;
 		std::map<std::string, EngineOption> options;
@@ -25,5 +25,6 @@ namespace engine
 		void get_options(EngineOptions& options);
 		void generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move);
 		bool stop_thinking(std::chrono::milliseconds timeout_ms);
+		inline void quit() {}
 	};
 }

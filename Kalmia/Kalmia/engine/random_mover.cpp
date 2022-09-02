@@ -46,7 +46,8 @@ namespace engine
 
 		Array<Move, MAX_MOVE_NUM> moves;
 		auto num = this->_position.get_next_moves(moves);
-		move = num ? moves[this->rand.next(num)].coord : BoardCoordinate::PASS;
+		auto idx = this->rand.next(num);
+		move = num ? moves[idx].coord : BoardCoordinate::PASS;
 	}
 
 	// ’…èŒˆ’è‚Íˆêu‚ÅI‚í‚é‚Ì‚Å“Á‚É‚â‚é‚±‚Æ‚Í‚È‚¢.
