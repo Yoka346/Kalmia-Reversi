@@ -32,6 +32,7 @@ namespace reversi
 	}
 
 	std::string coordinate_to_string(BoardCoordinate coord);
+	BoardCoordinate coordinate_2d_to_1d(int32_t x, int32_t y);
 	BoardCoordinate parse_coordinate(const std::string& str);
 
 	enum DiscColor

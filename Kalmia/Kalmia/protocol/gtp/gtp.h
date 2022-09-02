@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <map>
 #include <functional>
 
@@ -69,11 +70,10 @@ namespace protocol
 		// gogui-rules commands
 		// GoGuiというGUIプログラムをリバーシに対応させるために必要.
 
-		void exec_rules_game_id_command(int id, std::istringstream& args);
-		void exec_rules_board_size_command(int id, std::istringstream& args);
+		inline void exec_rules_game_id_command(int id, std::istringstream& args) { gtp_success(id, "Reversi"); }
+		inline void exec_rules_board_size_command(int id, std::istringstream& args) { gtp_success(id, to_string(BOARD_SIZE)); }
 		void exec_rules_legal_moves_command(int id, std::istringstream& args);
-		void exec_rules_side_to_move_command(int id, std::istringstream& args);
-		void exec_rules_side_to_move_command(int id, std::istringstream& args);
+		inline void exec_rules_side_to_move_command(int id, std::istringstream& args) { gtp_success(id, color_to_string(this->engine->position().side_to_move())); }
 		void exec_rules_final_result_command(int id, std::istringstream& args);
 
 		// original commands

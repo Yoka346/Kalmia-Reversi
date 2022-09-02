@@ -9,6 +9,24 @@ using namespace utils;
 
 using namespace std::chrono;
 
+void GameTimer::set(milliseconds main_time_ms, milliseconds byoyomi_ms, int32_t byoyomi_stones, milliseconds inc_ms)
+{
+	this->_is_ticking = false;
+	this->_main_time_ms = main_time_ms;
+	this->_byoyomi_ms = byoyomi_ms;
+	this->_byoyomi_stones = byoyomi_stones;
+	this->_increment_ms = inc_ms;
+	this->_time_left_ms = main_time_ms + _byoyomi_ms;
+	this->_byoyomi_stones_left = _byoyomi_stones_left;
+}
+
+void GameTimer::set_left(milliseconds main_time_left, int32_t byoyomi_stones_left)
+{
+	this->_is_ticking = false;
+	this->_time_left_ms = main_time_left + this->_byoyomi_ms;
+	this->_byoyomi_stones_left = byoyomi_stones_left;
+}
+
 void GameTimer::start()
 {
 	if (is_ticking())
@@ -51,6 +69,7 @@ void GameTimer::reset()
 {
 	this->_is_ticking = this->_timeout = false;
 	this->_time_left_ms = this->_main_time_ms + this->_byoyomi_ms;
+	this->_byoyomi_stones_left = this->_byoyomi_stones;
 }
 
 template<bool INCLUDE_BYOYOMI>

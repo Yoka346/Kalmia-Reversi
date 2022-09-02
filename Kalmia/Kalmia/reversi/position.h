@@ -89,7 +89,7 @@ namespace reversi
 			this->_side_to_move = opponent_color();
 		}
 
-		inline int get_next_moves(Array<Move, MAX_MOVE_NUM>& moves)
+		inline int get_next_moves(Array<Move, MAX_MOVE_NUM>& moves) const
 		{
 			uint64_t mobility = this->_bitboard.calc_player_mobility();
 			auto move_count = 0;
@@ -101,6 +101,12 @@ namespace reversi
 
 		inline void calc_flipped_discs(Move& move) { move.flipped = this->_bitboard.calc_flipped_discs(move.coord); }
 		inline int32_t get_disc_diff() { return this->_bitboard.player_disc_count() - this->_bitboard.opponent_disc_count(); }
+		
+		inline bool is_gameover() const
+		{
+			return std::popcount(this->_bitboard.calc_player_mobility()) == 0
+				&& std::popcount(this->_bitboard.calc_opponent_mobility()) == 0;
+		}
 
 		/**
 		* @fn

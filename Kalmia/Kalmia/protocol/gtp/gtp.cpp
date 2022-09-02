@@ -1,6 +1,7 @@
 #include "gtp.h"
 
 #include <string>
+#include <chrono>
 #include <exception>
 #include <filesystem>
 #include <functional>
@@ -12,6 +13,7 @@
 #include "../../reversi/types.h"
 
 using namespace std;
+using namespace std::chrono;
 
 using namespace io;
 using namespace engine;
@@ -237,5 +239,231 @@ namespace protocol
 			return;
 		}
 		gtp_success(id);
+	}
+
+	void GTP::exec_genmove_command(int id, std::istringstream& args)
+	{
+		if (args.eof())
+		{
+			gtp_failure(id, "invalid move.");
+			return;
+		}
+
+		string color_str;
+		args >> color_str;
+		auto color = parse_color(color_str);
+		if (color == DiscColor::EMPTY)
+		{
+			gtp_failure(id, "invalid color.");
+			return;
+		}
+
+		BoardCoordinate move;
+		this->engine->generate_move(color, move);
+		this->engine->update_position(color, move);
+		gtp_success(id, coordinate_to_string(move));
+	}
+
+	void GTP::exec_undo_command(int id, istringstream& args)
+	{
+		if (!this->engine->undo_position())
+		{
+			gtp_failure(id, "cannot undo.");
+			return;
+		}
+		gtp_success(id);
+	}
+
+	void GTP::exec_time_settings_command(int id, istringstream& args)
+	{
+		string time_strs[3];
+		int i = 0;
+		while (!args.eof() && i < 3)
+			args >> time_strs[i++];
+
+		if (i != 3)
+		{
+			gtp_failure(id, "invalid option.");
+			return;
+		}
+
+		int32_t main_time, byoyomi, byoyomi_stones;
+		try
+		{
+			main_time = stoi(time_strs[0]);
+			byoyomi = stoi(time_strs[1]);
+			byoyomi_stones = stoi(time_strs[2]);
+		}
+		catch (invalid_argument)
+		{
+			gtp_failure(id, "main time, byoyomi time and byoyomi stones must be integer.");
+			return;
+		}
+
+		if (main_time < 0 || byoyomi < 0 || byoyomi_stones < 0)
+		{
+			gtp_failure(id, "main time, byoyomi time and byoyomi stone must be more than or equal 0.");
+			return;
+		}
+
+		milliseconds main_time_ms(main_time * 1000);
+		milliseconds byoyomi_ms(byoyomi * 1000);
+		this->engine->set_time(DiscColor::BLACK, main_time_ms, byoyomi_ms, byoyomi_stones, milliseconds::zero());
+		this->engine->set_time(DiscColor::WHITE, main_time_ms, byoyomi_ms, byoyomi_stones, milliseconds::zero());
+		gtp_success(id);
+	}
+
+	void GTP::exec_time_left_command(int id, istringstream& args)
+	{
+		string arg_strs[3];
+		int i = 0;
+		while (!args.eof() && i < 3)
+			args >> arg_strs[i++];
+
+		if (i != 3)
+		{
+			gtp_failure(id, "invalid option.");
+			return;
+		}
+
+		auto color = parse_color(arg_strs[0]);
+		if (color == DiscColor::EMPTY)
+		{
+			gtp_failure(id, "invalid color.");
+			return;
+		}
+
+		int32_t time_left, byoyomi_stones_left;
+		try
+		{
+			time_left = stoi(arg_strs[1]);
+			byoyomi_stones_left = stoi(arg_strs[2]);
+		}
+		catch (invalid_argument)
+		{
+			gtp_failure(id, "time left and byoyomi stones left must be integer.");
+			return;
+		}
+
+		if (time_left < 0 || byoyomi_stones_left < 0)
+		{
+			gtp_failure(id, "time left and byoyomi stones left must be more than or equal 0.");
+			return;
+		}
+
+		milliseconds time_left_ms(time_left * 1000);
+		this->engine->set_time_left(color, time_left_ms, byoyomi_stones_left);
+		gtp_success(id);
+	}
+
+	void GTP::exec_loadsgf_command(int id, istringstream& args)
+	{
+		// ToDo: SGFファイルのパーサーの実装.
+		gtp_failure(id, "not supported.");
+	}
+
+	void GTP::exec_color_command(int id, istringstream& args)
+	{
+		if (args.eof())
+		{
+			gtp_failure(id, "invalid option.");
+			return;
+		}
+
+		string coord_str;
+		args >> coord_str;
+		auto coord = parse_coordinate(coord_str);
+		if (coord == BoardCoordinate::NULL_COORD)
+		{
+			gtp_failure(id, "invalid coordinate.");
+			return;
+		}
+		gtp_success(id, color_to_string(this->engine->position().square_color_at(coord)));
+	}
+
+	void GTP::exec_reg_genmove_command(int id, istringstream& args)
+	{
+		if (args.eof())
+		{
+			gtp_failure(id, "invalid move.");
+			return;
+		}
+
+		string color_str;
+		args >> color_str;
+		auto color = parse_color(color_str);
+		if (color == DiscColor::EMPTY)
+		{
+			gtp_failure(id, "invalid color.");
+			return;
+		}
+
+		BoardCoordinate move;
+		this->engine->generate_move(color, move);
+		gtp_success(id, coordinate_to_string(move));
+	}
+
+	void GTP::exec_showboard_command(int id, istringstream& args)
+	{
+		constexpr char SYMBOLS[3] = { 'X', 'O', '.' };
+
+		auto& pos = this->engine->position();
+		ostringstream oss("\n  ");
+		for (int32_t i = 0; i < BOARD_SIZE; i++)
+			oss << static_cast<char>('A' + i) << ' ';
+
+		for (int32_t y = BOARD_SIZE - 1; y >= 0; y--)
+		{
+			oss << '\n' << static_cast<char>('8' - y) << ' ';
+			for (int32_t x = 0; x < BOARD_SIZE; x++)
+				oss << SYMBOLS[pos.square_color_at(coordinate_2d_to_1d(x, y))] << ' ';
+		}
+		gtp_success(id, oss.str());
+	}
+
+	void GTP::exec_black_command(int id, istringstream& args)
+	{
+		ostringstream os;
+		os << "black" << ' ' << args.str();
+		istringstream is(os.str());
+		exec_play_command(id, is);
+	}
+
+	void GTP::exec_playwhite_command(int id, istringstream& args)
+	{
+		ostringstream os;
+		os << "white" << ' ' << args.str();
+		istringstream is(os.str());
+		exec_play_command(id, is);
+	}
+
+	void GTP::exec_genmove_black_command(int id, istringstream& args)
+	{
+		istringstream is("black");
+		exec_genmove_command(id, is);
+	}
+
+	void GTP::exec_genmove_white_command(int id, istringstream& args)
+	{
+		istringstream is("white");
+		exec_genmove_command(id, is);
+	}
+
+	void GTP::exec_rules_legal_moves_command(int id, istringstream& args)
+	{
+		auto& pos = this->engine->position();
+		Array<Move, MAX_MOVE_NUM> moves;
+		auto move_num = pos.get_next_moves(moves);
+		if (!move_num)
+		{
+			gtp_success(id, pos.is_gameover() ? "" : "pass resign");
+			return;
+		}
+
+		ostringstream os;
+		for (int32_t i = 0; i < move_num; i++)
+			os << coordinate_to_string(moves[i].coord) << " ";
+		os << "resign";
+		gtp_success(id, os.str());
 	}
 }

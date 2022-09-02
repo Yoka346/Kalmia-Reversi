@@ -25,6 +25,13 @@ namespace reversi
 		return ss.str();
 	}
 
+	BoardCoordinate coordinate_2d_to_1d(int32_t x, int32_t y)
+	{
+		if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE)
+			throw out_of_range("x or y is out of range 0 to BOARD_SIZE - 1.");
+		return static_cast<BoardCoordinate>(x + y * BOARD_SIZE);
+	}
+
 	BoardCoordinate parse_coordinate(const std::string& str)
 	{
 		auto lstr = str;

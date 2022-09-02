@@ -17,7 +17,7 @@ namespace engine
 	protected:
 		std::string _name;
 		std::string _version;
-		utils::GameTimer timer;
+		utils::GameTimer timer[2];
 		reversi::Position _position;
 		std::vector<reversi::Move> move_history;
 		bool _is_thinking;
@@ -45,9 +45,14 @@ namespace engine
 		inline bool is_thinking() { return this->_is_thinking; }
 		virtual void quit() = 0;
 
-		inline void set_time(std::chrono::milliseconds main_time, std::chrono::milliseconds byoyomi, std::chrono::milliseconds inc)
+		inline void set_time(reversi::DiscColor color, std::chrono::milliseconds main_time, std::chrono::milliseconds byoyomi, int32_t byoyomi_stones, std::chrono::milliseconds inc)
 		{
-			this->timer = GameTimer(main_time, byoyomi, inc);
+			this->timer[static_cast<int>(color)].set(main_time, byoyomi, byoyomi_stones, inc);
+		}
+
+		inline void set_time_left(reversi::DiscColor color, std::chrono::milliseconds main_time_left, int32_t byoyomi_stones_left)
+		{
+			this->timer[static_cast<int>(color)].set_left(main_time_left, byoyomi_stones_left);
 		}
 
 		/**
