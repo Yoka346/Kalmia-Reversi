@@ -5,10 +5,9 @@
     "\\Kalmia\\Kalmia",
     "\\Kalmia\\Kalmia\\engine",
     "\\Kalmia\\Kalmia\\protocol",
-    "\\Kalmia\\Kalmia\\protocol\\gtp",
     "\\Kalmia\\Kalmia\\reversi",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia.sln",
+  "SelectedNode": "\\Kalmia\\Kalmia\\reversi\\position.h",
   "PreviewInSolutionExplorer": false
 }

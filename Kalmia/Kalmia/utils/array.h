@@ -1,4 +1,5 @@
 #pragma once
+#include <initializer_list>
 #include <exception>
 #include <cassert>
 
@@ -17,7 +18,7 @@ namespace utils
 	public:
 		Array() : data() { ; }
 
-		Array(ElementType* data, size_t data_len = LEN) : data()
+		Array(const ElementType* data, size_t data_len = LEN) : data()
 		{
 			if (data_len >= LEN)
 				throw std::out_of_range("The length of \"data\" cannnot be greater than \"LEN\".");
@@ -25,6 +26,8 @@ namespace utils
 			for (int i = 0; i < data_len; i++)
 				this->data[i] = data[i];
 		}
+
+		Array(std::initializer_list<ElementType> init_list) : data(init_list.begin()) {}
 
 		ElementType& operator[](size_t idx)
 		{
@@ -49,12 +52,26 @@ namespace utils
 		ElementType data[LEN];
 
 	public:
+
 		/**
 		* イニシャライザから長さLENの配列を生成.
 		* 
 		* @param initializer 配列のデータの初期化を行う関数のポインタ.
 		**/
 		constexpr ConstantArray(void (*initializer)(ElementType*, size_t)) :data() { initializer(this->data, LEN); }
+
+		constexpr ConstantArray(const ElementType* data)
+		{
+			for (size_t i = 0; i < LEN; i++)
+				this->data[i] = data[i];
+		}
+
+		constexpr ConstantArray(std::initializer_list<ElementType> init_list) : data() 
+		{
+			size_t i = 0;
+			for (auto& value : init_list)
+				this->data[i++] = value;
+		}
 
 		constexpr const ElementType& operator[](size_t idx) const
 		{

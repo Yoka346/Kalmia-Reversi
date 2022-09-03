@@ -56,7 +56,7 @@ namespace reversi
 
 	inline std::string color_to_string(DiscColor color)
 	{
-		return (color == DiscColor::EMPTY) ? "empty" : ((color == DiscColor::BLACK) ? "black" : "white");
+		return (color == DiscColor::EMPTY) ? "Empty" : ((color == DiscColor::BLACK) ? "Black" : "White");
 	}
 
 	enum Player

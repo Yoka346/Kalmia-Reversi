@@ -150,6 +150,7 @@
     <ClInclude Include="engine\engine.h" />
     <ClInclude Include="engine\engine_option.h" />
     <ClInclude Include="engine\random_mover.h" />
+    <ClInclude Include="evaluate\feature.h" />
     <ClInclude Include="io\logger.h" />
     <ClInclude Include="protocol\gtp.h" />
     <ClInclude Include="reversi\bitboard.h" />

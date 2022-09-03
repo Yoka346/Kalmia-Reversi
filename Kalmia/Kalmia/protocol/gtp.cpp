@@ -124,7 +124,7 @@ namespace protocol
 
 		this->logger << "Status: success\n";
 		this->logger << "Output: " << output << "\n" << endl;
-		*this->gtp_out << "=" << output << "\n" << endl;
+		*this->gtp_out << "= " << output << "\n" << endl;
 	}
 
 	void GTP::gtp_failure(int id, const string& msg)
@@ -137,7 +137,7 @@ namespace protocol
 
 		this->logger << "Status: fail\n";
 		this->logger << "Output: " << output << "\n" << endl;
-		*this->gtp_out << "?" << output << "\n" << endl;
+		*this->gtp_out << "? " << output << "\n" << endl;
 	}
 
 	GTP::CommandHandler GTP::to_handler(void (GTP::* exec_cmd)(int, std::istringstream&))
@@ -482,20 +482,15 @@ namespace protocol
 		}
 
 		auto diff = pos.get_disc_diff();
+		ostringstream oss;
 		if (diff == 0)
-			gtp_success(id, "Draw.");
+			oss << "Draw.";
 		else if (diff > 0)
-		{
-			ostringstream oss(color_to_string(pos.side_to_move()));
-			oss << " wins by " << diff << "points.";
-			gtp_success(id, oss.str());
-		}
+			oss << color_to_string(pos.side_to_move()) << " wins by " << diff << " points.";
 		else
-		{
-			ostringstream oss(color_to_string(pos.opponent_color()));
-			oss << " wins by " << -diff << "points.";
-			gtp_success(id, oss.str());
-		}
+			oss << color_to_string(pos.side_to_move()) << " wins by " << -diff << " points.";
+		oss << "\n" << "Final score is B " << pos.black_disc_count() << " and W " << pos.white_disc_count() << ".";
+		gtp_success(id, oss.str());
 	}
 
 	// original commands

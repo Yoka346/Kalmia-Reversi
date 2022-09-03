@@ -47,8 +47,8 @@ namespace reversi
 		inline int player_disc_count() const { return this->_bitboard.player_disc_count(); }
 		inline int opponent_disc_count() const { return this->_bitboard.opponent_disc_count(); }
 		inline int disc_count() const { return this->_bitboard.disc_count(); }
-		inline int black_disc_count() const { (this->_side_to_move == DiscColor::BLACK) ? player_disc_count() : opponent_disc_count(); }
-		inline int white_disc_count() const { (this->_side_to_move == DiscColor::WHITE) ? player_disc_count() : opponent_disc_count(); }
+		inline int black_disc_count() const { return (this->_side_to_move == DiscColor::BLACK) ? player_disc_count() : opponent_disc_count(); }
+		inline int white_disc_count() const { return (this->_side_to_move == DiscColor::WHITE) ? player_disc_count() : opponent_disc_count(); }
 
 		inline DiscColor square_color_at(BoardCoordinate coord) const
 		{
