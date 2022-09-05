@@ -5,15 +5,6 @@
 
 namespace utils
 {
-	template<class T>
-	constexpr int64_t index_of(const T* data, T target, size_t len)
-	{
-		for (auto i = 0ULL; i < len; i++)
-			if (data[i] == target)
-				return i;
-		return -1ULL;
-	}
-
 	/**
 	* @class 
 	* @brief	デバッグ時にのみ範囲チェックを行う配列.
@@ -51,7 +42,6 @@ namespace utils
 
 		constexpr size_t length() const { return LEN; }
 		inline ElementType* as_raw_array() const { return this->data; }
-		constexpr size_t index_of(ElementType target) { return utils::index_of(this->data, target, LEN); }
 	};
 
 	/**
@@ -96,6 +86,25 @@ namespace utils
 
 		constexpr int length() const { return LEN; }
 		constexpr const ElementType* as_raw_array() const { return this->data; }
-		constexpr int64_t index_of(ElementType target) const { return utils::index_of(this->data, target, LEN); }
+	};
+
+	/**
+	* @class
+	* @brief	読み取り専用の配列ラッパー. Arrayオブジェクトの参照を内部に持ち, そのArray内のデータに対する読み取り機能を提供する.
+	* @detail	使い方としては, private変数としてArrayオブジェクトを宣言して, そのArrayオブジェクトの読み取りのみを外部に公開したい場合にこのラッパーを用いると便利.
+	**/
+	template<class ElementType, size_t LEN>
+	class ReadonlyArrayWrapper
+	{
+	private:
+		Array<ElementType, LEN>& data;
+
+	public:
+		constexpr ReadonlyArrayWrapper(Array<ElementType, LEN>& data) : data(data) {}
+
+		inline ElementType& operator[](size_t idx) { this->data[idx]; }
+
+		constexpr size_t length() const { return LEN; }
+		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
 	};
 }

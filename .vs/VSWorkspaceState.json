@@ -1,13 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Kalmia",
-    "\\Kalmia\\Kalmia",
-    "\\Kalmia\\Kalmia\\engine",
-    "\\Kalmia\\Kalmia\\protocol",
-    "\\Kalmia\\Kalmia\\reversi",
-    "\\Kalmia\\Kalmia\\utils"
+    "\\KalmiaTest\\bin",
+    "\\ValueFuncOptimization\\LatentFactor",
+    "\\ValueFuncOptimization\\Linear"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\main.cpp",
   "PreviewInSolutionExplorer": false
 }

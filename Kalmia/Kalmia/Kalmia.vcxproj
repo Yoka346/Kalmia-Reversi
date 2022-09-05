@@ -134,6 +134,7 @@
     <ClCompile Include="engine\engine.cpp" />
     <ClCompile Include="engine\engine_option.cpp" />
     <ClCompile Include="engine\random_mover.cpp" />
+    <ClCompile Include="evaluate\feature.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="protocol\gtp.cpp" />

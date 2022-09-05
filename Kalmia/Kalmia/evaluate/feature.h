@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "../reversi/constant.h"
 #include "../reversi/types.h"
 #include "../reversi/position.h"
@@ -25,7 +27,7 @@ namespace evaluate
 	// Kalmiaが局面評価に用いるパターンはEdaxと同じ12種類のパターン.
 	constexpr int32_t PATTERN_KIND_NUM = 12;	
 
-	// 局面から抽出するパターンは全部で46個(Bias項も含む).
+	// 局面から抽出するパターンは全部で46個.
 	constexpr int32_t ALL_PATTERN_NUM = 46;
 
 	constexpr int32_t MAX_PATTERN_SIZE = 10;
@@ -161,6 +163,7 @@ namespace evaluate
         { PATTERN_SIZE[DiagonalLine4], {reversi::H5, reversi::G6, reversi::F7, reversi::E8}}
     };
 
+    // 座標からその座標が含まれているパターンの特徴に変換するテーブル. 特徴の差分更新の際に用いる.
     constexpr utils::ConstantArray<CoordinateToFeature, reversi::SQUARE_NUM> COORDINATE_TO_FEATURE([](CoordinateToFeature* data, size_t len)
         {
             for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::H8; coord++)
@@ -270,6 +273,22 @@ namespace evaluate
 	**/
 	class PositionFeature
 	{
+    private:
+        utils::Array<uint16_t, ALL_PATTERN_NUM> _features;
+        reversi::DiscColor _side_to_move;
+        int32_t empty_square_count;
+        std::function<void(const reversi::Move&)> update_callbacks[2];    // 特徴を更新する関数は黒用と白用を配列で管理する(条件分岐を無くすため).
+        void update_after_black_move(const reversi::Move move);
+        void update_after_white_move(const reversi::Move move);
 
+    public:
+        const utils::ReadonlyArrayWrapper<uint16_t, ALL_PATTERN_NUM> features;
+
+        PositionFeature(reversi::Position pos);
+        PositionFeature(const PositionFeature& src);
+        void init_features(reversi::Position pos);
+        void update(const reversi::Move& move);
+        const PositionFeature& operator=(const PositionFeature& right);
+        bool operator==(const PositionFeature& right);
 	};
 }
