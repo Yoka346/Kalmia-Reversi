@@ -140,7 +140,7 @@
     <ClCompile Include="protocol\gtp.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
-    <ClCompile Include="reversi\type.cpp" />
+    <ClCompile Include="reversi\types.cpp" />
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />

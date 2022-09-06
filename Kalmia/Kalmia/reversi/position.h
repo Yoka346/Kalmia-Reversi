@@ -21,7 +21,7 @@ namespace reversi
 		// Rankというのはチェス用語で, 盤面の水平方向のラインを意味する.
 		static constexpr int HASH_RANK_LEN_0 = 16;
 		static constexpr int HASH_RANK_LEN_1 = 256;
-		static utils::ConstantArray<uint64_t, HASH_RANK_LEN_0 * HASH_RANK_LEN_1> HASH_RANK;
+		static utils::Array<uint64_t, HASH_RANK_LEN_0 * HASH_RANK_LEN_1> HASH_RANK;
 
 		Bitboard _bitboard;
 		DiscColor _side_to_move;
@@ -135,5 +135,5 @@ namespace reversi
 		}
 	};
 
-	inline ConstantArray<uint64_t, Position::HASH_RANK_LEN_0* Position::HASH_RANK_LEN_1> Position::HASH_RANK(Position::init_hash_rank);
+	inline Array<uint64_t, Position::HASH_RANK_LEN_0* Position::HASH_RANK_LEN_1> Position::HASH_RANK(Position::init_hash_rank);
 }

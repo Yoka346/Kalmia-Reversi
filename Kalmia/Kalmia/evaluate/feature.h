@@ -33,13 +33,13 @@ namespace evaluate
 	constexpr int32_t MAX_PATTERN_SIZE = 10;
 
     // 各パターンを構成するマスの数.
-    constexpr utils::ConstantArray<int32_t, PATTERN_KIND_NUM> PATTERN_SIZE = { 9, 10, 10, 10, 8, 8, 8, 8, 7, 6, 5, 4 };
+    constexpr utils::Array<int32_t, PATTERN_KIND_NUM> PATTERN_SIZE = { 9, 10, 10, 10, 8, 8, 8, 8, 7, 6, 5, 4 };
 
     // 各パターンの特徴の数((e.g. Corner3x3パターンであれば, サイズが9, マスが取りうる状態は黒, 白, 空の3つなので, 3^9個の特徴).
-    constexpr utils::ConstantArray<int32_t, PATTERN_KIND_NUM> PATTERN_FEATURE_NUM = {19683, 59049, 59049, 59049, 6561, 6561, 6561, 6561, 2187, 729, 243, 81};
+    constexpr utils::Array<int32_t, PATTERN_KIND_NUM> PATTERN_FEATURE_NUM = {19683, 59049, 59049, 59049, 6561, 6561, 6561, 6561, 2187, 729, 243, 81};
 
     // 対称変換したら一致するパターンを除いた際の各パターンの特徴の数.
-    constexpr utils::ConstantArray<int32_t, PATTERN_KIND_NUM> PACKED_PATTERN_FEATURE_NUM = { 10206, 29889, 29646, 29646, 3321, 3321, 3321, 3321, 1134, 378, 135, 45 };
+    constexpr utils::Array<int32_t, PATTERN_KIND_NUM> PACKED_PATTERN_FEATURE_NUM = { 10206, 29889, 29646, 29646, 3321, 3321, 3321, 3321, 1134, 378, 135, 45 };
 
     constexpr int32_t ALL_PATTERN_FEATURE_NUM = 
         ([]
@@ -50,7 +50,7 @@ namespace evaluate
                 return sum;
             })();
 
-    constexpr utils::ConstantArray<int32_t, PATTERN_KIND_NUM> PATTERN_FEATURE_OFFSET([](int32_t* data, size_t len)
+    constexpr utils::Array<int32_t, PATTERN_KIND_NUM> PATTERN_FEATURE_OFFSET([](int32_t* data, size_t len)
         {
             int32_t offset = 0;
             for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
@@ -61,7 +61,7 @@ namespace evaluate
         });
 
     // 3^n(n <= MAX_PATTERN_SIZE)の結果を格納したテーブル. 特徴の計算でよく使うのでコンパイル時に事前計算しておく.
-    constexpr utils::ConstantArray<uint16_t, MAX_PATTERN_SIZE + 1> POW_3([](uint16_t* data, size_t len)
+    constexpr utils::Array<uint16_t, MAX_PATTERN_SIZE + 1> POW_3([](uint16_t* data, size_t len)
         {
             for (size_t i = 0; i < len; i++)
             {
@@ -91,13 +91,13 @@ namespace evaluate
 		int32_t size;
 
 		// パターンを構成するマスの座標.
-        utils::ConstantArray<reversi::BoardCoordinate, MAX_PATTERN_SIZE + 1> coordinates;
+        utils::Array<reversi::BoardCoordinate, MAX_PATTERN_SIZE + 1> coordinates;
 	};
 
     struct CoordinateToFeature
     {
         int32_t len;
-        utils::ConstantArray<Pattern, 16> features;
+        utils::Array<Pattern, 16> features;
 
         constexpr CoordinateToFeature() : len(0), features({}) {}
     };
@@ -164,7 +164,7 @@ namespace evaluate
     };
 
     // 座標からその座標が含まれているパターンの特徴に変換するテーブル. 特徴の差分更新の際に用いる.
-    constexpr utils::ConstantArray<CoordinateToFeature, reversi::SQUARE_NUM> COORDINATE_TO_FEATURE([](CoordinateToFeature* data, size_t len)
+    constexpr utils::Array<CoordinateToFeature, reversi::SQUARE_NUM> COORDINATE_TO_FEATURE([](CoordinateToFeature* data, size_t len)
         {
             for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::H8; coord++)
             {
@@ -188,7 +188,7 @@ namespace evaluate
                     count++;
                 };
 
-                data[coord].features = ConstantArray<Pattern, 16>(features);
+                data[coord].features = Array<Pattern, 16>(features);
                 data[coord].len = count;
             }
         });
@@ -204,7 +204,7 @@ namespace evaluate
     }
 
     template<int TABLE_LEN>
-    constexpr uint16_t shuffle_feature_with_table(uint16_t feature, const utils::ConstantArray<int32_t, TABLE_LEN>& table)
+    constexpr uint16_t shuffle_feature_with_table(uint16_t feature, const utils::Array<int32_t, TABLE_LEN>& table)
     {
         uint16_t shuffled = 0;
         for (size_t i = 0; i < table.length(); i++)
@@ -218,8 +218,8 @@ namespace evaluate
 
     constexpr uint16_t to_symmetric_feature(PatternKind kind, uint16_t feature)
     {
-        constexpr utils::ConstantArray<int32_t, PATTERN_SIZE[PatternKind::Corner3x3]> TABLE_FOR_CORNER_3X3 = { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
-        constexpr utils::ConstantArray<int32_t, PATTERN_SIZE[PatternKind::CornerEdgeX]> TABLE_FOR_CORNER_EDGE_X = { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
+        constexpr utils::Array<int32_t, PATTERN_SIZE[PatternKind::Corner3x3]> TABLE_FOR_CORNER_3X3 = { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
+        constexpr utils::Array<int32_t, PATTERN_SIZE[PatternKind::CornerEdgeX]> TABLE_FOR_CORNER_EDGE_X = { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
 
         if (kind == PatternKind::Corner3x3)
             return shuffle_feature_with_table(feature, TABLE_FOR_CORNER_3X3);
@@ -232,7 +232,7 @@ namespace evaluate
 
     constexpr uint16_t to_opponent_feature(PatternKind kind, uint16_t feature)
     {
-        uint16_t opp_feature;
+        uint16_t opp_feature = 0;
         for (int32_t i = 0; i < PATTERN_SIZE[kind]; i++)
         {
             auto color = static_cast<reversi::DiscColor>((feature / POW_3[i]) % 3);
@@ -245,10 +245,10 @@ namespace evaluate
     }
 
     // 対象変換したパターンの特徴を格納しているテーブル.
-    const utils::ConstantArray<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_SYMMETRIC_FEATURE([](uint16_t* data, size_t len)
+    const utils::Array<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_SYMMETRIC_FEATURE([](uint16_t* data, size_t len)
         {
             for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
-                for (int16_t feature = 0; feature < PATTERN_FEATURE_NUM[kind]; feature++)
+                for (uint16_t feature = 0; feature < PATTERN_FEATURE_NUM[kind]; feature++)
                 {
                     auto k = static_cast<PatternKind>(kind);
                     data[to_feature_idx(k, feature)] = to_symmetric_feature(k, feature);
@@ -256,10 +256,10 @@ namespace evaluate
         });
 
     // ディスクの種類を反転させたパターンの特徴を格納しているテーブル.
-    const utils::ConstantArray<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_OPPONENT_FEATURE([](uint16_t* data, size_t len)
+    const utils::Array<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_OPPONENT_FEATURE([](uint16_t* data, size_t len)
         {
             for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
-                for (int16_t feature = 0; feature < PATTERN_FEATURE_NUM[kind]; feature++)
+                for (uint16_t feature = 0; feature < PATTERN_FEATURE_NUM[kind]; feature++)
                 {
                     auto k = static_cast<PatternKind>(kind);
                     data[to_feature_idx(k, feature)] = to_opponent_feature(k, feature);
@@ -282,7 +282,7 @@ namespace evaluate
         void update_after_white_move(const reversi::Move move);
 
     public:
-        const utils::ReadonlyArrayWrapper<uint16_t, ALL_PATTERN_NUM> features;
+        const utils::ReadonlyArray<uint16_t, ALL_PATTERN_NUM> features;
 
         PositionFeature(reversi::Position pos);
         PositionFeature(const PositionFeature& src);

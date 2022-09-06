@@ -1,9 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\KalmiaTest\\bin",
-    "\\ValueFuncOptimization\\LatentFactor",
-    "\\ValueFuncOptimization\\Linear"
+    "\\Kalmia",
+    "\\Kalmia\\Kalmia",
+    "\\Kalmia\\Kalmia\\utils"
   ],
+  "SelectedNode": "\\Kalmia\\Kalmia\\utils\\array.h",
   "PreviewInSolutionExplorer": false
 }

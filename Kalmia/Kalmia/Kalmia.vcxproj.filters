@@ -39,7 +39,7 @@
     <ClCompile Include="utils\game_timer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="reversi\type.cpp">
+    <ClCompile Include="reversi\types.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="engine\engine_option.cpp">

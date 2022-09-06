@@ -4,12 +4,12 @@
 
 #include "evaluate/feature.h"
 
+#include "test/flip_test.h"
+
 using namespace engine;
 using namespace protocol;
 
 int main()
 {
-	RandomMover engine;
-	GTP gtp;
-	gtp.mainloop(&engine, "gtp.log");
+	test::calc_flipped_discs_test();
 }
