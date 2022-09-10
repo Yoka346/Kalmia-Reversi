@@ -24,9 +24,10 @@ namespace evaluation
 	{
 		for (int32_t i = 0; i < this->_features.length(); i++)
 		{
+			auto& pat_loc = PATTERN_LOCATION[i];
 			this->_features[i] = 0;
-			for (auto& coord : PATTERN_LOCATION[i].coordinates)
-				this->_features[i] = this->_features[i] * 3 + pos.square_owner_at(coord);
+			for (int32_t j = 0; j < pat_loc.size; j++)
+				this->_features[i] = this->_features[i] * 3 + pos.square_owner_at(pat_loc.coordinates[j]);
 		}
 		this->_side_to_move = pos.side_to_move();
 		this->empty_square_count = pos.empty_square_count();
