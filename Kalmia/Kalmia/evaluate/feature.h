@@ -1,12 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <functional>
 
 #include "../reversi/constant.h"
 #include "../reversi/types.h"
 #include "../reversi/position.h"
 
-namespace evaluate
+namespace evaluation
 {	
     enum PatternKind
     {
@@ -271,24 +272,27 @@ namespace evaluate
 	* @brief 局面の特徴を表現するクラス.
 	* @detail 局面の評価はこの特徴に基づいて行われる.
 	**/
-	class PositionFeature
-	{
+    class PositionFeature
+    {
     private:
         utils::Array<uint16_t, ALL_PATTERN_NUM> _features;
         reversi::DiscColor _side_to_move;
         int32_t empty_square_count;
         std::function<void(const reversi::Move&)> update_callbacks[2];    // 特徴を更新する関数は黒用と白用を配列で管理する(条件分岐を無くすため).
-        void update_after_black_move(const reversi::Move move);
-        void update_after_white_move(const reversi::Move move);
+        void init_update_callbacks();
+        void update_after_black_move(const reversi::Move& move);
+        void update_after_white_move(const reversi::Move& move);
 
     public:
         const utils::ReadonlyArray<uint16_t, ALL_PATTERN_NUM> features;
 
-        PositionFeature(reversi::Position pos);
+        PositionFeature(reversi::Position& pos);
         PositionFeature(const PositionFeature& src);
-        void init_features(reversi::Position pos);
+        inline reversi::DiscColor side_to_move() { return this->_side_to_move; }
+        void init_features(reversi::Position& pos);
         void update(const reversi::Move& move);
+        inline void pass() { this->_side_to_move = to_opponent_color(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);
-        bool operator==(const PositionFeature& right);
-	};
+        inline bool operator==(const PositionFeature& right) { this->_side_to_move == right._side_to_move && std::equal(this->_features.begin(), this->features.end(), right._features); }
+    };
 }

@@ -37,6 +37,9 @@ namespace utils
 
 		constexpr Array(void (*initializer)(ElementType*, size_t)) : data() { initializer(this->data, LEN); }
 
+		constexpr const ElementType* begin() const { return &this->data[0]; }
+		constexpr const ElementType* end() const { return this->data + LEN; }
+
 		inline ElementType& operator[](size_t idx)
 		{
 			assert(idx >= 0 && idx < LEN);
@@ -68,8 +71,9 @@ namespace utils
 	public:
 		constexpr ReadonlyArray(Array<ElementType, LEN>& data) : data(data) {}
 
-		inline ElementType& operator[](size_t idx) { this->data[idx]; }
-
+		constexpr const ElementType* begin() const { return this->data.begin(); }
+		constexpr const ElementType* end() const { return this->data.end(); }
+		inline const ElementType& operator[](size_t idx) const { this->data[idx]; }
 		constexpr size_t length() const { return LEN; }
 		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
 	};

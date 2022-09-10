@@ -3,6 +3,7 @@
     "",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
+    "\\Kalmia\\Kalmia\\evaluate",
     "\\Kalmia\\Kalmia\\utils"
   ],
   "SelectedNode": "\\Kalmia\\Kalmia\\utils\\array.h",

@@ -43,7 +43,7 @@ namespace reversi
 
 		inline DiscColor side_to_move() const { return this->_side_to_move; }
 		inline DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
-		inline int get_empty_square_count() const { return this->_bitboard.empty_count(); }
+		inline int empty_square_count() const { return this->_bitboard.empty_count(); }
 		inline int player_disc_count() const { return this->_bitboard.player_disc_count(); }
 		inline int opponent_disc_count() const { return this->_bitboard.opponent_disc_count(); }
 		inline int disc_count() const { return this->_bitboard.disc_count(); }
@@ -52,13 +52,13 @@ namespace reversi
 
 		inline DiscColor square_color_at(BoardCoordinate coord) const
 		{
-			auto owner = disc_owner_at(coord);
+			auto owner = square_owner_at(coord);
 			if (owner == Player::NULL_PLAYER)
 				return DiscColor::EMPTY;
 			return (owner == Player::CURRENT) ? this->_side_to_move : opponent_color();
 		}
 
-		inline Player disc_owner_at(BoardCoordinate coord) const
+		inline Player square_owner_at(BoardCoordinate coord) const
 		{
 			return static_cast<Player>(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1));
 		}
