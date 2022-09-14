@@ -172,6 +172,7 @@
     <ClInclude Include="utils\static_initializer.h" />
     <ClInclude Include="utils\game_timer.h" />
     <ClInclude Include="utils\string_to_type.h" />
+    <ClInclude Include="utils\unroller.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

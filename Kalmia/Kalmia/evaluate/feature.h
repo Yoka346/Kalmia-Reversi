@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "../utils/bitmanip.h"
 #include "../reversi/constant.h"
 #include "../reversi/types.h"
 #include "../reversi/position.h"
@@ -25,10 +26,10 @@ namespace evaluation
         DiagonalLine4
     };
 
-	// Kalmiaが局面評価に用いるパターンはEdaxと同じ12種類のパターン.
+	// Kalmiaが盤面評価に用いるパターンはEdaxと同じ12種類のパターン.
 	constexpr int32_t PATTERN_KIND_NUM = 12;	
 
-	// 局面から抽出するパターンは全部で46個.
+	// 盤面から抽出するパターンは全部で46個.
 	constexpr int32_t ALL_PATTERN_NUM = 46;
 
 	constexpr int32_t MAX_PATTERN_SIZE = 10;
@@ -73,17 +74,17 @@ namespace evaluation
             }
         });
 
-    // パターンに関する情報を管理する構造体.
-    struct Pattern
-    {
-        // 盤面のどのパターンなのかを識別するID. 1つの盤面から抽出するパターンは全部でALL_PATTERN_NUM個なので, idは0以上(ALL_PATTERN_NUM - 1)以下.
-        int32_t id;
+    //// パターンに関する情報を管理する構造体.
+    //struct Pattern
+    //{
+    //    // 盤面のどのパターンなのかを識別するID. 1つの盤面から抽出するパターンは全部でALL_PATTERN_NUM個なので, idは0以上(ALL_PATTERN_NUM - 1)以下.
+    //    int32_t id;
 
-        // パターンの特徴.
-        uint16_t feature;
+    //    // パターンの特徴.
+    //    uint16_t feature;
 
-        constexpr Pattern() : id(0), feature(0) {}
-    };
+    //    constexpr Pattern() : id(0), feature(0) {}
+    //};
 
     // パターンの位置を表す構造体.
 	struct PatternLocation
@@ -95,13 +96,13 @@ namespace evaluation
         utils::Array<reversi::BoardCoordinate, MAX_PATTERN_SIZE + 1> coordinates;
 	};
 
-    struct CoordinateToFeature
+    /*struct CoordinateToFeature
     {
         int32_t len;
         utils::Array<Pattern, 16> features;
 
         constexpr CoordinateToFeature() : len(0), features({}) {}
-    };
+    };*/
 
     constexpr PatternLocation PATTERN_LOCATION[ALL_PATTERN_NUM] =
     {
@@ -165,7 +166,7 @@ namespace evaluation
     };
 
     // 座標からその座標が含まれているパターンの特徴に変換するテーブル. 特徴の差分更新の際に用いる.
-    constexpr utils::Array<CoordinateToFeature, reversi::SQUARE_NUM> COORDINATE_TO_FEATURE([](CoordinateToFeature* data, size_t len)
+    /*constexpr utils::Array<CoordinateToFeature, reversi::SQUARE_NUM> COORDINATE_TO_FEATURE([](CoordinateToFeature* data, size_t len)
         {
             for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::H8; coord++)
             {
@@ -192,7 +193,7 @@ namespace evaluation
                 data[coord].features = Array<Pattern, 16>(features);
                 data[coord].len = count;
             }
-        });
+        });*/
 
     constexpr int32_t to_feature_idx(PatternKind kind, uint16_t feature) { return PATTERN_FEATURE_OFFSET[kind] + feature; }
 
@@ -256,7 +257,7 @@ namespace evaluation
                 }
         });
 
-    // ディスクの種類を反転させたパターンの特徴を格納しているテーブル.
+    // ディスクの色を反転させたパターンの特徴を格納しているテーブル.
     const utils::Array<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_OPPONENT_FEATURE([](uint16_t* data, size_t len)
         {
             for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
@@ -267,15 +268,40 @@ namespace evaluation
                 }
         });
 
+    // 盤面に出現する12種類(合計46個)のパターンの特徴を管理するテーブル.
+    union FeatureTable
+    {
+        static constexpr int32_t PADDING = 2;
+        static constexpr int32_t LEN = ALL_PATTERN_NUM + PADDING;
+        static constexpr int32_t SIZE = sizeof(uint16_t) * LEN;
+        static constexpr int32_t ULL_LEN = SIZE / sizeof(uint64_t);
+        static constexpr int32_t V8_LEN = SIZE / sizeof(__m128i);
+        static constexpr int32_t V16_LEN = SIZE / sizeof(__m256i);
+
+        Array<uint16_t, LEN> t;  // ベクトル化のために, 配列のサイズ(バイト単位)が16Bまたは32Bで割り切れるようにパディングする.
+        struct { Array<uint16_t, ALL_PATTERN_NUM> features; Array<uint16_t, PADDING> padding; } t_splitted;
+        Array<uint16_t, ULL_LEN> t_ull;
+
+#ifdef USE_SSE2
+        Array<__m128i, V8_LEN> t_v8;
+#endif
+
+#ifdef USE_AVX2
+        Array<__m256i, V16_LEN> t_v16;
+#endif
+        
+        FeatureTable() : t() { ; }
+    };
+
 	/**
 	* @class
-	* @brief 局面の特徴を表現するクラス.
-	* @detail 局面の評価はこの特徴に基づいて行われる.
+	* @brief 盤面の特徴を表現するクラス.
+	* @detail 盤面の評価はこの特徴に基づいて行われる.
 	**/
     class PositionFeature
     {
     private:
-        utils::Array<uint16_t, ALL_PATTERN_NUM> _features;
+        FeatureTable _features;
         reversi::DiscColor _side_to_move;
         int32_t empty_square_count;
         std::function<void(const reversi::Move&)> update_callbacks[2];    // 特徴を更新する関数は黒用と白用を配列で管理する(条件分岐を無くすため).
@@ -293,6 +319,6 @@ namespace evaluation
         void update(const reversi::Move& move);
         inline void pass() { this->_side_to_move = to_opponent_color(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);
-        inline bool operator==(const PositionFeature& right) { this->_side_to_move == right._side_to_move && std::equal(this->_features.begin(), this->features.end(), right._features); }
+        inline bool operator==(const PositionFeature& right) { this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right._features); }
     };
 }

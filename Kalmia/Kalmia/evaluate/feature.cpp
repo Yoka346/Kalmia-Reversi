@@ -1,33 +1,35 @@
 #pragma once
 #include "feature.h"
 
+#include "../utils/unroller.h"
+
 using namespace std;
 
 using namespace reversi;
 
 namespace evaluation
 {
-	PositionFeature::PositionFeature(Position& pos) : _features(), features(_features), _side_to_move(pos.side_to_move()), update_callbacks()
+	PositionFeature::PositionFeature(Position& pos) : _features(), features(_features.t_splitted.features), _side_to_move(pos.side_to_move()), update_callbacks()
 	{
 		init_features(pos);
 		init_update_callbacks();
 	}
 
-	PositionFeature::PositionFeature(const PositionFeature& src) : _features(), features(_features), _side_to_move(src._side_to_move), update_callbacks()
+	PositionFeature::PositionFeature(const PositionFeature& src) : _features(), features(_features.t_splitted.features), _side_to_move(src._side_to_move), update_callbacks()
 	{
-		for (int32_t i = 0; i < this->_features.length(); i++)
-			this->_features[i] = src._features[i];
+		LoopUnroller<FeatureTable::V16_LEN>()([&](const int32_t i) { this->_features.t_v16[i] = src._features.t_v16[i]; });
 		init_update_callbacks();
 	}
 
 	void PositionFeature::init_features(Position& pos)
 	{
-		for (int32_t i = 0; i < this->_features.length(); i++)
+		auto features = this->_features.t_splitted.features;
+		for (int32_t i = 0; i < features.length(); i++)
 		{
 			auto& pat_loc = PATTERN_LOCATION[i];
-			this->_features[i] = 0;
+			features[i] = 0;
 			for (int32_t j = 0; j < pat_loc.size; j++)
-				this->_features[i] = this->_features[i] * 3 + pos.square_owner_at(pat_loc.coordinates[j]);
+				features[i] = features[i] * 3 + pos.square_owner_at(pat_loc.coordinates[j]);
 		}
 		this->_side_to_move = pos.side_to_move();
 		this->empty_square_count = pos.empty_square_count();
@@ -49,8 +51,7 @@ namespace evaluation
 
 	const PositionFeature& PositionFeature::operator=(const PositionFeature& right)
 	{
-		for (int32_t i = 0; i < this->_features.length(); i++)
-			this->_features[i] = right._features[i];
+		LoopUnroller<FeatureTable::V16_LEN>()([&](const int32_t i) { this->_features.t_v16[i] = right._features.t_v16[i]; });
 		this->_side_to_move = right._side_to_move;
 		this->empty_square_count = right.empty_square_count;
 		return *this;

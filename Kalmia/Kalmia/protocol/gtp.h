@@ -69,7 +69,7 @@ namespace protocol
 
 		// original commands
 
-		// 現在の局面からの着手の列をf5d6c3...形式で入力するコマンド.
+		// 現在の盤面からの着手の列をf5d6c3...形式で入力するコマンド.
 		void exec_set_moves_command(int id, std::istringstream& args);
 
 		// EngineOptionのリストを表示するコマンド.

@@ -1,6 +1,8 @@
 #pragma once
 #include <bit>
 
+#include "../config.h"
+
 #ifdef USE_AVX2
 #include <immintrin.h>
 #elif defined(USE_SSE42)
