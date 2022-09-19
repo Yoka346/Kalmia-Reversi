@@ -61,10 +61,20 @@ namespace reversi
 
 	enum Player
 	{
-		CURRENT,
-		OPPONENT,
+		FIRST,
+		SECOND,
 		NULL_PLAYER
 	};
+
+	/**
+	* @fn
+	* @brief プレイヤーを反転させる. FIRSTであればSECONDに, SECONDであればFIRSTに変換する.
+	* @return 反転したプレイヤー
+	**/
+	constexpr Player to_opponent_player(Player player)
+	{
+		return static_cast<Player>(player ^ Player::SECOND);
+	}
 
 	enum class GameResult : int8_t
 	{

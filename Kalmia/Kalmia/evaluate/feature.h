@@ -258,7 +258,8 @@ namespace evaluation
         });
 
     // ディスクの色を反転させたパターンの特徴を格納しているテーブル.
-    const utils::Array<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_OPPONENT_FEATURE([](uint16_t* data, size_t len)
+    const utils::Array<uint16_t, ALL_PATTERN_FEATURE_NUM> TO_OPPONENT_FEATURE(
+        [](uint16_t* data, size_t len)
         {
             for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
                 for (uint16_t feature = 0; feature < PATTERN_FEATURE_NUM[kind]; feature++)
@@ -275,23 +276,63 @@ namespace evaluation
         static constexpr int32_t LEN = ALL_PATTERN_NUM + PADDING;
         static constexpr int32_t SIZE = sizeof(uint16_t) * LEN;
         static constexpr int32_t ULL_LEN = SIZE / sizeof(uint64_t);
-        static constexpr int32_t V8_LEN = SIZE / sizeof(__m128i);
-        static constexpr int32_t V16_LEN = SIZE / sizeof(__m256i);
 
         Array<uint16_t, LEN> t;  // ベクトル化のために, 配列のサイズ(バイト単位)が16Bまたは32Bで割り切れるようにパディングする.
         struct { Array<uint16_t, ALL_PATTERN_NUM> features; Array<uint16_t, PADDING> padding; } t_splitted;
         Array<uint16_t, ULL_LEN> t_ull;
 
 #ifdef USE_SSE2
+        static constexpr int32_t V8_LEN = SIZE / sizeof(__m128i);
         Array<__m128i, V8_LEN> t_v8;
 #endif
 
 #ifdef USE_AVX2
+        static constexpr int32_t V16_LEN = SIZE / sizeof(__m256i);
         Array<__m256i, V16_LEN> t_v16;
 #endif
         
-        FeatureTable() : t() { ; }
+        constexpr FeatureTable() : t() { ; }
+
+        constexpr FeatureTable(uint16_t* t) : t(t, LEN) { ; }
+
+        const FeatureTable& operator=(const FeatureTable& right)
+        {
+#ifdef USE_AVX2
+            utils::LoopUnroller<V16_LEN>()(
+                [&](const int32_t i) { this->t_v16.as_raw_array()[i] = right.t_v16.as_raw_array()[i]; });
+#elif defined(USE_SSE2)
+            utils::LoopUnroller<V8_LEN>()(
+                [&](const int32_t i) { this->t_v8.as_raw_array()[i] = right.t_v8.as_raw_array()[i]; });
+#else
+            utils::LoopUnroller<ULL_LEN>()(
+                [&](const int32_t i) { this->t_ull.as_raw_array()[i] = right.t_ull.as_raw_array()[i]; });
+#endif
+            return *this;
+        }
     };
+
+    // 特徴を更新する際の差分を格納しているテーブル.
+    constexpr utils::Array<FeatureTable, reversi::SQUARE_NUM> FEATURE_TABLE_DIFF(
+        [](FeatureTable* data, size_t len)
+        {
+            for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::H8; coord++)
+            {
+                auto& features = data[coord].t;
+                for (int32_t i = 0; i < ALL_PATTERN_NUM; i++)
+                {
+                    auto& pattern_loc = PATTERN_LOCATION[i];
+                    auto coordinates = pattern_loc.coordinates.as_raw_array();
+                    int32_t idx;
+                    for (idx = 0; idx < pattern_loc.size; idx++)
+                        if (coordinates[idx] == coord)
+                            break;
+                    if (idx != pattern_loc.size)
+                        features.as_raw_array()[i] = POW_3.as_raw_array()[pattern_loc.size - idx - 1];
+                    else
+                        features.as_raw_array()[i] = 0;
+                }
+            }
+        });
 
 	/**
 	* @class
@@ -302,7 +343,7 @@ namespace evaluation
     {
     private:
         FeatureTable _features;
-        reversi::DiscColor _side_to_move;
+        reversi::Player _side_to_move;
         int32_t empty_square_count;
         std::function<void(const reversi::Move&)> update_callbacks[2];    // 特徴を更新する関数は黒用と白用を配列で管理する(条件分岐を無くすため).
         void init_update_callbacks();
@@ -314,11 +355,11 @@ namespace evaluation
 
         PositionFeature(reversi::Position& pos);
         PositionFeature(const PositionFeature& src);
-        inline reversi::DiscColor side_to_move() { return this->_side_to_move; }
+        inline reversi::Player side_to_move() { return this->_side_to_move; }
         void init_features(reversi::Position& pos);
         void update(const reversi::Move& move);
-        inline void pass() { this->_side_to_move = to_opponent_color(this->_side_to_move); }
+        inline void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);
-        inline bool operator==(const PositionFeature& right) { this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right._features); }
+        inline bool operator==(const PositionFeature& right) { return this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right.features.begin()); }
     };
 }

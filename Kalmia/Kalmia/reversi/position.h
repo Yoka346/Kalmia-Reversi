@@ -4,6 +4,7 @@
 #include "../utils/static_initializer.h"
 #include "../utils/random.h"
 #include "../utils/array.h"
+#include "../utils/unroller.h"
 #include "constant.h"
 #include "types.h"
 #include "move.h"
@@ -19,8 +20,8 @@ namespace reversi
 	{
 	private:
 		// Rankというのはチェス用語で, 盤面の水平方向のラインを意味する.
-		static constexpr int HASH_RANK_LEN_0 = 16;
-		static constexpr int HASH_RANK_LEN_1 = 256;
+		static constexpr int32_t HASH_RANK_LEN_0 = 16;
+		static constexpr int32_t HASH_RANK_LEN_1 = 256;
 		static utils::Array<uint64_t, HASH_RANK_LEN_0 * HASH_RANK_LEN_1> HASH_RANK;
 
 		Bitboard _bitboard;
@@ -49,15 +50,25 @@ namespace reversi
 		inline int disc_count() const { return this->_bitboard.disc_count(); }
 		inline int black_disc_count() const { return (this->_side_to_move == DiscColor::BLACK) ? player_disc_count() : opponent_disc_count(); }
 		inline int white_disc_count() const { return (this->_side_to_move == DiscColor::WHITE) ? player_disc_count() : opponent_disc_count(); }
-
+		
+		/**
+		* @fn
+		* @brief 指定された座標のマスにあるディスクの色を取得する.
+		* @return 指定された座標のマスにあるディスクの色, ディスクが無ければDiscColor::EMPTY.
+		**/
 		inline DiscColor square_color_at(BoardCoordinate coord) const
 		{
 			auto owner = square_owner_at(coord);
 			if (owner == Player::NULL_PLAYER)
 				return DiscColor::EMPTY;
-			return (owner == Player::CURRENT) ? this->_side_to_move : opponent_color();
+			return (owner == Player::FIRST) ? this->_side_to_move : opponent_color();
 		}
 
+		/**
+		* @fn
+		* @brief 指定された座標のマスにあるディスクの持ち主を取得する.
+		* @return 現在の手番のディスクであればPlayer::FIRST, 相手の手番のディスクであればPlayer::SECOND, どちらでもなければPlayer::NULL_PLAYER.
+		**/
 		inline Player square_owner_at(BoardCoordinate coord) const
 		{
 			return static_cast<Player>(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1));
@@ -132,6 +143,21 @@ namespace reversi
 			if (!diff)
 				return GameResult::DRAW;
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
+		}
+
+		inline uint64_t calc_hash_code() 
+		{
+			auto p = reinterpret_cast<uint8_t*>(&(this->_bitboard));
+			uint64_t h0 = HASH_RANK[p[0]];
+			uint64_t h1 = HASH_RANK[HASH_RANK_LEN_0 + p[1]];
+			utils::LoopUnroller<7>()(
+				[&](const int32_t i)
+				{
+					auto j = i << 1;
+					h0 ^= HASH_RANK[j * HASH_RANK_LEN_0 + p[j]];
+					h1 ^= HASH_RANK[(j + 1) * HASH_RANK_LEN_0 + p[j + 1]];
+				});
+			return h0 ^ h1;
 		}
 	};
 

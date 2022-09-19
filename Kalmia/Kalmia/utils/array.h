@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 #include <initializer_list>
-#include <exception>
+#include <stdexcept>
 #include <cassert>
 
 namespace utils
@@ -24,7 +24,7 @@ namespace utils
 			if (data_len > LEN)
 				throw std::out_of_range("The length of \"data\" cannnot be greater than \"LEN\".");
 
-			for (int i = 0; i < data_len; i++)
+			for (size_t i = 0; i < data_len; i++)
 				this->data[i] = data[i];
 		}
 
@@ -53,7 +53,7 @@ namespace utils
 		}
 
 		constexpr size_t length() const { return LEN; }
-		inline ElementType* as_raw_array() { return this->data; }
+		constexpr ElementType* as_raw_array() { return this->data; }
 		constexpr const ElementType* as_raw_array() const { return this->data; }
 	};
 

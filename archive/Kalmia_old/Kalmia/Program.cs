@@ -49,8 +49,11 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            using var sw = new StreamWriter("flip_test_data.csv");
-            sw.WriteLine("player,opponent,move,flipped");
+            using var sw = new StreamWriter("position_feature_init_test_data.csv");
+            sw.Write("player,opponent");
+            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
+                sw.Write($",f{i}");
+            sw.WriteLine();
 
             Span<Reversi.BoardPosition> moves = stackalloc Reversi.BoardPosition[48];
             var rand = new Random();
@@ -60,10 +63,12 @@ namespace Kalmia
                 var o = (ulong)rand.NextInt64();
                 p ^= o;
                 var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
-                var num = board.GetNextPositionCandidates(moves);
-                var move = (int)moves[rand.Next(num)];
-                var flipped = CalculateFilippedDiscs_AVX2(p, o, move);
-                sw.WriteLine($"{p},{o},{move},{flipped}");
+                var bf = new BoardFeature(board);
+
+                sw.Write($"{p},{o}");
+                foreach (var f in bf.Features)
+                    sw.Write($",{f}");
+                sw.WriteLine();
             }
 
             static ulong CalculateFilippedDiscs_AVX2(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
