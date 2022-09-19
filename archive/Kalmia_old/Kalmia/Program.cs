@@ -51,7 +51,7 @@ namespace Kalmia
         {
             using var sw = new StreamWriter("position_feature_init_test_data.csv");
             sw.Write("player,opponent");
-            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM; i++)
+            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM-1; i++)
                 sw.Write($",f{i}");
             sw.WriteLine();
 
@@ -61,13 +61,14 @@ namespace Kalmia
             {
                 var p = (ulong)rand.NextInt64();
                 var o = (ulong)rand.NextInt64();
-                p ^= o;
+                p ^= ~(p ^ o);
+                Console.WriteLine($"{p} {o}");
                 var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
                 var bf = new BoardFeature(board);
 
                 sw.Write($"{p},{o}");
-                foreach (var f in bf.Features)
-                    sw.Write($",{f}");
+                for (var j =0;j < bf.Features.Length-1; j++)
+                    sw.Write($",{bf.Features[j]}");
                 sw.WriteLine();
             }
 

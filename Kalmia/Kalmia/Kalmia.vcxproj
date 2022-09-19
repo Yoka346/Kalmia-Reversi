@@ -144,6 +144,7 @@
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />
+    <ClCompile Include="test\position_feature_init_test.cpp" />
     <ClCompile Include="utils\game_timer.cpp" />
     <ClCompile Include="utils\random.cpp" />
   </ItemGroup>
@@ -160,6 +161,7 @@
     <ClInclude Include="reversi\move.h" />
     <ClInclude Include="reversi\position.h" />
     <ClInclude Include="test\flip_test.h" />
+    <ClInclude Include="test\position_feature_init_test.h" />
     <ClInclude Include="test\test_common.h" />
     <ClInclude Include="utils\bitmanip.h" />
     <ClInclude Include="config.h" />

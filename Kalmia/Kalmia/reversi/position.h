@@ -42,6 +42,8 @@ namespace reversi
 			: _bitboard(COORD_TO_BIT[reversi::E4] | COORD_TO_BIT[reversi::D5], COORD_TO_BIT[reversi::D4] | COORD_TO_BIT[reversi::E5]),
 			  _side_to_move(DiscColor::BLACK) { ; }
 
+		Position(Bitboard bitboard, DiscColor side_to_move) : _bitboard(bitboard), _side_to_move(side_to_move) { ; }
+
 		inline DiscColor side_to_move() const { return this->_side_to_move; }
 		inline DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
 		inline int empty_square_count() const { return this->_bitboard.empty_count(); }

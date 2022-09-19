@@ -23,7 +23,7 @@ namespace evaluation
 
 	void PositionFeature::init_features(Position& pos)
 	{
-		auto features = this->_features.t_splitted.features;
+		auto& features = this->_features.t_splitted.features;
 		for (int32_t i = 0; i < features.length(); i++)
 		{
 			auto& pat_loc = PATTERN_LOCATION[i];

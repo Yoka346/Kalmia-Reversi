@@ -4,12 +4,12 @@
 
 #include "evaluate/feature.h"
 
-#include "test/flip_test.h"
+#include "test/position_feature_init_test.h"
 
 using namespace engine;
 using namespace protocol;
 
 int main()
 {
-	test::calc_flipped_discs_test();
+	test::init_position_feature_test();
 }
