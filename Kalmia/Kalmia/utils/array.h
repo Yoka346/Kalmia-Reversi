@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <initializer_list>
+#include <algorithm>
 #include <stdexcept>
 #include <cassert>
 
@@ -52,6 +53,7 @@ namespace utils
 			return this->data[idx];
 		}
 
+		constexpr bool operator==(const Array<ElementType, LEN>& right) const { return std::equal(begin(), end(), right.begin()); }
 		constexpr size_t length() const { return LEN; }
 		constexpr ElementType* as_raw_array() { return this->data; }
 		constexpr const ElementType* as_raw_array() const { return this->data; }
@@ -74,6 +76,8 @@ namespace utils
 		constexpr const ElementType* begin() const { return this->data.begin(); }
 		constexpr const ElementType* end() const { return this->data.end(); }
 		inline const ElementType& operator[](size_t idx) const { this->data[idx]; }
+		constexpr bool operator==(const ReadonlyArray<ElementType, LEN>& right) const { return this->data == right.data; }
+		constexpr bool operator==(const Array<ElementType, LEN>& right) const { return this->data == right; }
 		constexpr size_t length() const { return LEN; }
 		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
 	};

@@ -31,15 +31,15 @@ namespace evaluation
 			for (int32_t j = 0; j < pat_loc.size; j++)
 				features[i] = features[i] * 3 + pos.square_owner_at(pat_loc.coordinates[j]);
 		}
-		this->_side_to_move = Player::FIRST;
+		this->_side_to_move = Player::FIRST;	// 与えられた盤面の現在の手番を先手とする.
 		this->empty_square_count = pos.empty_square_count();
 	}
 
 	void PositionFeature::init_update_callbacks()
 	{
 		using namespace placeholders;
-		this->update_callbacks[DiscColor::BLACK] = bind(&PositionFeature::update_after_black_move, this, _1);
-		this->update_callbacks[DiscColor::WHITE] = bind(&PositionFeature::update_after_black_move, this, _1);
+		this->update_callbacks[Player::FIRST] = bind(&PositionFeature::update_after_black_move, this, _1);
+		this->update_callbacks[Player::SECOND] = bind(&PositionFeature::update_after_white_move, this, _1);
 	}
 
 	void PositionFeature::update(const Move& move)
@@ -61,7 +61,7 @@ namespace evaluation
 
 	/**
 	* @fn
-	* @brief 与えられた黒の着手から, 特徴を差分更新する.
+	* @brief 与えられた先手の着手から, 特徴を差分更新する.
 	* @detail AVX2を用いて, 48個の特徴(うち2つはパディング)を16要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
@@ -83,7 +83,7 @@ namespace evaluation
 
 	/**
 	* @fn
-	* @brief 与えられた白の着手から, 特徴を差分更新する.
+	* @brief 与えられた後手の着手から, 特徴を差分更新する.
 	* @detail AVX2を用いて, 48個の特徴(うち2つはパディング)を16要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
@@ -107,7 +107,7 @@ namespace evaluation
 
 	/**
 	* @fn
-	* @brief 与えられた黒の着手から, 特徴を差分更新する.
+	* @brief 与えられた先手の着手から, 特徴を差分更新する.
 	* @detail SSE2を用いて, 48個の特徴(うち2つはパディング)を8要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
@@ -129,7 +129,7 @@ namespace evaluation
 
 	/**
 	* @fn
-	* @brief 与えられた白の着手から, 特徴を差分更新する.
+	* @brief 与えられた後手の着手から, 特徴を差分更新する.
 	* @detail SSE2を用いて, 48個の特徴(うち2つはパディング)を8要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
@@ -153,7 +153,7 @@ namespace evaluation
 
 	/**
 	* @fn
-	* @brief 与えられた黒の着手から, 特徴を差分更新する.
+	* @brief 与えられた先手の着手から, 特徴を差分更新する.
 	* @detail SIMD命令を用いる実装よりかなり遅くなるので, もしかしたらEdaxのeval_update関数のように条件分岐で選択的に特徴を更新する方が高速かもしれない.
 	* ただし, コンパイラの最適化による.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
@@ -176,7 +176,7 @@ namespace evaluation
 
 	/**
 	* @fn
-	* @brief 与えられた白の着手から, 特徴を差分更新する.
+	* @brief 与えられた後手の着手から, 特徴を差分更新する.
 	* @detail SIMD命令を用いる実装よりかなり遅くなるので, もしかしたらEdaxのeval_update関数のように条件分岐で選択的に特徴を更新する方が高速かもしれない.
 	* ただし, コンパイラの最適化による.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm

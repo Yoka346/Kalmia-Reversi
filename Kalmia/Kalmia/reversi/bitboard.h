@@ -26,18 +26,18 @@ namespace reversi
 		inline uint64_t calc_opponent_mobility() const {return calc_mobility(this->_opponent, this->_player);}
 		inline uint64_t calc_flipped_discs(BoardCoordinate& coord) const { return reversi::calc_flipped_discs(this->_player, this->_opponent, coord); }
 
-		inline void update(BoardCoordinate& coord, uint64_t& flipped)
+		inline void update(const BoardCoordinate& coord, const uint64_t& flipped)
 		{
-			this->_player |= (COORD_TO_BIT[coord] | flipped);
-			this->_opponent ^= flipped;
-			swap();
+			auto player = this->_player;
+			this->_player = this->_opponent ^ flipped;
+			this->_opponent = player | (COORD_TO_BIT[coord] | flipped);
 		}
 
-		inline void undo(BoardCoordinate& coord, uint64_t& flipped)
+		inline void undo(const BoardCoordinate& coord, const uint64_t& flipped)
 		{
-			swap();
-			this->_player ^= (COORD_TO_BIT[coord] | flipped);
-			this->_opponent ^= flipped;
+			auto player = this->_player;
+			this->_player = this->_opponent ^ flipped;
+			this->_opponent = player ^ (COORD_TO_BIT[coord] | flipped);
 		}
 
 		inline void swap()

@@ -76,11 +76,11 @@ namespace reversi
 			return static_cast<Player>(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1));
 		}
 
-		inline bool is_legal(BoardCoordinate& coord) const { return this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
+		inline bool is_legal(const BoardCoordinate& coord) const { return (coord == BoardCoordinate::PASS) ? can_pass() : this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
 		inline void pass() { this->_side_to_move = opponent_color(); this->_bitboard.swap(); }
 
 		template<bool CHECK_LEGALITY>
-		inline bool update(Move& move) 
+		inline bool update(const Move& move) 
 		{
 			if constexpr (CHECK_LEGALITY)
 				if (!is_legal(move.coord))
@@ -92,15 +92,15 @@ namespace reversi
 		}
 
 		template<bool CHECK_LEGALITY>
-		inline bool update(BoardCoordinate& coord)
+		inline bool update(const BoardCoordinate& coord)
 		{
 			if constexpr (CHECK_LEGALITY)
 				if (!is_legal(coord))
 					return false;
 
-			uint64_t flipped = this->_bitboard.calc_flipped_discs(coord);
+			uint64_t flipped = (coord != BoardCoordinate::PASS) ? this->_bitboard.calc_flipped_discs(coord) : 0ULL;
 			Move move(coord, flipped);
-			update(move);
+			return update(move);
 		}
 
 		inline void undo(Move& move)

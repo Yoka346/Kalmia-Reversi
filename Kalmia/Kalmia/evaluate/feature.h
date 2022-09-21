@@ -312,10 +312,10 @@ namespace evaluation
     };
 
     // 特徴を更新する際の差分を格納しているテーブル.
-    constexpr utils::Array<FeatureTable, reversi::SQUARE_NUM> FEATURE_TABLE_DIFF(
+    constexpr utils::Array<FeatureTable, reversi::SQUARE_NUM + 1> FEATURE_TABLE_DIFF(
         [](FeatureTable* data, size_t len)
         {
-            for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::H8; coord++)
+            for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::PASS; coord++)
             {
                 auto& features = data[coord].t;
                 for (int32_t i = 0; i < ALL_PATTERN_NUM; i++)
@@ -357,7 +357,7 @@ namespace evaluation
         PositionFeature(const PositionFeature& src);
         inline reversi::Player side_to_move() { return this->_side_to_move; }
         void init_features(reversi::Position& pos);
-        void update(const reversi::Move& move);
+        void update(const reversi::Move& move); 
         inline void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);
         inline bool operator==(const PositionFeature& right) { return this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right.features.begin()); }

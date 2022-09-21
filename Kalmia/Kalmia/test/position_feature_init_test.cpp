@@ -52,12 +52,12 @@ namespace test
 			uint64_t o = strtoull(items[1].c_str(), nullptr, 10);
 			uint16_t expected[ALL_PATTERN_NUM];
 			for (int32_t i = 0; i < ALL_PATTERN_NUM; i++)
-				expected[i] = static_cast<uint16_t>(strtoul(items[2 + i].c_str(), nullptr, 10));
+				expected[i] = static_cast<uint16_t>(stoi(items[2 + i].c_str(), nullptr, 10));
 
 			Bitboard bb(p, o);
 			Position pos(bb, DiscColor::BLACK);
-			PositionFeature feature(pos);
-			assert(std::equal(feature.features.begin(), feature.features.end(), expected));
+			PositionFeature pf(pos);
+			assert(std::equal(pf.features.begin(), pf.features.end(), expected));
 		}
 	}
 }

@@ -1,2 +1,7 @@
 ﻿  モジュール依存関係のソースをスキャンしています...
+  feature.cpp
+  main.cpp
+  position_feature_init_test.cpp
+  position_feature_update_test.cpp
+  コードを生成中...
   Kalmia.vcxproj -> C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\x64\Debug\Kalmia.exe

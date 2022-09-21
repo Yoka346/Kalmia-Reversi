@@ -49,10 +49,12 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            using var sw = new StreamWriter("position_feature_init_test_data.csv");
-            sw.Write("player,opponent");
+            using var sw = new StreamWriter("position_feature_update_test_data.csv");
+            sw.Write("player,opponent,move0,move1");
             for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM-1; i++)
-                sw.Write($",f{i}");
+                sw.Write($",f0{i}");
+            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM - 1; i++)
+                sw.Write($",f1{i}");
             sw.WriteLine();
 
             Span<Reversi.BoardPosition> moves = stackalloc Reversi.BoardPosition[48];
@@ -61,14 +63,26 @@ namespace Kalmia
             {
                 var p = (ulong)rand.NextInt64();
                 var o = (ulong)rand.NextInt64();
-                p ^= ~(p ^ o);
-                Console.WriteLine($"{p} {o}");
+                p ^= p & o;
                 var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
                 var bf = new BoardFeature(board);
+                var num = board.GetNextPositionCandidates(moves);
+                var move = moves[rand.Next(num)];
+                var flipped = board.Update(move);
+                bf.Update(move, flipped);
 
-                sw.Write($"{p},{o}");
-                for (var j =0;j < bf.Features.Length-1; j++)
+                board.GetNextPositionCandidates(moves);
+                var move1 = moves[rand.Next(num)];
+                flipped = board.Update(move1);
+                var bf1 = new BoardFeature(bf);
+                bf1.Update(move1, flipped);
+
+                sw.Write($"{p},{o},{(int)move},{(int)move1}");
+                for (var j = 0; j < bf.Features.Length - 1; j++)
                     sw.Write($",{bf.Features[j]}");
+                for (var j = 0; j < bf1.Features.Length - 1; j++)
+                    sw.Write($",{bf1.Features[j]}");
+
                 sw.WriteLine();
             }
 
