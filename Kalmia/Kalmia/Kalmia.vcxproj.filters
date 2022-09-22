@@ -149,5 +149,8 @@
     <ClInclude Include="test\position_feature_update_test.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="evaluate\position_eval.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

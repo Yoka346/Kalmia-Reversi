@@ -3,10 +3,12 @@
     "",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
+    "\\Kalmia\\Kalmia\\engine",
     "\\Kalmia\\Kalmia\\evaluate",
+    "\\Kalmia\\Kalmia\\reversi",
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\test\\position_feature_update_test.cpp",
+  "SelectedNode": "\\Kalmia\\Kalmia.sln",
   "PreviewInSolutionExplorer": false
 }
