@@ -7,7 +7,6 @@ using namespace evaluation;
 constexpr const char* TEST_DATA_FILE_PATH = "test_data/eval_func_test_data.csv";
 constexpr const char* TEST_EVAL_PARAM_PATH = "test_data/kalmia_eval_func.dat";
 
-// ToDo: ‘ÎÌ•ÏŠ·‚ª³‚µ‚­À‘•‚³‚ê‚Ä‚¢‚é‚©Šm”F.
 TEST(EvalFunc_Test, Eval_Test)
 {
 	constexpr float EPSILON = 1.0e-4f;

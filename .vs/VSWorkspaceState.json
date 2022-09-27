@@ -1,14 +1,16 @@
 {
   "ExpandedNodes": [
     "",
+    "\\archive",
+    "\\archive\\Kalmia_old",
+    "\\archive\\Kalmia_old\\KalmiaCore-Test",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
-    "\\Kalmia\\Kalmia\\engine",
     "\\Kalmia\\Kalmia\\evaluate",
     "\\Kalmia\\Kalmia\\reversi",
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia.sln",
+  "SelectedNode": "\\Kalmia\\Kalmia\\evaluate\\position_eval.cpp",
   "PreviewInSolutionExplorer": false
 }

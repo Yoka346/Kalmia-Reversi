@@ -324,7 +324,7 @@ namespace Kalmia.Evaluation
             }
         }
 
-        float[][][] PackWeight()
+        public float[][][] PackWeight()
         {
             var packedWeight = new float[this.StageNum][][];
             int packedWIdx;

@@ -49,100 +49,23 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            using var sw = new StreamWriter("position_feature_update_test_data.csv");
-            sw.Write("player,opponent,move0,move1");
-            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM-1; i++)
-                sw.Write($",f0{i}");
-            for (var i = 0; i < BoardFeature.PATTERN_NUM_SUM - 1; i++)
-                sw.Write($",f1{i}");
-            sw.WriteLine();
+            const string IN_PATH = "kalmia_value_func.dat";
+            const string OUT_PATH = "value_func_weight_for_test.bin";
 
-            Span<Reversi.BoardPosition> moves = stackalloc Reversi.BoardPosition[48];
-            var rand = new Random();
-            for(int i = 0; i < 1000; i++)
+            var valueFunc = new ValueFunction(IN_PATH);
+            using var fs = new FileStream(OUT_PATH, FileMode.Create, FileAccess.Write);
+            fs.WriteByte(1);
+            fs.WriteByte((byte)valueFunc.MoveCountPerStage);
+            var packedW = valueFunc.PackWeight();
+            for(var stage = 0; stage < valueFunc.StageNum; stage++)
             {
-                var p = (ulong)rand.NextInt64();
-                var o = (ulong)rand.NextInt64();
-                p ^= p & o;
-                var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
-                var bf = new BoardFeature(board);
-                var num = board.GetNextPositionCandidates(moves);
-                var move = moves[rand.Next(num)];
-                var flipped = board.Update(move);
-                bf.Update(move, flipped);
-
-                board.GetNextPositionCandidates(moves);
-                var move1 = moves[rand.Next(num)];
-                flipped = board.Update(move1);
-                var bf1 = new BoardFeature(bf);
-                bf1.Update(move1, flipped);
-
-                sw.Write($"{p},{o},{(int)move},{(int)move1}");
-                for (var j = 0; j < bf.Features.Length - 1; j++)
-                    sw.Write($",{bf.Features[j]}");
-                for (var j = 0; j < bf1.Features.Length - 1; j++)
-                    sw.Write($",{bf1.Features[j]}");
-
-                sw.WriteLine();
-            }
-
-            static ulong CalculateFilippedDiscs_AVX2(ulong p, ulong o, int pos)    // p is current player's board      o is opponent player's board
-            {
-                var shift = Vector256.Create(1UL, 8UL, 9UL, 7UL);
-                var shift2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
-                var flipMask = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
-
-                var x = 1UL << pos;
-                var x4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(x));
-                var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
-                var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), flipMask);
-                var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
-                var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
-
-                var flipLeft = Avx2.And(Avx2.ShiftLeftLogicalVariable(x4, shift), maskedO4);
-                var flipRight = Avx2.And(Avx2.ShiftRightLogicalVariable(x4, shift), maskedO4);
-                flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift)));
-                flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, shift)));
-                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
-                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
-                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
-                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
-
-                var outflankLeft = Avx2.And(p4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift));
-                var outflankRight = Avx2.And(p4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
-                flipLeft = Avx2.AndNot(Avx2.CompareEqual(outflankLeft, Vector256<ulong>.Zero), flipLeft);
-                flipRight = Avx2.AndNot(Avx2.CompareEqual(outflankRight, Vector256<ulong>.Zero), flipRight);
-                var flip4 = Avx2.Or(flipLeft, flipRight);
-                var flip2 = Sse2.Or(Avx2.ExtractVector128(flip4, 0), Avx2.ExtractVector128(flip4, 1));
-                flip2 = Sse2.Or(flip2, Sse2.UnpackHigh(flip2, flip2));
-                return Sse2.X64.ConvertToUInt64(flip2);
-            }
-
-            ulong CalculateMobility_AVX2(ulong p, ulong o)   // p is current player's board      o is opponent player's board
-            {
-                var shift = Vector256.Create(1UL, 8UL, 9UL, 7UL);
-                var shift2 = Vector256.Create(2UL, 16UL, 18UL, 14UL);
-                var flipMask = Vector256.Create(0x7e7e7e7e7e7e7e7eUL, 0xffffffffffffffffUL, 0x7e7e7e7e7e7e7e7eUL, 0x7e7e7e7e7e7e7e7eUL);
-
-                var p4 = Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(p));
-                var maskedO4 = Avx2.And(Avx2.BroadcastScalarToVector256(Sse2.X64.ConvertScalarToVector128UInt64(o)), flipMask);
-                var prefixLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(maskedO4, shift));
-                var prefixRight = Avx2.ShiftRightLogicalVariable(prefixLeft, shift);
-
-                var flipLeft = Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(p4, shift));
-                var flipRight = Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(p4, shift));
-                flipLeft = Avx2.Or(flipLeft, Avx2.And(maskedO4, Avx2.ShiftLeftLogicalVariable(flipLeft, shift)));
-                flipRight = Avx2.Or(flipRight, Avx2.And(maskedO4, Avx2.ShiftRightLogicalVariable(flipRight, shift)));
-                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
-                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
-                flipLeft = Avx2.Or(flipLeft, Avx2.And(prefixLeft, Avx2.ShiftLeftLogicalVariable(flipLeft, shift2)));
-                flipRight = Avx2.Or(flipRight, Avx2.And(prefixRight, Avx2.ShiftRightLogicalVariable(flipRight, shift2)));
-
-                var mobility4 = Avx2.ShiftLeftLogicalVariable(flipLeft, shift);
-                mobility4 = Avx2.Or(mobility4, Avx2.ShiftRightLogicalVariable(flipRight, shift));
-                var mobility2 = Sse2.Or(Avx2.ExtractVector128(mobility4, 0), Avx2.ExtractVector128(mobility4, 1));
-                mobility2 = Sse2.Or(mobility2, Sse2.UnpackHigh(mobility2, mobility2));
-                return Sse2.X64.ConvertToUInt64(mobility2) & ~(p | o);
+                var w = packedW[stage];
+                for(var kind = 0; kind < 13; kind++)
+                {
+                    var ww = w[kind];
+                    foreach (var value in ww)
+                        fs.Write(BitConverter.GetBytes(value), 0, sizeof(float));
+                }
             }
         }
 #endif

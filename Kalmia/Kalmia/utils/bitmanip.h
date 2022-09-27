@@ -1,5 +1,6 @@
 #pragma once
 #include <bit>
+#include <stdlib.h>
 
 #include "../config.h"
 
@@ -57,10 +58,19 @@ inline uint64_t pext(uint64_t bits, uint64_t mask)
 #endif
 
 #ifdef _MSC_VER
+#define BYTE_SWAP_32(bits) _byteswap_ulong(bits)
 #define BYTE_SWAP_64(bits) _byteswap_uint64(bits)
 #elif defined(__GNUC__)
+#define BYTE_SWAP_32(bits) __builtin_bswap32(bits)
 #define BYTE_SWAP_64(bits) __builtin_bswap64(bits)
 #else
+
+inline uint32_t byte_swap_32(uint32_t bits)
+{
+    uint32_t swapped = (bits >> 16) | (bits << 16);
+    swapped = ((swapped & 0xff00ff00) >> 8) | ((swapped & 0x00ff00ff) << 8);
+    return swapped;
+}
 
 inline uint64_t byte_swap_64(uint64_t bits)
 {
@@ -70,6 +80,7 @@ inline uint64_t byte_swap_64(uint64_t bits)
     return swapped;
 }
 
+#define BYTE_SWAP_32(bits) byte_swap_32(bits)
 #define BYTE_SWAP_64(bits) byte_swap_64(bits)
 
 #endif

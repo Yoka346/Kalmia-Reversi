@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cmath>
+
 #include "bitmanip.h"
 
 namespace utils
@@ -56,5 +59,8 @@ namespace utils
 	inline int32_t log2(uint64_t n) { return 63 ^ static_cast<int32_t>(std::countl_zero(n | 1)); }
 	inline int32_t log2_ceiling(uint32_t n) { int32_t res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
 	inline int32_t log2_ceiling(uint64_t n) { int32_t res = log2(n); return (std::popcount(n) == 1) ? res : res + 1; }
+
+	inline float fast_std_sigmoid(float x) { return 1.0f / (1.0f + exp(-x)); }
+	inline float std_sigmoid(float x) { return 1.0f / (1.0f + std::expf(-x)); }
 }
 

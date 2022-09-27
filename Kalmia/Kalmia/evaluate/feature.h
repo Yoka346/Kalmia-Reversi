@@ -77,18 +77,6 @@ namespace evaluation
             }
         });
 
-    //// パターンに関する情報を管理する構造体.
-    //struct Pattern
-    //{
-    //    // 盤面のどのパターンなのかを識別するID. 1つの盤面から抽出するパターンは全部でALL_PATTERN_NUM個なので, idは0以上(ALL_PATTERN_NUM - 1)以下.
-    //    int32_t id;
-
-    //    // パターンの特徴.
-    //    uint16_t feature;
-
-    //    constexpr Pattern() : id(0), feature(0) {}
-    //};
-
     // パターンの位置を表す構造体.
 	struct PatternLocation
 	{
@@ -98,14 +86,6 @@ namespace evaluation
 		// パターンを構成するマスの座標.
         utils::Array<reversi::BoardCoordinate, MAX_PATTERN_SIZE + 1> coordinates;
 	};
-
-    /*struct CoordinateToFeature
-    {
-        int32_t len;
-        utils::Array<Pattern, 16> features;
-
-        constexpr CoordinateToFeature() : len(0), features({}) {}
-    };*/
 
     constexpr PatternLocation PATTERN_LOCATION[ALL_PATTERN_NUM] =
     {
@@ -129,43 +109,43 @@ namespace evaluation
         { PATTERN_SIZE[CORNER2x5], {reversi::A1, reversi::A3, reversi::A4, reversi::B3, reversi::B4, reversi::B5, reversi::B6, reversi::A5, reversi::A6, reversi::A8}},
         { PATTERN_SIZE[CORNER2x5], {reversi::H1, reversi::H3, reversi::H4, reversi::G3, reversi::G4, reversi::G5, reversi::G6, reversi::H5, reversi::H6, reversi::H8}},
 
-        { PATTERN_SIZE[Line0], {reversi::A2, reversi::B2, reversi::C2, reversi::D2, reversi::E2, reversi::F2, reversi::G2, reversi::H2}},
-        { PATTERN_SIZE[Line0], {reversi::A7, reversi::B7, reversi::C7, reversi::D7, reversi::E7, reversi::F7, reversi::G7, reversi::H7}},
-        { PATTERN_SIZE[Line0], {reversi::B1, reversi::B2, reversi::B3, reversi::B4, reversi::B5, reversi::B6, reversi::B7, reversi::B8}},
-        { PATTERN_SIZE[Line0], {reversi::G1, reversi::G2, reversi::G3, reversi::G4, reversi::G5, reversi::G6, reversi::G7, reversi::G8}},
+        { PATTERN_SIZE[LINE0], {reversi::A2, reversi::B2, reversi::C2, reversi::D2, reversi::E2, reversi::F2, reversi::G2, reversi::H2}},
+        { PATTERN_SIZE[LINE0], {reversi::A7, reversi::B7, reversi::C7, reversi::D7, reversi::E7, reversi::F7, reversi::G7, reversi::H7}},
+        { PATTERN_SIZE[LINE0], {reversi::B1, reversi::B2, reversi::B3, reversi::B4, reversi::B5, reversi::B6, reversi::B7, reversi::B8}},
+        { PATTERN_SIZE[LINE0], {reversi::G1, reversi::G2, reversi::G3, reversi::G4, reversi::G5, reversi::G6, reversi::G7, reversi::G8}},
 
-        { PATTERN_SIZE[Line1], {reversi::A3, reversi::B3, reversi::C3, reversi::D3, reversi::E3, reversi::F3, reversi::G3, reversi::H3}},
-        { PATTERN_SIZE[Line1], {reversi::A6, reversi::B6, reversi::C6, reversi::D6, reversi::E6, reversi::F6, reversi::G6, reversi::H6}},
-        { PATTERN_SIZE[Line1], {reversi::C1, reversi::C2, reversi::C3, reversi::C4, reversi::C5, reversi::C6, reversi::C7, reversi::C8}},
-        { PATTERN_SIZE[Line1], {reversi::F1, reversi::F2, reversi::F3, reversi::F4, reversi::F5, reversi::F6, reversi::F7, reversi::F8}},
+        { PATTERN_SIZE[LINE1], {reversi::A3, reversi::B3, reversi::C3, reversi::D3, reversi::E3, reversi::F3, reversi::G3, reversi::H3}},
+        { PATTERN_SIZE[LINE1], {reversi::A6, reversi::B6, reversi::C6, reversi::D6, reversi::E6, reversi::F6, reversi::G6, reversi::H6}},
+        { PATTERN_SIZE[LINE1], {reversi::C1, reversi::C2, reversi::C3, reversi::C4, reversi::C5, reversi::C6, reversi::C7, reversi::C8}},
+        { PATTERN_SIZE[LINE1], {reversi::F1, reversi::F2, reversi::F3, reversi::F4, reversi::F5, reversi::F6, reversi::F7, reversi::F8}},
 
-        { PATTERN_SIZE[Line2], {reversi::A4, reversi::B4, reversi::C4, reversi::D4, reversi::E4, reversi::F4, reversi::G4, reversi::H4}},
-        { PATTERN_SIZE[Line2], {reversi::A5, reversi::B5, reversi::C5, reversi::D5, reversi::E5, reversi::F5, reversi::G5, reversi::H5}},
-        { PATTERN_SIZE[Line2], {reversi::D1, reversi::D2, reversi::D3, reversi::D4, reversi::D5, reversi::D6, reversi::D7, reversi::D8}},
-        { PATTERN_SIZE[Line2], {reversi::E1, reversi::E2, reversi::E3, reversi::E4, reversi::E5, reversi::E6, reversi::E7, reversi::E8}},
+        { PATTERN_SIZE[LINE2], {reversi::A4, reversi::B4, reversi::C4, reversi::D4, reversi::E4, reversi::F4, reversi::G4, reversi::H4}},
+        { PATTERN_SIZE[LINE2], {reversi::A5, reversi::B5, reversi::C5, reversi::D5, reversi::E5, reversi::F5, reversi::G5, reversi::H5}},
+        { PATTERN_SIZE[LINE2], {reversi::D1, reversi::D2, reversi::D3, reversi::D4, reversi::D5, reversi::D6, reversi::D7, reversi::D8}},
+        { PATTERN_SIZE[LINE2], {reversi::E1, reversi::E2, reversi::E3, reversi::E4, reversi::E5, reversi::E6, reversi::E7, reversi::E8}},
 
-        { PATTERN_SIZE[DiagonalLine8], {reversi::A1, reversi::B2, reversi::C3, reversi::D4, reversi::E5, reversi::F6, reversi::G7, reversi::H8}},
-        { PATTERN_SIZE[DiagonalLine8], {reversi::A8, reversi::B7, reversi::C6, reversi::D5, reversi::E4, reversi::F3, reversi::G2, reversi::H1}},
+        { PATTERN_SIZE[DIAG_LINE8], {reversi::A1, reversi::B2, reversi::C3, reversi::D4, reversi::E5, reversi::F6, reversi::G7, reversi::H8}},
+        { PATTERN_SIZE[DIAG_LINE8], {reversi::A8, reversi::B7, reversi::C6, reversi::D5, reversi::E4, reversi::F3, reversi::G2, reversi::H1}},
 
-        { PATTERN_SIZE[DiagonalLine5], {reversi::B1, reversi::C2, reversi::D3, reversi::E4, reversi::F5, reversi::G6, reversi::H7}},
-        { PATTERN_SIZE[DiagonalLine5], {reversi::H2, reversi::G3, reversi::F4, reversi::E5, reversi::D6, reversi::C7, reversi::B8}},
-        { PATTERN_SIZE[DiagonalLine5], {reversi::A2, reversi::B3, reversi::C4, reversi::D5, reversi::E6, reversi::F7, reversi::G8}},
-        { PATTERN_SIZE[DiagonalLine5], {reversi::G1, reversi::F2, reversi::E3, reversi::D4, reversi::C5, reversi::B6, reversi::A7}},
+        { PATTERN_SIZE[DIAG_LINE7], {reversi::B1, reversi::C2, reversi::D3, reversi::E4, reversi::F5, reversi::G6, reversi::H7}},
+        { PATTERN_SIZE[DIAG_LINE7], {reversi::H2, reversi::G3, reversi::F4, reversi::E5, reversi::D6, reversi::C7, reversi::B8}},
+        { PATTERN_SIZE[DIAG_LINE7], {reversi::A2, reversi::B3, reversi::C4, reversi::D5, reversi::E6, reversi::F7, reversi::G8}},
+        { PATTERN_SIZE[DIAG_LINE7], {reversi::G1, reversi::F2, reversi::E3, reversi::D4, reversi::C5, reversi::B6, reversi::A7}},
 
-        { PATTERN_SIZE[DiagonalLine6], {reversi::C1, reversi::D2, reversi::E3, reversi::F4, reversi::G5, reversi::H6}},
-        { PATTERN_SIZE[DiagonalLine6], {reversi::A3, reversi::B4, reversi::C5, reversi::D6, reversi::E7, reversi::F8}},
-        { PATTERN_SIZE[DiagonalLine6], {reversi::F1, reversi::E2, reversi::D3, reversi::C4, reversi::B5, reversi::A6}},
-        { PATTERN_SIZE[DiagonalLine6], {reversi::H3, reversi::G4, reversi::F5, reversi::E6, reversi::D7, reversi::C8}},
+        { PATTERN_SIZE[DIAG_LINE6], {reversi::C1, reversi::D2, reversi::E3, reversi::F4, reversi::G5, reversi::H6}},
+        { PATTERN_SIZE[DIAG_LINE6], {reversi::A3, reversi::B4, reversi::C5, reversi::D6, reversi::E7, reversi::F8}},
+        { PATTERN_SIZE[DIAG_LINE6], {reversi::F1, reversi::E2, reversi::D3, reversi::C4, reversi::B5, reversi::A6}},
+        { PATTERN_SIZE[DIAG_LINE6], {reversi::H3, reversi::G4, reversi::F5, reversi::E6, reversi::D7, reversi::C8}},
 
-        { PATTERN_SIZE[DiagonalLine7], {reversi::D1, reversi::E2, reversi::F3, reversi::G4, reversi::H5}},
-        { PATTERN_SIZE[DiagonalLine7], {reversi::A4, reversi::B5, reversi::C6, reversi::D7, reversi::E8}},
-        { PATTERN_SIZE[DiagonalLine7], {reversi::E1, reversi::D2, reversi::C3, reversi::B4, reversi::A5}},
-        { PATTERN_SIZE[DiagonalLine7], {reversi::H4, reversi::G5, reversi::F6, reversi::E7, reversi::D8}},
+        { PATTERN_SIZE[DIAG_LINE5], {reversi::D1, reversi::E2, reversi::F3, reversi::G4, reversi::H5}},
+        { PATTERN_SIZE[DIAG_LINE5], {reversi::A4, reversi::B5, reversi::C6, reversi::D7, reversi::E8}},
+        { PATTERN_SIZE[DIAG_LINE5], {reversi::E1, reversi::D2, reversi::C3, reversi::B4, reversi::A5}},
+        { PATTERN_SIZE[DIAG_LINE5], {reversi::H4, reversi::G5, reversi::F6, reversi::E7, reversi::D8}},
 
-        { PATTERN_SIZE[DiagonalLine8], {reversi::D1, reversi::C2, reversi::B3, reversi::A4}},
-        { PATTERN_SIZE[DiagonalLine8], {reversi::A5, reversi::B6, reversi::C7, reversi::D8}},
-        { PATTERN_SIZE[DiagonalLine8], {reversi::E1, reversi::F2, reversi::G3, reversi::H4}},
-        { PATTERN_SIZE[DiagonalLine8], {reversi::H5, reversi::G6, reversi::F7, reversi::E8}}
+        { PATTERN_SIZE[DIAG_LINE4], {reversi::D1, reversi::C2, reversi::B3, reversi::A4}},
+        { PATTERN_SIZE[DIAG_LINE4], {reversi::A5, reversi::B6, reversi::C7, reversi::D8}},
+        { PATTERN_SIZE[DIAG_LINE4], {reversi::E1, reversi::F2, reversi::G3, reversi::H4}},
+        { PATTERN_SIZE[DIAG_LINE4], {reversi::H5, reversi::G6, reversi::F7, reversi::E8}}
     };
 
     // 座標からその座標が含まれているパターンの特徴に変換するテーブル. 特徴の差分更新の際に用いる.
@@ -347,7 +327,7 @@ namespace evaluation
     private:
         FeatureTable _features;
         reversi::Player _side_to_move;
-        int32_t empty_square_count;
+        int32_t _empty_count;
         std::function<void(const reversi::Move&)> update_callbacks[2];    // 特徴を更新する関数は黒用と白用を配列で管理する(条件分岐を無くすため).
         void init_update_callbacks();
         void update_after_black_move(const reversi::Move& move);
@@ -358,7 +338,8 @@ namespace evaluation
 
         PositionFeature(reversi::Position& pos);
         PositionFeature(const PositionFeature& src);
-        inline reversi::Player side_to_move() { return this->_side_to_move; }
+        inline reversi::Player side_to_move() const { return this->_side_to_move; }
+        inline int32_t empty_count() const { return this->_empty_count; }
         void init_features(reversi::Position& pos);
         void update(const reversi::Move& move); 
         inline void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }

@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <functional>
 #include <initializer_list>
 #include <algorithm>
@@ -75,10 +76,69 @@ namespace utils
 
 		constexpr const ElementType* begin() const { return this->data.begin(); }
 		constexpr const ElementType* end() const { return this->data.end(); }
-		inline const ElementType& operator[](size_t idx) const { this->data[idx]; }
+		inline const ElementType& operator[](size_t idx) const { return this->data[idx]; }
 		constexpr bool operator==(const ReadonlyArray<ElementType, LEN>& right) const { return this->data == right.data; }
 		constexpr bool operator==(const Array<ElementType, LEN>& right) const { return this->data == right; }
 		constexpr size_t length() const { return LEN; }
+		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
+	};
+
+	/**
+	* @class
+	* @brief	デバッグ時にのみ範囲チェックを行う動的配列.
+	**/
+	template<class ElementType>
+	class DynamicArray
+	{
+	private:
+		std::shared_ptr<ElementType[]> data;
+		size_t _length;
+
+	public:
+		DynamicArray(size_t length) : data(std::make_shared<ElementType[]>(length)), _length(length) { ; }
+
+		inline const ElementType* begin() const { return &this->data[0]; }
+		inline const ElementType* end() const { return this->data + this->_length; }
+
+		inline ElementType& operator[](size_t idx)
+		{
+			assert(idx >= 0 && idx < this->_length);
+			return this->data.get()[idx];
+		}
+
+		inline const ElementType& operator[](size_t idx) const
+		{
+			assert(idx >= 0 && idx < this->_length);
+			return this->data.get()[idx];
+		}
+
+		inline DynamicArray<ElementType>& operator=(const DynamicArray<ElementType>& right) { this->_length = right._length; this->data = right.data; return *this; }
+		inline bool operator==(const DynamicArray<ElementType>& right) const { return this->_length == right._length && std::equal(begin(), end(), right.begin()); }
+		inline bool reference_equals_to(const DynamicArray<ElementType>& target) const { return this->data.get() == target.data.get(); }
+		inline size_t length() const { return this->_length; }
+		inline ElementType* as_raw_array() { return this->data; }
+		inline const ElementType* as_raw_array() const { return this->data; }
+	};
+
+	/**
+	* @class
+	* @brief	読み取り専用動的配列. DynamicArrayオブジェクトの参照を内部に持ち, そのDynamicArray内のデータに対する読み取り機能を提供する.
+	**/
+	template<class ElementType>
+	class ReadonlyDynamicArray
+	{
+	private:
+		DynamicArray<ElementType>& data;
+
+	public:
+		ReadonlyDynamicArray(DynamicArray<ElementType>& data) : data(data) { ; }
+
+		inline const ElementType* begin() const { return this->data.begin(); }
+		inline const ElementType* end() const { return this->data.end(); }
+		inline const ElementType& operator[](size_t idx) const { this->data[idx]; }
+		inline bool operator==(const ReadonlyDynamicArray<ElementType>& right) const { return this->data == right.data; }
+		inline bool operator==(const DynamicArray<ElementType>& right) const { return this->data == right; }
+		inline size_t length() const { return this->data.length(); }
 		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
 	};
 }
