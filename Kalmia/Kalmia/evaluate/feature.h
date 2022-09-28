@@ -328,10 +328,10 @@ namespace evaluation
         FeatureTable _features;
         reversi::Player _side_to_move;
         int32_t _empty_count;
-        std::function<void(const reversi::Move&)> update_callbacks[2];    // 特徴を更新する関数は黒用と白用を配列で管理する(条件分岐を無くすため).
+        std::function<void(const reversi::Move&)> update_callbacks[2];    
         void init_update_callbacks();
-        void update_after_black_move(const reversi::Move& move);
-        void update_after_white_move(const reversi::Move& move);
+        void update_after_first_player_move(const reversi::Move& move);
+        void update_after_second_player_move(const reversi::Move& move);
 
     public:
         const utils::ReadonlyArray<uint16_t, ALL_PATTERN_NUM> features;

@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 
-#include "../utils/static_initializer.h"
 #include "../utils/random.h"
 #include "../utils/array.h"
 #include "../utils/unroller.h"

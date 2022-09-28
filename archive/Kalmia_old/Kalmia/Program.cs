@@ -12,6 +12,8 @@ using Kalmia.EndGameSolver;
 using Kalmia.GoTextProtocol;
 using Kalmia.Evaluation;
 using Kalmia.Learning;
+using Kalmia.Reversi;
+using System.Runtime.Intrinsics.Arm;
 
 #if DEVELOP
 using System.Runtime.Intrinsics;
@@ -49,24 +51,34 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
+            const int SAMPLE_NUM = 1000;
             const string IN_PATH = "kalmia_value_func.dat";
-            const string OUT_PATH = "value_func_weight_for_test.bin";
+            const string OUT_PATH = "value_func_predict_test_data.csv";
 
+            Span<Reversi.BoardPosition> moves = stackalloc Reversi.BoardPosition[48];
             var valueFunc = new ValueFunction(IN_PATH);
-            using var fs = new FileStream(OUT_PATH, FileMode.Create, FileAccess.Write);
-            fs.WriteByte(1);
-            fs.WriteByte((byte)valueFunc.MoveCountPerStage);
-            var packedW = valueFunc.PackWeight();
-            for(var stage = 0; stage < valueFunc.StageNum; stage++)
-            {
-                var w = packedW[stage];
-                for(var kind = 0; kind < 13; kind++)
-                {
-                    var ww = w[kind];
-                    foreach (var value in ww)
-                        fs.Write(BitConverter.GetBytes(value), 0, sizeof(float));
-                }
-            }
+            //using var sw = new StreamWriter(OUT_PATH);
+            //sw.WriteLine("player,opponent,move,v0,v1");
+            //for (var i = 0; i < SAMPLE_NUM; i++)
+            //{
+            //    ulong p, o;
+            //    do
+            //    {
+            //        p = (ulong)Random.Shared.NextInt64();
+            //        o = (ulong)Random.Shared.NextInt64();
+            //        p ^= p & o;
+            //    } while (BitManipulations.PopCount(p | o) >= 63);
+            //    var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
+            //    var bf = new BoardFeature(board);
+            //    var v0 = valueFunc.F(bf);
+
+            //    var num = board.GetNextPositionCandidates(moves);
+            //    var move = moves[Random.Shared.Next(num)];
+            //    var flipped = board.Update(move);
+            //    bf.Update(move, flipped);
+            //    var v1 = valueFunc.F(bf);
+            //    sw.WriteLine($"{p},{o},{(int)move},{v0},{v1}");
+            //}
         }
 #endif
 

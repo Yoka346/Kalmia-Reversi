@@ -41,11 +41,11 @@ namespace evaluation
 		ValueFuncParamArray* expanded = nullptr;
 		packed_value_func_param_as_array(*this, packed);
 		value_func_param_as_array(param, expanded);
+
+		int32_t i = 0;
 		for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
 		{
 			auto offset = PATTERN_FEATURE_OFFSET[kind];
-
-			int32_t i = 0;
 			for (int32_t f = 0; f < PATTERN_FEATURE_NUM[kind]; f++)
 			{
 				auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
@@ -101,7 +101,7 @@ namespace evaluation
 
 		PackedWeight packed_weight(this->_phase_num);
 		int32_t phase_count = -1;
-		while (!ifs.peek() && ++phase_count != this->_phase_num)
+		while (!ifs.eof() && ++phase_count != this->_phase_num)
 		{
 			bool native_is_little_endian = (std::endian::native == std::endian::little);
 			if (file_is_little_endian == native_is_little_endian)

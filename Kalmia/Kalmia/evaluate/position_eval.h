@@ -37,7 +37,7 @@ namespace evaluation
 
 	using ValueFuncParamArray = Array<float, sizeof(ValueFuncParam) / sizeof(float)>;
 
-	inline void value_func_param_as_array(ValueFuncParam& param, ValueFuncParamArray* out) { out = reinterpret_cast<ValueFuncParamArray*>(&param); }	
+	inline void value_func_param_as_array(ValueFuncParam& param, ValueFuncParamArray*& out) { out = reinterpret_cast<ValueFuncParamArray*>(&param); }	
 
 	/**
 	* @struct
@@ -68,7 +68,10 @@ namespace evaluation
 
 	using PackedValueFuncParamArray = Array<float, sizeof(PackedValueFuncParam) / sizeof(float)>;
 
-	inline void packed_value_func_param_as_array(PackedValueFuncParam& param, PackedValueFuncParamArray* out) { out = reinterpret_cast<PackedValueFuncParamArray*>(&param); }
+	inline void packed_value_func_param_as_array(PackedValueFuncParam& param, PackedValueFuncParamArray*& out)
+	{ 
+		out = reinterpret_cast<PackedValueFuncParamArray*>(&param); 
+	}
 
 	enum ValueRepresentation
 	{

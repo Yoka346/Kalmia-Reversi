@@ -38,8 +38,8 @@ namespace evaluation
 	void PositionFeature::init_update_callbacks()
 	{
 		using namespace placeholders;
-		this->update_callbacks[Player::FIRST] = bind(&PositionFeature::update_after_black_move, this, _1);
-		this->update_callbacks[Player::SECOND] = bind(&PositionFeature::update_after_white_move, this, _1);
+		this->update_callbacks[Player::FIRST] = bind(&PositionFeature::update_after_first_player_move, this, _1);
+		this->update_callbacks[Player::SECOND] = bind(&PositionFeature::update_after_second_player_move, this, _1);
 	}
 
 	void PositionFeature::update(const Move& move)
@@ -65,7 +65,7 @@ namespace evaluation
 	* @detail AVX2を用いて, 48個の特徴(うち2つはパディング)を16要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
-	void PositionFeature::update_after_black_move(const Move& move)
+	void PositionFeature::update_after_first_player_move(const Move& move)
 	{
 		auto& features = this->_features.t_v16;
 
@@ -87,7 +87,7 @@ namespace evaluation
 	* @detail AVX2を用いて, 48個の特徴(うち2つはパディング)を16要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
-	void PositionFeature::update_after_white_move(const Move& move)
+	void PositionFeature::update_after_second_player_move(const Move& move)
 	{
 		auto& features = this->_features.t_v16;
 
@@ -111,7 +111,7 @@ namespace evaluation
 	* @detail SSE2を用いて, 48個の特徴(うち2つはパディング)を8要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
-	void PositionFeature::update_after_black_move(const Move& move)
+	void PositionFeature::update_after_first_player_move(const Move& move)
 	{
 		auto& features = this->_features.t_v8;
 
@@ -133,7 +133,7 @@ namespace evaluation
 	* @detail SSE2を用いて, 48個の特徴(うち2つはパディング)を8要素まとめて更新する.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
-	void PositionFeature::update_after_white_move(const Move& move)
+	void PositionFeature::update_after_second_player_move(const Move& move)
 	{
 		auto& features = this->_features.t_v8;
 
@@ -158,7 +158,7 @@ namespace evaluation
 	* ただし, コンパイラの最適化による.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
-	void PositionFeature::update_after_black_move(const Move& move)
+	void PositionFeature::update_after_first_player_move(const Move& move)
 	{
 		auto& features = this->_features.t;
 
@@ -181,7 +181,7 @@ namespace evaluation
 	* ただし, コンパイラの最適化による.
 	* @cite http://www.amy.hi-ho.ne.jp/okuhara/edaxopt.htm
 	**/
-	void PositionFeature::update_after_white_move(const Move& move)
+	void PositionFeature::update_after_second_player_move(const Move& move)
 	{
 		auto& features = this->_features.t;
 
