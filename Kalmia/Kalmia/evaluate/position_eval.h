@@ -106,7 +106,6 @@ namespace evaluation
 	public:
 		inline int32_t phase_num() { return this->_phase_num; }
 		inline int32_t move_count_per_phase() { return this->_move_count_per_phase; }
-		inline int32_t calc_phase(int32_t empty_count) { return (MAX_EMPTY_COUNT - empty_count) / this->_move_count_per_phase; }
 
 		ValueFunction(int32_t move_count_per_phase);
 		ValueFunction(const std::string path);

@@ -1,15 +1,6 @@
 ﻿  モジュール依存関係のソースをスキャンしています...
-  engine.cpp
-  random_mover.cpp
-  feature.cpp
   position_eval.cpp
-  main.cpp
-  gtp.cpp
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\io\logger.h(20,20): warning C4805: '==': 演算中の 'int' 型と 'bool' 型の混用は安全ではありません
-  flip.cpp
-  mobility.cpp
-  position_feature_init_test.cpp
+  position_eval_test.cpp
   position_feature_update_test.cpp
-  random.cpp
   コードを生成中...
   Kalmia.vcxproj -> C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\x64\Debug\Kalmia.exe

@@ -65,9 +65,10 @@ namespace evaluation
 		this->_move_count_per_phase = move_count_per_phase;
 		init_empty_count_to_phase_table();
 
+		this->weight = Weight(this->_phase_num);
 		for (int32_t i = 0; i < this->weight.length(); i++)
 		{
-			auto w = this->weight[i];
+			auto& w = this->weight[i];
 			for (auto player = 0; player < 2; player++)
 			{
 				ValueFuncParamArray* w_array = nullptr;
@@ -102,7 +103,7 @@ namespace evaluation
 		int32_t phase_count = -1;
 		while (!ifs.peek() && ++phase_count != this->_phase_num)
 		{
-			bool native_is_little_endian = std::endian::native == std::endian::little;
+			bool native_is_little_endian = (std::endian::native == std::endian::little);
 			if (file_is_little_endian == native_is_little_endian)
 				ifs.read(reinterpret_cast<char*>(&packed_weight[phase_count]), sizeof(PackedValueFuncParam));
 			else
