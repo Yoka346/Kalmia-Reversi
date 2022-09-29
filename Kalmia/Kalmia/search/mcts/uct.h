@@ -85,15 +85,70 @@ namespace search::mcts
 		Node root;
 
 		// pps(playout per second)を計算するためのカウンター.
-		uint32_t pps_counter;
+		std::atomic<uint32_t> pps_counter;
 
 		std::chrono::steady_clock::time_point search_start_time;
 		std::chrono::steady_clock::time_point search_end_time;
-		bool search_stop_flag = true;
+		std::atomic<bool> search_stop_flag = true;
 		bool _is_searching = false;
 
+		void init_root_child_nodes();
+
+		/**
+		* @fn
+		* @detail 探索ワーカー. 探索スレッド数だけ並列にこの関数が実行される.
+		**/
+		void search_kernel(GameInfo& game_info, uint32_t playout_num, int32_t time_limit_ms);
+
+		void visit_root_node(GameInfo& game_info);
+
+		template<bool AFTER_PASS>
+		double visit_node(GameInfo& game_info, Node* current_node, Edge& edge_to_current_node);
+
+		int32_t select_root_child_node();
+		int32_t select_child_node();
+
+		float playout(GameInfo& game_info)
+		{
+			this->pps_counter++;
+			return 1.0f - this->VALUE_FUNC.predict(game_info.feature());
+		}
+
+		/**
+		* @fn
+		* @brief 親ノードと選択された辺に報酬を付与しつつ, virtual lossを取り除く.
+		**/
+		void update_statistic(Node* node, Edge& edge, double reward)
+		{
+			if constexpr (VIRTUAL_LOSS != 1)
+			{
+				node->visit_count += 1 - VIRTUAL_LOSS;
+				edge.visit_count += 1 - VIRTUAL_LOSS;
+			}
+			edge.reward_sum += reward;
+		}
+
+		void add_virtual_loss(Node* node, Edge& edge)
+		{
+			node->visit_count += VIRTUAL_LOSS;
+			edge.visit_count += VIRTUAL_LOSS;
+		}
+
+		/**
+		* @fn
+		* @brief Principal Variation(最善応手列)を取得する.
+		* @detail UCTにおいては, 訪問回数が多いノードは有望なノードなので, 基本的には訪問回数の多いノードを木の末端に至るまで選び続ける.
+		* ノードの選び方の詳細:
+		* 1. 訪問回数が最も多いノードを選ぶ. ただし, それが2つ以上あった場合は, 価値が最も高いノードを選ぶ.
+		* 2. 勝利確定ノードがあれば訪問回数に関わらず, そのノードを選ぶ. ただし, 勝利確定ノードが複数存在する場合は, 最終石差が最大のノードを選ぶ.
+		* 3. 最も訪問回数の多いノードが敗北確定ノードであれば, 次に訪問回数の多いノードを選ぶ.
+		* 4. 引き分け確定ノードと負け確定ノードしかない場合は, 引き分け確定ノードを選ぶ.
+		* 5. 敗北確定ノードしか無い場合は, 最終石差が最小のノードを選ぶ.
+		**/
+		void get_pv(Node* root, std::vector<reversi::BoardCoordinate> pv);
+
 	public:
-		UCT(UCTOptions& options) : OPTIONS(options), VALUE_FUNC(options.value_func_param_file_path) { ; }
+		UCT(UCTOptions& options) : OPTIONS(options), VALUE_FUNC(options.value_func_param_file_path), pps_counter(0) { ; }
 
 		bool is_searching() { return this->_is_searching; }
 
@@ -107,6 +162,7 @@ namespace search::mcts
 
 		double pps() { return this->pps_counter / (this->search_ellapsed_ms() * 1.0e-3); }
 
+		void get_search_info(SearchInfo&& search_info);
 		void set_root_state(const reversi::Position& pos);
 
 		/**
@@ -116,5 +172,17 @@ namespace search::mcts
 		* @return 遷移できたらtrue.
 		**/
 		bool transition_root_state_to_child_state(reversi::BoardCoordinate move);
+
+		/**
+		* @fn
+		* @brief 探索を行う. 制限時間はINT32_MAX[ms](約24.8日)
+		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
+		**/
+		void search(uint32_t playout_num) { search(playout_num, INT32_MAX); }
+		void search(uint32_t playout_num, int32_t time_limit_ms);
+		void send_stop_search_signal() { if (this->_is_searching) this->search_stop_flag.store(true); }
 	};
+
+	template double UCT::visit_node<true>(GameInfo&, Node*, Edge&);
+	template double UCT::visit_node<false>(GameInfo&, Node*, Edge&);
 }

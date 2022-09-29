@@ -143,6 +143,7 @@
     <ClCompile Include="reversi\mobility.cpp" />
     <ClCompile Include="reversi\types.cpp" />
     <ClCompile Include="search\mcts\gc.cpp" />
+    <ClCompile Include="search\mcts\uct.cpp" />
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />

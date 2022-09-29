@@ -50,7 +50,6 @@ namespace search::mcts
 	struct Node
 	{
 		std::atomic<uint32_t> visit_count;
-		std::atomic<double> reward_sum;
 
 		// 他の箇所では, デバッグ効率を向上させるために, DynamicArray<T>を動的配列に用いていたが,
 		// ここではNodeオブジェクトのサイズをできる限り減らしたいので使わない.
