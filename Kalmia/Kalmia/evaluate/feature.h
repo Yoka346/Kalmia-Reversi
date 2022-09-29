@@ -297,7 +297,7 @@ namespace evaluation
     private:
         FeatureTable _features;
         reversi::Player _side_to_move;
-        int32_t _empty_count;
+        int32_t _empty_square_count;
         std::function<void(const reversi::Move&)> update_callbacks[2];    
         void init_update_callbacks();
         void update_after_first_player_move(const reversi::Move& move);
@@ -309,7 +309,7 @@ namespace evaluation
         PositionFeature(reversi::Position& pos);
         PositionFeature(const PositionFeature& src);
         reversi::Player side_to_move() const { return this->_side_to_move; }
-        int32_t empty_count() const { return this->_empty_count; }
+        int32_t empty_square_count() const { return this->_empty_square_count; }
         void init_features(reversi::Position& pos);
         void update(const reversi::Move& move); 
         void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }

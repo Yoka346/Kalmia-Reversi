@@ -135,7 +135,7 @@ namespace evaluation
 		**/
 		float predict(const PositionFeature& pos_feature) const 
 		{
-			return predict(this->empty_count_to_phase[pos_feature.empty_count()], pos_feature);
+			return predict(this->empty_count_to_phase[pos_feature.empty_square_count()], pos_feature);
 		}
 
 		/**

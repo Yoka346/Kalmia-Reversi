@@ -142,6 +142,7 @@
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
     <ClCompile Include="reversi\types.cpp" />
+    <ClCompile Include="search\mcts\gc.cpp" />
     <ClCompile Include="test\flip_test.cpp" />
     <ClCompile Include="test\mobility_test.cpp" />
     <ClCompile Include="test\mobility_test.h" />
@@ -164,6 +165,8 @@
     <ClInclude Include="reversi\mobility.h" />
     <ClInclude Include="reversi\move.h" />
     <ClInclude Include="reversi\position.h" />
+    <ClInclude Include="search\common.h" />
+    <ClInclude Include="search\mcts\gc.h" />
     <ClInclude Include="search\mcts\node.h" />
     <ClInclude Include="search\mcts\uct.h" />
     <ClInclude Include="test\flip_test.h" />

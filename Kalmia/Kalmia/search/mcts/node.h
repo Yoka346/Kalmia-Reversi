@@ -11,7 +11,7 @@
 
 namespace search::mcts
 {
-	enum EdgeLabel : char
+	enum EdgeLabel : uint8_t
 	{
 		NOT_PROVED = 0x00,	// Ÿ”s‚ªŠm’è‚µ‚Ä‚¢‚È‚¢.
 		PROVED = 0xf0,	// Ÿ”s‚ªŠm’è‚µ‚Ä‚¢‚é.

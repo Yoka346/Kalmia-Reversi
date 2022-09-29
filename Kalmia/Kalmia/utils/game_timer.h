@@ -3,7 +3,6 @@
 
 namespace utils
 {
-	// ToDo: ƒJƒiƒ_•ûŽ®‚Ö‚Ì‘Î‰ž.
 	class GameTimer
 	{
 	private:
@@ -42,4 +41,7 @@ namespace utils
 
 		std::chrono::milliseconds byoyomi_left_ms();
 	};
+
+	template std::chrono::milliseconds GameTimer::time_left_ms<true>();
+	template std::chrono::milliseconds GameTimer::time_left_ms<false>();
 }

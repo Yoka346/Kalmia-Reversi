@@ -31,7 +31,7 @@ namespace evaluation
 				features[i] = features[i] * 3 + pos.square_owner_at(pat_loc.coordinates[j]);
 		}
 		this->_side_to_move = Player::FIRST;	// —^‚¦‚ç‚ê‚½”Õ–Ê‚ÌŒ»Ý‚ÌŽè”Ô‚ðæŽè‚Æ‚·‚é.
-		this->_empty_count = pos.empty_square_count();
+		this->_empty_square_count = pos.empty_square_count();
 	}
 
 	void PositionFeature::init_update_callbacks()
@@ -44,7 +44,7 @@ namespace evaluation
 	void PositionFeature::update(const Move& move)
 	{
 		this->update_callbacks[this->_side_to_move](move);
-		this->_empty_count--;
+		this->_empty_square_count--;
 		this->_side_to_move = to_opponent_player(this->_side_to_move);
 	}
 
@@ -52,7 +52,7 @@ namespace evaluation
 	{
 		this->_features = right._features;
 		this->_side_to_move = right._side_to_move;
-		this->_empty_count = right._empty_count;
+		this->_empty_square_count = right._empty_square_count;
 		return *this;
 	}
 
