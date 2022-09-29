@@ -14,7 +14,7 @@ namespace io
 	{
 		char buf_[128];
 	protected:
-		inline virtual int overflow(int c)
+		virtual int overflow(int c)
 		{
 			setp(buf_, buf_ + sizeof(buf_));
 			return (c == eof()) ? '\0' : c;
@@ -37,15 +37,15 @@ namespace io
 
 		std::ofstream ofs;
 		std::ostream* sub_os;
-		bool enabled_auto_flush;
+		bool enabled_auto_flush = true;
 
 	public:
 		Logger(std::string& path) : ofs(path) { this->null_stream = new NullStream(); this->sub_os = dynamic_cast<std::ostream*>(this->null_stream); }
 		Logger(std::string& path, std::ostream* sub_stream) : ofs(path), sub_os(sub_stream) { this->null_stream = nullptr; }
 		~Logger() { if (this->null_stream) delete this->null_stream; }
 		template<class T> Logger& operator <<(T t);
-		inline void flush() { this->ofs.flush(); this->sub_os->flush(); }
-		inline void enable_auto_flush() { this->enabled_auto_flush = true; }
-		inline void disable_auto_flush() { this->enabled_auto_flush = false; }
+		void flush() { this->ofs.flush(); this->sub_os->flush(); }
+		void enable_auto_flush() { this->enabled_auto_flush = true; }
+		void disable_auto_flush() { this->enabled_auto_flush = false; }
 	};
 }

@@ -28,27 +28,27 @@ namespace engine
 		* 送った文字列は, プロトコルによって適切な形で出力される. 例えば, USIプロトコルであれば, info stringコマンドを利用し,
 		* GTPであれば, エラー出力に出力する.
 		**/
-		inline void send_text_message(std::string msg) { this->on_message_is_sent(msg); }
+		void send_text_message(std::string msg) { this->on_message_is_sent(msg); }
 
 	public:
 		// エンジンが文字列を送信するときに呼び出されるハンドラ.
 		std::function<void(std::string&)> on_message_is_sent = [](std::string&) {};
 
 		Engine(const std::string& name, const std::string& version) : _name(name), _version(version), _position(), position_history(), timer(), _is_thinking(false) { ; }
-		inline const std::string& name() const { return this->_name; }
-		inline const std::string& version() const { return this->_version; }
-		inline const reversi::Position& position() const { return this->_position; }
-		inline virtual void set_position(reversi::Position& pos) { this->_position = pos; this->position_history.clear(); }
-		inline virtual void clear_position() { this->_position = reversi::Position(); this->position_history.clear(); }
-		inline bool is_thinking() { return this->_is_thinking; }
+		const std::string& name() const { return this->_name; }
+		const std::string& version() const { return this->_version; }
+		const reversi::Position& position() const { return this->_position; }
+		virtual void set_position(reversi::Position& pos) { this->_position = pos; this->position_history.clear(); }
+		virtual void clear_position() { this->_position = reversi::Position(); this->position_history.clear(); }
+		bool is_thinking() { return this->_is_thinking; }
 		virtual void quit() = 0;
 
-		inline void set_time(reversi::DiscColor color, std::chrono::milliseconds main_time, std::chrono::milliseconds byoyomi, int32_t byoyomi_stones, std::chrono::milliseconds inc)
+		void set_time(reversi::DiscColor color, std::chrono::milliseconds main_time, std::chrono::milliseconds byoyomi, int32_t byoyomi_stones, std::chrono::milliseconds inc)
 		{
 			this->timer[static_cast<int>(color)].set(main_time, byoyomi, byoyomi_stones, inc);
 		}
 
-		inline void set_time_left(reversi::DiscColor color, std::chrono::milliseconds main_time_left, int32_t byoyomi_stones_left)
+		void set_time_left(reversi::DiscColor color, std::chrono::milliseconds main_time_left, int32_t byoyomi_stones_left)
 		{
 			this->timer[static_cast<int>(color)].set_left(main_time_left, byoyomi_stones_left);
 		}
@@ -86,7 +86,7 @@ namespace engine
 		* @param (value) オプション値.
 		* @return オプション値の設定に成功したらtrue.
 		**/
-		inline bool set_option(const std::string name, const std::string& value)
+		bool set_option(const std::string name, const std::string& value)
 		{
 			std::string dummy;
 			return set_option(name, value, dummy);

@@ -1,4 +1,3 @@
-#pragma once
 #include "logger.h"
 
 namespace io

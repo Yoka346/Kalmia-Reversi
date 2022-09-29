@@ -26,20 +26,20 @@ namespace protocol
 		std::ofstream logger;
 
 		void gtp_success(int id, const std::string& msg);
-		inline  void gtp_success(int id) { std::string empty = "";  gtp_success(id, empty); }
+		 void gtp_success(int id) { std::string empty = "";  gtp_success(id, empty); }
 		void gtp_failure(int id, const std::string& msg);
 		CommandHandler to_handler(void (GTP::*exec_cmd)(int, std::istringstream&));
 
 		// version 2.0 commands
 
-		inline void exec_protocol_version_command(int id, std::istringstream& args) { gtp_success(id, GTP::VERSION); }
-		inline void exec_name_command(int id, std::istringstream& args) { gtp_success(id, GTP::engine->name()); }
-		inline void exec_version_command(int id, std::istringstream& args) { gtp_success(id, GTP::engine->version()); }
+		void exec_protocol_version_command(int id, std::istringstream& args) { gtp_success(id, GTP::VERSION); }
+		void exec_name_command(int id, std::istringstream& args) { gtp_success(id, GTP::engine->name()); }
+		void exec_version_command(int id, std::istringstream& args) { gtp_success(id, GTP::engine->version()); }
 		void exec_known_command_command(int id, std::istringstream& args);	// known_commandという名前のコマンドを実行するので, 関数名は誤植ではない.
 		void exec_list_commands_command(int id, std::istringstream& args);
 		void exec_quit_command(int id, std::istringstream& args);
 		void exec_board_size_command(int id, std::istringstream& args);
-		inline void exec_clear_board_command(int id, std::istringstream& args) { GTP::engine->clear_position(); gtp_success(id); }
+		void exec_clear_board_command(int id, std::istringstream& args) { GTP::engine->clear_position(); gtp_success(id); }
 		void exec_komi_command(int id, std::istringstream& args) { gtp_success(id); }	// これは囲碁専用のコマンドなので, 特に何もしない.
 		void exec_play_command(int id, std::istringstream& args);
 		void exec_genmove_command(int id, std::istringstream& args);
@@ -61,10 +61,10 @@ namespace protocol
 		// gogui-rules commands
 		// GoGuiというGUIプログラムをリバーシに対応させるために必要.
 
-		inline void exec_rules_game_id_command(int id, std::istringstream& args) { gtp_success(id, "Reversi"); }
-		inline void exec_rules_board_size_command(int id, std::istringstream& args) { gtp_success(id, std::to_string(reversi::BOARD_SIZE)); }
+		void exec_rules_game_id_command(int id, std::istringstream& args) { gtp_success(id, "Reversi"); }
+		void exec_rules_board_size_command(int id, std::istringstream& args) { gtp_success(id, std::to_string(reversi::BOARD_SIZE)); }
 		void exec_rules_legal_moves_command(int id, std::istringstream& args);
-		inline void exec_rules_side_to_move_command(int id, std::istringstream& args) { gtp_success(id, color_to_string(this->engine->position().side_to_move())); }
+		void exec_rules_side_to_move_command(int id, std::istringstream& args) { gtp_success(id, color_to_string(this->engine->position().side_to_move())); }
 		void exec_rules_final_result_command(int id, std::istringstream& args);
 
 		// original commands
@@ -84,6 +84,6 @@ namespace protocol
 		GTP(std::istream* gtp_in = &std::cin, std::ostream* gtp_out = &std::cout) : engine(engine), gtp_in(gtp_in), gtp_out(gtp_out), commands(), quit(true), logger() { init(); }
 		void init();
 		void mainloop(engine::Engine* engine, const std::string& log_file_path);
-		inline void mainloop(engine::Engine* engine) { std::string null_path = ""; mainloop(engine, null_path); }
+		void mainloop(engine::Engine* engine) { std::string null_path = ""; mainloop(engine, null_path); }
 	};
 }

@@ -1,4 +1,3 @@
-#pragma once
 #include "engine_option.h"
 #include <string>
 #include <sstream>

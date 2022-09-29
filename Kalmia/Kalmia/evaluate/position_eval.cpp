@@ -1,5 +1,3 @@
-#pragma once
-
 #include "position_eval.h"
 
 #include <iostream>

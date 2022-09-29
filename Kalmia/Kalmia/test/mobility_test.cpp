@@ -1,4 +1,3 @@
-#pragma once
 #include "mobility_test.h"
 #include "test_common.h"
 #include "../reversi/mobility.h"

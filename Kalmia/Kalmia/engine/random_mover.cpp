@@ -1,4 +1,3 @@
-#pragma once
 #include "random_mover.h"
 #include "../utils/array.h"
 #include "../reversi/constant.h"

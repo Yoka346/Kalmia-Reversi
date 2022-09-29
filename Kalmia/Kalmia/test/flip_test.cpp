@@ -1,4 +1,3 @@
-#pragma once
 #include "flip_test.h"
 #include "test_common.h"
 #include "../reversi/flip.h"

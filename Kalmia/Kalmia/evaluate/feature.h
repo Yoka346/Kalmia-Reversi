@@ -148,36 +148,6 @@ namespace evaluation
         { PATTERN_SIZE[DIAG_LINE4], {reversi::H5, reversi::G6, reversi::F7, reversi::E8}}
     };
 
-    // 座標からその座標が含まれているパターンの特徴に変換するテーブル. 特徴の差分更新の際に用いる.
-    /*constexpr utils::Array<CoordinateToFeature, reversi::SQUARE_NUM> COORDINATE_TO_FEATURE([](CoordinateToFeature* data, size_t len)
-        {
-            for (auto coord = reversi::BoardCoordinate::A1; coord <= reversi::BoardCoordinate::H8; coord++)
-            {
-                Pattern features[16];
-                int32_t count = 0;
-                for (int32_t pattern_id = 0; pattern_id < ALL_PATTERN_NUM; pattern_id++)
-                {
-                    auto& coords = PATTERN_LOCATION[pattern_id].coordinates;
-                    auto size = PATTERN_LOCATION[pattern_id].size;
-
-                    int32_t idx;
-                    for (idx = 0; idx < size; idx++)
-                        if (coords[idx] == coord)
-                            break;
-
-                    if (idx == size)
-                        continue;
-
-                    features[count].id = pattern_id;
-                    features[count].feature = POW_3.as_raw_array()[size - idx - 1];
-                    count++;
-                };
-
-                data[coord].features = Array<Pattern, 16>(features);
-                data[coord].len = count;
-            }
-        });*/
-
     constexpr int32_t to_feature_idx(PatternKind kind, uint16_t feature) { return PATTERN_FEATURE_OFFSET[kind] + feature; }
 
     constexpr uint16_t mirror_feature(uint16_t feature, int32_t size)
@@ -338,12 +308,12 @@ namespace evaluation
 
         PositionFeature(reversi::Position& pos);
         PositionFeature(const PositionFeature& src);
-        inline reversi::Player side_to_move() const { return this->_side_to_move; }
-        inline int32_t empty_count() const { return this->_empty_count; }
+        reversi::Player side_to_move() const { return this->_side_to_move; }
+        int32_t empty_count() const { return this->_empty_count; }
         void init_features(reversi::Position& pos);
         void update(const reversi::Move& move); 
-        inline void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }
+        void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);
-        inline bool operator==(const PositionFeature& right) { return this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right.features.begin()); }
+        bool operator==(const PositionFeature& right) { return this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right.features.begin()); }
     };
 }

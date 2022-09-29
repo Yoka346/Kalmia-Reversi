@@ -1,4 +1,3 @@
-#pragma once
 #include "feature.h"
 
 #include "../utils/unroller.h"

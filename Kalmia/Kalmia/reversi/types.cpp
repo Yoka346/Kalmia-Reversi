@@ -1,4 +1,3 @@
-#pragma once
 #include "types.h"
 #include "constant.h"
 #include <iostream>

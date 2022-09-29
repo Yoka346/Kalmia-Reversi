@@ -11,5 +11,6 @@ using namespace protocol;
 
 int main()
 {
+	std::cout << "test\n";
 	test::predict_test();
 }

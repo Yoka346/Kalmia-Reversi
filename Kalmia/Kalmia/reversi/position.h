@@ -27,9 +27,9 @@ namespace reversi
 		DiscColor _side_to_move;
 
 	public:
-		inline static size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
+		static size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
 
-		inline static void init_hash_rank(uint64_t* hash_rank, size_t len)
+		static void init_hash_rank(uint64_t* hash_rank, size_t len)
 		{
 			Random rand;
 			for (int i = 0; i < HASH_RANK_LEN_0; i++)
@@ -43,21 +43,21 @@ namespace reversi
 
 		Position(Bitboard bitboard, DiscColor side_to_move) : _bitboard(bitboard), _side_to_move(side_to_move) { ; }
 
-		inline DiscColor side_to_move() const { return this->_side_to_move; }
-		inline DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
-		inline int empty_square_count() const { return this->_bitboard.empty_count(); }
-		inline int player_disc_count() const { return this->_bitboard.player_disc_count(); }
-		inline int opponent_disc_count() const { return this->_bitboard.opponent_disc_count(); }
-		inline int disc_count() const { return this->_bitboard.disc_count(); }
-		inline int black_disc_count() const { return (this->_side_to_move == DiscColor::BLACK) ? player_disc_count() : opponent_disc_count(); }
-		inline int white_disc_count() const { return (this->_side_to_move == DiscColor::WHITE) ? player_disc_count() : opponent_disc_count(); }
+		DiscColor side_to_move() const { return this->_side_to_move; }
+		DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
+		int empty_square_count() const { return this->_bitboard.empty_count(); }
+		int player_disc_count() const { return this->_bitboard.player_disc_count(); }
+		int opponent_disc_count() const { return this->_bitboard.opponent_disc_count(); }
+		int disc_count() const { return this->_bitboard.disc_count(); }
+		int black_disc_count() const { return (this->_side_to_move == DiscColor::BLACK) ? player_disc_count() : opponent_disc_count(); }
+		int white_disc_count() const { return (this->_side_to_move == DiscColor::WHITE) ? player_disc_count() : opponent_disc_count(); }
 		
 		/**
 		* @fn
 		* @brief 指定された座標のマスにあるディスクの色を取得する.
 		* @return 指定された座標のマスにあるディスクの色, ディスクが無ければDiscColor::EMPTY.
 		**/
-		inline DiscColor square_color_at(BoardCoordinate coord) const
+		DiscColor square_color_at(BoardCoordinate coord) const
 		{
 			auto owner = square_owner_at(coord);
 			if (owner == Player::NULL_PLAYER)
@@ -70,16 +70,16 @@ namespace reversi
 		* @brief 指定された座標のマスにあるディスクの持ち主を取得する.
 		* @return 現在の手番のディスクであればPlayer::FIRST, 相手の手番のディスクであればPlayer::SECOND, どちらでもなければPlayer::NULL_PLAYER.
 		**/
-		inline Player square_owner_at(BoardCoordinate coord) const
+		Player square_owner_at(BoardCoordinate coord) const
 		{
 			return static_cast<Player>(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1));
 		}
 
-		inline bool is_legal(const BoardCoordinate& coord) const { return (coord == BoardCoordinate::PASS) ? can_pass() : this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
-		inline void pass() { this->_side_to_move = opponent_color(); this->_bitboard.swap(); }
+		bool is_legal(const BoardCoordinate& coord) const { return (coord == BoardCoordinate::PASS) ? can_pass() : this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
+		void pass() { this->_side_to_move = opponent_color(); this->_bitboard.swap(); }
 
 		template<bool CHECK_LEGALITY>
-		inline bool update(const Move& move) 
+		bool update(const Move& move) 
 		{
 			if constexpr (CHECK_LEGALITY)
 				if (!is_legal(move.coord))
@@ -91,7 +91,7 @@ namespace reversi
 		}
 
 		template<bool CHECK_LEGALITY>
-		inline bool update(const BoardCoordinate& coord)
+		bool update(const BoardCoordinate& coord)
 		{
 			if constexpr (CHECK_LEGALITY)
 				if (!is_legal(coord))
@@ -102,13 +102,13 @@ namespace reversi
 			return update(move);
 		}
 
-		inline void undo(Move& move)
+		void undo(Move& move)
 		{
 			this->_bitboard.undo(move.coord, move.flipped);
 			this->_side_to_move = opponent_color();
 		}
 
-		inline int get_next_moves(Array<Move, MAX_MOVE_NUM>& moves) const
+		int get_next_moves(Array<Move, MAX_MOVE_NUM>& moves) const
 		{
 			uint64_t mobility = this->_bitboard.calc_player_mobility();
 			auto move_count = 0;
@@ -118,16 +118,16 @@ namespace reversi
 			return move_count;
 		}
 
-		inline void calc_flipped_discs(Move& move) const { move.flipped = this->_bitboard.calc_flipped_discs(move.coord); }
-		inline int32_t get_disc_diff() const { return this->_bitboard.player_disc_count() - this->_bitboard.opponent_disc_count(); }
+		void calc_flipped_discs(Move& move) const { move.flipped = this->_bitboard.calc_flipped_discs(move.coord); }
+		int32_t get_disc_diff() const { return this->_bitboard.player_disc_count() - this->_bitboard.opponent_disc_count(); }
 		
-		inline bool is_gameover() const
+		bool is_gameover() const
 		{
 			return std::popcount(this->_bitboard.calc_player_mobility()) == 0
 				&& std::popcount(this->_bitboard.calc_opponent_mobility()) == 0;
 		}
 
-		inline bool can_pass() const
+		bool can_pass() const
 		{
 			return std::popcount(this->_bitboard.calc_player_mobility()) == 0
 				&& std::popcount(this->_bitboard.calc_opponent_mobility()) != 0;
@@ -138,7 +138,7 @@ namespace reversi
 		* @brief 現在の手番からみたゲームの勝敗を返す.
 		* @detail 処理の中身は単純にディスクの個数を比較しているだけなので, 本当に終局しているかどうかは確認していない.
 		**/
-		inline GameResult get_game_result() const
+		GameResult get_game_result() const
 		{
 			int32_t diff = get_disc_diff();
 			if (!diff)
@@ -146,7 +146,7 @@ namespace reversi
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
 		}
 
-		inline uint64_t calc_hash_code() 
+		uint64_t calc_hash_code() 
 		{
 			auto p = reinterpret_cast<uint8_t*>(&(this->_bitboard));
 			uint64_t h0 = HASH_RANK[p[0]];

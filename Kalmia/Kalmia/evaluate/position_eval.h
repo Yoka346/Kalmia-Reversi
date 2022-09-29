@@ -68,10 +68,8 @@ namespace evaluation
 
 	using PackedValueFuncParamArray = Array<float, sizeof(PackedValueFuncParam) / sizeof(float)>;
 
-	inline void packed_value_func_param_as_array(PackedValueFuncParam& param, PackedValueFuncParamArray*& out)
-	{ 
-		out = reinterpret_cast<PackedValueFuncParamArray*>(&param); 
-	}
+	inline void packed_value_func_param_as_array(PackedValueFuncParam& param, PackedValueFuncParamArray*& out) { out = reinterpret_cast<PackedValueFuncParamArray*>(&param); }
+
 
 	enum ValueRepresentation
 	{
@@ -107,13 +105,13 @@ namespace evaluation
 		void expand_packed_weight(PackedWeight& packed_weight);
 
 	public:
-		inline int32_t phase_num() { return this->_phase_num; }
-		inline int32_t move_count_per_phase() { return this->_move_count_per_phase; }
+		int32_t phase_num() { return this->_phase_num; }
+		int32_t move_count_per_phase() { return this->_move_count_per_phase; }
 
 		ValueFunction(int32_t move_count_per_phase);
 		ValueFunction(const std::string path);
 
-		inline void init_weight_with_rand_num() { init_weight_with_rand_num(1.0f, 0.0f); }
+		void init_weight_with_rand_num() { init_weight_with_rand_num(1.0f, 0.0f); }
 		void init_weight_with_rand_num(float mean, float variance);
 		void save_to_file(const std::string& path);
 
@@ -135,7 +133,7 @@ namespace evaluation
 		* @param (pos_feature) Œ»Ý‚Ì”Õ–Ê‚Ì“Á’¥.
 		* @return —\‘ª’l. VALUE_REPS‚ªDISC_DIFF‚Å‚ ‚ê‚Î, ÅIÎ·‚Ì—\‘ª’l. WIN_RATE‚Å‚ ‚ê‚Î, —\‘zŸ—¦.
 		**/
-		inline float predict(const PositionFeature& pos_feature) const 
+		float predict(const PositionFeature& pos_feature) const 
 		{
 			return predict(this->empty_count_to_phase[pos_feature.empty_count()], pos_feature);
 		}

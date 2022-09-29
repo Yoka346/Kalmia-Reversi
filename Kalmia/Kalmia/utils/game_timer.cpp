@@ -1,4 +1,3 @@
-#pragma once
 #include "game_timer.h"
 
 #include <cmath>

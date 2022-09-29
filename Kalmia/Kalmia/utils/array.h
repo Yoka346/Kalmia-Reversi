@@ -42,7 +42,7 @@ namespace utils
 		constexpr const ElementType* begin() const { return &this->data[0]; }
 		constexpr const ElementType* end() const { return this->data + LEN; }
 
-		inline ElementType& operator[](size_t idx)
+		ElementType& operator[](size_t idx)
 		{
 			assert(idx >= 0 && idx < LEN);
 			return this->data[idx];
@@ -76,11 +76,11 @@ namespace utils
 
 		constexpr const ElementType* begin() const { return this->data.begin(); }
 		constexpr const ElementType* end() const { return this->data.end(); }
-		inline const ElementType& operator[](size_t idx) const { return this->data[idx]; }
+		const ElementType& operator[](size_t idx) const { return this->data[idx]; }
 		constexpr bool operator==(const ReadonlyArray<ElementType, LEN>& right) const { return this->data == right.data; }
 		constexpr bool operator==(const Array<ElementType, LEN>& right) const { return this->data == right; }
 		constexpr size_t length() const { return LEN; }
-		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
+		const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
 	};
 
 	/**
@@ -106,40 +106,40 @@ namespace utils
 
 		DynamicArray(DynamicArray<ElementType>&& src) : _length(src._length), data(std::move(src.data)) { ; }
 
-		inline const ElementType* begin() const { return &this->data[0]; }
-		inline const ElementType* end() const { return this->data + this->_length; }
+		const ElementType* begin() const { return &this->data[0]; }
+		const ElementType* end() const { return this->data + this->_length; }
 
-		inline ElementType& operator[](size_t idx)
+		ElementType& operator[](size_t idx)
 		{
 			assert(idx >= 0 && idx < this->_length);
 			return this->data.get()[idx];
 		}
 
-		inline const ElementType& operator[](size_t idx) const
+		const ElementType& operator[](size_t idx) const
 		{
 			assert(idx >= 0 && idx < this->_length);
 			return this->data.get()[idx];
 		}
 
-		inline DynamicArray<ElementType>& operator=(const DynamicArray<ElementType>& right) 
+		DynamicArray<ElementType>& operator=(const DynamicArray<ElementType>& right) 
 		{ 
 			this->_length = right._length;
-			this->data = std::make_unique<ElementType[]>(this->_length);
+			this->data.reset(std::make_unique<ElementType[]>(this->_length));
 			std::memcpy(this->data.get(), right.data.get(), sizeof(ElementType) * this->_length);
 			return *this;
 		}
 
-		inline DynamicArray<ElementType>& operator=(DynamicArray<ElementType>&& right)
+		DynamicArray<ElementType>& operator=(DynamicArray<ElementType>&& right)
 		{
 			this->_length = right._length;
 			this->data = std::move(right.data);
 			return *this;
 		}
 
-		inline bool operator==(const DynamicArray<ElementType>& right) const { return this->_length == right._length && std::equal(begin(), end(), right.begin()); }
-		inline size_t length() const { return this->_length; }
-		inline ElementType* as_raw_array() { return this->data.get(); }
-		inline const ElementType* as_raw_array() const { return this->data.get(); }
+		bool operator==(const DynamicArray<ElementType>& right) const { return this->_length == right._length && std::equal(begin(), end(), right.begin()); }
+		size_t length() const { return this->_length; }
+		ElementType* as_raw_array() { return this->data.get(); }
+		const ElementType* as_raw_array() const { return this->data.get(); }
 	};
 
 	/**
@@ -155,12 +155,12 @@ namespace utils
 	public:
 		ReadonlyDynamicArray(DynamicArray<ElementType>& data) : data(data) { ; }
 
-		inline const ElementType* begin() const { return this->data.begin(); }
-		inline const ElementType* end() const { return this->data.end(); }
-		inline const ElementType& operator[](size_t idx) const { this->data[idx]; }
-		inline bool operator==(const ReadonlyDynamicArray<ElementType>& right) const { return this->data == right.data; }
-		inline bool operator==(const DynamicArray<ElementType>& right) const { return this->data == right; }
-		inline size_t length() const { return this->data.length(); }
-		inline const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
+		const ElementType* begin() const { return this->data.begin(); }
+		const ElementType* end() const { return this->data.end(); }
+		const ElementType& operator[](size_t idx) const { this->data[idx]; }
+		bool operator==(const ReadonlyDynamicArray<ElementType>& right) const { return this->data == right.data; }
+		bool operator==(const DynamicArray<ElementType>& right) const { return this->data == right; }
+		size_t length() const { return this->data.length(); }
+		const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
 	};
 }

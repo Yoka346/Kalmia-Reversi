@@ -23,19 +23,19 @@ namespace utils
 			: _main_time_ms(main_time_ms), _byoyomi_ms(byoyomi_ms), _byoyomi_stones(byoyomi_stones), _increment_ms(inc_ms),
 			  _time_left_ms(main_time_ms + byoyomi_ms), _byoyomi_stones_left(byoyomi_stones), _is_ticking(false), _timeout(false) { ; }
 
-		inline std::chrono::milliseconds main_time_ms() const { return this->_main_time_ms; }
-		inline std::chrono::milliseconds byoyomi_ms() const { return this->_byoyomi_ms; }
-		inline int32_t byoyomi_stones() const { return this->_byoyomi_stones; }
-		inline int32_t byoyomi_stones_left() const { return this->_byoyomi_stones_left; }
-		inline std::chrono::milliseconds increment_ms() const { return this->_increment_ms; }
-		inline bool is_ticking() const { return this->_is_ticking; }
-		inline bool timeout() const { return this->_timeout; }
+		std::chrono::milliseconds main_time_ms() const { return this->_main_time_ms; }
+		std::chrono::milliseconds byoyomi_ms() const { return this->_byoyomi_ms; }
+		int32_t byoyomi_stones() const { return this->_byoyomi_stones; }
+		int32_t byoyomi_stones_left() const { return this->_byoyomi_stones_left; }
+		std::chrono::milliseconds increment_ms() const { return this->_increment_ms; }
+		bool is_ticking() const { return this->_is_ticking; }
+		bool timeout() const { return this->_timeout; }
 		void set(std::chrono::milliseconds main_time_ms, std::chrono::milliseconds byoyomi_ms, int32_t byoyomi_stones, std::chrono::milliseconds inc_ms);
 		void set_left(std::chrono::milliseconds main_time_left, int32_t byoyomi_stones_left);
 		void start();
 		void stop();
 		void reset();
-		inline void restart() { reset(); start(); }
+		void restart() { reset(); start(); }
 		
 		template<bool INCLUDE_BYOYOMI>
 		std::chrono::milliseconds time_left_ms();

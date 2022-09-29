@@ -1,2 +1,7 @@
 ﻿  モジュール依存関係のソースをスキャンしています...
+  engine_option.cpp
+  logger.cpp
+C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\io\logger.h(20,20): warning C4805: '==': 演算中の 'int' 型と 'bool' 型の混用は安全ではありません
+  main.cpp
+  コードを生成中...
   Kalmia.vcxproj -> C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\x64\Debug\Kalmia.exe

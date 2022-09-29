@@ -47,17 +47,17 @@ namespace engine
 		EngineOption(std::string& value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 
-		inline const std::string& default_value() const { return this->_default_value; }
-		inline const std::string& current_value() const { return this->_current_value; }
-		inline const std::string& type() const { return this->_type; }
-		inline int32_t min() const { return this->_min; }
-		inline int32_t max() const { return this->_max; }
-		inline size_t idx() const { return this->_idx; }
+		const std::string& default_value() const { return this->_default_value; }
+		const std::string& current_value() const { return this->_current_value; }
+		const std::string& type() const { return this->_type; }
+		int32_t min() const { return this->_min; }
+		int32_t max() const { return this->_max; }
+		size_t idx() const { return this->_idx; }
 
 		// 代入演算子. これが呼び出されたタイミングでon_value_changedハンドラが呼び出される.
 		EngineOption& operator=(const std::string& value);
 
 		operator int() const;
-		inline const std::string& to_string() const { return this->_current_value; }
+		const std::string& to_string() const { return this->_current_value; }
 	};
 }

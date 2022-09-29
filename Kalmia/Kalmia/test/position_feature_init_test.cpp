@@ -1,4 +1,3 @@
-#pragma once
 #include "position_feature_init_test.h"
 #include "test_common.h"
 

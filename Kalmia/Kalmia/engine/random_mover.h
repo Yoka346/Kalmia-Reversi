@@ -25,6 +25,6 @@ namespace engine
 		void get_options(EngineOptions& options);
 		void generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move);
 		bool stop_thinking(std::chrono::milliseconds timeout_ms);
-		inline void quit() {}
+		void quit() {}
 	};
 }
