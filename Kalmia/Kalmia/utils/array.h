@@ -91,11 +91,20 @@ namespace utils
 	class DynamicArray
 	{
 	private:
-		std::shared_ptr<ElementType[]> data;
+		std::unique_ptr<ElementType[]> data;
 		size_t _length;
 
 	public:
-		DynamicArray(size_t length) : data(std::make_shared<ElementType[]>(length)), _length(length) { ; }
+		DynamicArray(size_t length) : data(std::make_unique<ElementType[]>(length)), _length(length) { ; }
+
+		DynamicArray(const DynamicArray<ElementType>& src) 
+		{
+			this->_length = src._length;
+			this->data = std::make_unique<ElementType[]>(this->_length);
+			std::memcpy(this->data.get(), src.data.get(), sizeof(ElementType) * this->_length);
+		}
+
+		DynamicArray(DynamicArray<ElementType>&& src) : _length(src._length), data(std::move(src.data)) { ; }
 
 		inline const ElementType* begin() const { return &this->data[0]; }
 		inline const ElementType* end() const { return this->data + this->_length; }
@@ -112,12 +121,25 @@ namespace utils
 			return this->data.get()[idx];
 		}
 
-		inline DynamicArray<ElementType>& operator=(const DynamicArray<ElementType>& right) { this->_length = right._length; this->data = right.data; return *this; }
+		inline DynamicArray<ElementType>& operator=(const DynamicArray<ElementType>& right) 
+		{ 
+			this->_length = right._length;
+			this->data = std::make_unique<ElementType[]>(this->_length);
+			std::memcpy(this->data.get(), right.data.get(), sizeof(ElementType) * this->_length);
+			return *this;
+		}
+
+		inline DynamicArray<ElementType>& operator=(DynamicArray<ElementType>&& right)
+		{
+			this->_length = right._length;
+			this->data = std::move(right.data);
+			return *this;
+		}
+
 		inline bool operator==(const DynamicArray<ElementType>& right) const { return this->_length == right._length && std::equal(begin(), end(), right.begin()); }
-		inline bool reference_equals_to(const DynamicArray<ElementType>& target) const { return this->data.get() == target.data.get(); }
 		inline size_t length() const { return this->_length; }
-		inline ElementType* as_raw_array() { return this->data; }
-		inline const ElementType* as_raw_array() const { return this->data; }
+		inline ElementType* as_raw_array() { return this->data.get(); }
+		inline const ElementType* as_raw_array() const { return this->data.get(); }
 	};
 
 	/**
