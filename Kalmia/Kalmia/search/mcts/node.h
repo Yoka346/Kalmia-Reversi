@@ -23,7 +23,7 @@ namespace search::mcts
 	/**
 	* @class
 	* @brief 子ノードへ至る辺.
-	* @detail ノードはヒープ上に確保されるので, UCBの計算などで直接アクセスするのは高コスト.
+	* @detail ノードはヒープ上に不連続に配置されるので, UCBの計算などで直接アクセスするのは高コスト.
 	* 故にUCBの計算などで必要な子ノードの情報はある程度このEdgeにキャッシュしておく.
 	**/
 	struct Edge
@@ -52,13 +52,17 @@ namespace search::mcts
 		std::atomic<uint32_t> visit_count;
 		std::atomic<double> reward_sum;
 
-		// 他の箇所では, デバッグ効率を向上させるために, 自作のArray<T>やDynamicArray<T>を配列に用いていたが,
+		// 他の箇所では, デバッグ効率を向上させるために, DynamicArray<T>を動的配列に用いていたが,
 		// ここではNodeオブジェクトのサイズをできる限り減らしたいので使わない.
+
+		// 子ノードに至る辺
 		std::unique_ptr<Edge[]> edges;
+
 		std::unique_ptr<std::unique_ptr<Node>[]> child_nodes;
 		uint8_t child_node_num;
 
 		Node() : visit_count(0), edges(nullptr), child_nodes(nullptr), child_node_num(0) { _object_count++; }
+		~Node() { _object_count--; }
 
 		bool is_expanded() { return this->edges.get() != nullptr; }
 
@@ -69,18 +73,32 @@ namespace search::mcts
 
 		void init_child_nodes() { this->child_nodes = std::make_unique<std::unique_ptr<Node>[]>(this->child_node_num); }
 
+		/**
+		* @fn
+		* @brief 候補手の数だけ辺を伸ばす.
+		**/
 		void expand(const reversi::Position& pos)
 		{
 			Array<reversi::Move, reversi::MAX_MOVE_NUM> moves;
 			this->child_node_num = pos.get_next_moves(moves);
 			this->edges = std::make_unique<Edge[]>(this->child_node_num);
-			auto edges_ptr = this->edges.get();
 			for (int32_t i = 0; i < this->child_node_num; i++)
-				edges_ptr[i].move = moves[i];
+				this->edges[i].move = moves[i];
+		}
+
+		/**
+		* @fn
+		* @brief パスを表す辺を1つ伸ばす.
+		**/
+		void extend_pass_edge()
+		{
+			this->child_node_num = 1;
+			this->edges = std::make_unique<Edge[]>(1);
+			this->edges[0].move.coord = reversi::BoardCoordinate::PASS;
 		}
 
 	private:
-		inline static std::atomic<uint64_t> _object_count = 0ULL;
+		inline static std::atomic<uint64_t> _object_count = 0ULL;	// 現状存在するNodeオブジェクトの個数. 
 		static uint64_t object_count() { return _object_count; }
 	};
 }
