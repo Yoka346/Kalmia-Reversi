@@ -15,9 +15,9 @@ namespace search::mcts
 	{
 		NOT_PROVED = 0x00,	// 勝敗が確定していない.
 		PROVED = 0xf0,	// 勝敗が確定している.
-		WIN = PROVED | 0x01,
-		LOSS = PROVED | 0x02,
-		DRAW = PROVED | 0x03
+		WIN = PROVED | static_cast<uint8_t>(reversi::GameResult::WIN),
+		LOSS = PROVED | static_cast<uint8_t>(reversi::GameResult::LOSS),
+		DRAW = PROVED | static_cast<uint8_t>(reversi::GameResult::DRAW)
 	};
 
 	/**
@@ -63,12 +63,11 @@ namespace search::mcts
 		Node() : visit_count(0), edges(nullptr), child_nodes(nullptr), child_node_num(0) { _object_count++; }
 		~Node() { _object_count--; }
 
+		static uint64_t object_count() { return _object_count; }
+
 		bool is_expanded() { return this->edges.get() != nullptr; }
 
-		Node* create_child_node(int32_t idx)
-		{
-			return (this->child_nodes.get()[idx] = std::make_unique<Node>()).get();
-		}
+		Node* create_child_node(int32_t idx) { return (this->child_nodes[idx] = std::make_unique<Node>()).get(); }
 
 		void init_child_nodes() { this->child_nodes = std::make_unique<std::unique_ptr<Node>[]>(this->child_node_num); }
 
@@ -97,7 +96,6 @@ namespace search::mcts
 		}
 
 	private:
-		inline static std::atomic<uint64_t> _object_count = 0ULL;	// 現状存在するNodeオブジェクトの個数. 
-		static uint64_t object_count() { return _object_count; }
+		inline static std::atomic<uint64_t> _object_count = 0ULL;	// 現存するNodeオブジェクトの個数. 
 	};
 }

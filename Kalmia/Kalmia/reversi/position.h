@@ -146,9 +146,9 @@ namespace reversi
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
 		}
 
-		uint64_t calc_hash_code() 
+		uint64_t calc_hash_code() const
 		{
-			auto p = reinterpret_cast<uint8_t*>(&(this->_bitboard));
+			auto p = reinterpret_cast<const uint8_t*>(&(this->_bitboard));
 			uint64_t h0 = HASH_RANK[p[0]];
 			uint64_t h1 = HASH_RANK[HASH_RANK_LEN_0 + p[1]];
 			utils::LoopUnroller<7>()(

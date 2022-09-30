@@ -78,9 +78,12 @@ namespace reversi
 
 	enum class GameResult : int8_t
 	{
-		WIN = 1,
-		LOSS = -WIN,
-		DRAW = 0,
+		WIN = 0,
+		LOSS = 1,
+		DRAW = 2,
 		NOT_OVER = -2
 	};
+
+	constexpr Array<GameResult, 3> TO_OPPONENT_GAME_RESULT = { GameResult::LOSS, GameResult::WIN, GameResult::LOSS };
+	constexpr GameResult to_opponent_result(GameResult result) { return  TO_OPPONENT_GAME_RESULT[result]; }
 }

@@ -33,8 +33,8 @@ namespace search::mcts
 	{
 		while (!this->stop_flag.load())
 		{
-			this_thread::sleep_for(milliseconds(COLLECT_INTERVAL_MS));
-			collect();
+			this_thread::sleep_for(milliseconds(COLLECT_INTERVAL_MS));	
+			collect();	
 		}
 	}
 }
