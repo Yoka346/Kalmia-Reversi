@@ -34,14 +34,17 @@ namespace search::mcts
 		// この着手に費やされた探索の割合. (この着手のplayout_count) / (他の候補手のplayout_countの総和) に等しい.
 		double effort;
 
-		// この着手に費やされたプレイアウト(ここでは価値関数の呼び出しを指す)の回数.
+		// この着手に費やされたプレイアウトの回数.
 		uint32_t playout_count;
 
-		// 探索の結果得られた, この着手から先の期待勝率(厳密には価値の期待値). 
+		// 探索の結果得られた, この着手から先の期待勝率(期待価値). 
 		double expected_value;
 
 		// 価値関数の出力. すなわち探索を一切せずに予測した勝率(価値).
 		double raw_value;
+
+		// 勝敗が確定している場合の結果.
+		GameResult game_result;
 
 		// Principal Variation(最善応手列).
 		std::vector<reversi::BoardCoordinate> pv;
@@ -114,6 +117,7 @@ namespace search::mcts
 
 		reversi::Position root_state;
 		std::unique_ptr<Node> root;
+		EdgeLabel root_edge_label;
 
 		// pps(playout per second)を計算するためのカウンター.
 		std::atomic<uint32_t> pps_counter;
@@ -138,9 +142,9 @@ namespace search::mcts
 		double visit_node(GameInfo& game_info, Node* current_node, Edge& edge_to_current_node);
 
 		int32_t select_root_child_node();
-		int32_t select_child_node();
+		int32_t select_child_node(Node* parent, Edge& edge_to_parent);
 
-		float predict_value(GameInfo& game_info)
+		float predict_reward(GameInfo& game_info)
 		{
 			this->pps_counter++;
 			return 1.0f - this->VALUE_FUNC.predict(game_info.feature());
@@ -169,13 +173,12 @@ namespace search::mcts
 		/**
 		* @fn
 		* @brief Principal Variation(最善応手列)を取得する.
-		* @detail UCTにおいては, 訪問回数が多いノードは有望なノードなので, 基本的には訪問回数の多いノードを木の末端に至るまで選び続ける.
+		* @detail UCTにおいては, 訪問回数が多いノードは有望なノードなので, 基本的には訪問回数の多いノードをリーフノードに至るまで選び続ける.
 		* ノードの選び方の詳細:
 		* 1. 訪問回数が最も多いノードを選ぶ. ただし, それが2つ以上あった場合は, 価値が最も高いノードを選ぶ.
 		* 2. 勝利確定ノードがあれば訪問回数に関わらず, そのノードを選ぶ. 
 		* 3. 最も訪問回数の多いノードが敗北確定ノードであれば, 次に訪問回数の多いノードを選ぶ.
 		* 4. 引き分け確定ノードと負け確定ノードしかない場合は, 引き分け確定ノードを選ぶ.
-		* 5. 敗北確定ノードしか無い場合は, 最終石差が最小のノードを選ぶ.
 		**/
 		void get_pv(Node* root, std::vector<reversi::BoardCoordinate> pv);
 

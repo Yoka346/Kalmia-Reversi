@@ -65,7 +65,7 @@ namespace search::mcts
 
 		static uint64_t object_count() { return _object_count; }
 
-		bool is_expanded() { return this->edges.get() != nullptr; }
+		bool is_expanded() { return !this->edges; }
 
 		Node* create_child_node(int32_t idx) { return (this->child_nodes[idx] = std::make_unique<Node>()).get(); }
 
@@ -78,21 +78,17 @@ namespace search::mcts
 		void expand(const reversi::Position& pos)
 		{
 			Array<reversi::Move, reversi::MAX_MOVE_NUM> moves;
-			this->child_node_num = pos.get_next_moves(moves);
+			if (!(this->child_node_num = pos.get_next_moves(moves)))
+			{
+				this->child_node_num = 1;
+				this->edges = std::make_unique<Edge[]>(1);
+				this->edges[0].move.coord = reversi::BoardCoordinate::PASS;
+				return;
+			}
+
 			this->edges = std::make_unique<Edge[]>(this->child_node_num);
 			for (int32_t i = 0; i < this->child_node_num; i++)
 				this->edges[i].move = moves[i];
-		}
-
-		/**
-		* @fn
-		* @brief ƒpƒX‚ð•\‚·•Ó‚ð1‚ÂL‚Î‚·.
-		**/
-		void extend_pass_edge()
-		{
-			this->child_node_num = 1;
-			this->edges = std::make_unique<Edge[]>(1);
-			this->edges[0].move.coord = reversi::BoardCoordinate::PASS;
 		}
 
 	private:

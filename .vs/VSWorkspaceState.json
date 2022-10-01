@@ -8,9 +8,11 @@
     "\\Kalmia\\Kalmia",
     "\\Kalmia\\Kalmia\\evaluate",
     "\\Kalmia\\Kalmia\\reversi",
+    "\\Kalmia\\Kalmia\\search",
+    "\\Kalmia\\Kalmia\\search\\mcts",
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia.sln",
+  "SelectedNode": "\\Kalmia\\Kalmia\\search\\mcts\\node.h",
   "PreviewInSolutionExplorer": false
 }
