@@ -37,14 +37,11 @@ namespace search::mcts
 		// この着手に費やされたプレイアウトの回数.
 		uint32_t playout_count;
 
-		// 探索の結果得られた, この着手から先の期待勝率(期待価値). 
-		double expected_value;
-
-		// 価値関数の出力. すなわち探索を一切せずに予測した勝率(価値).
-		double raw_value;
+		// 探索の結果得られた, この着手から先の期待勝率(期待報酬). 
+		double expected_reward;
 
 		// 勝敗が確定している場合の結果.
-		GameResult game_result;
+		reversi::GameResult game_result;
 
 		// Principal Variation(最善応手列).
 		std::vector<reversi::BoardCoordinate> pv;
@@ -104,7 +101,7 @@ namespace search::mcts
 		// UCBを計算する際の係数のうちの1つ. AlphaZeroで用いている式のC_baseにあたる.
 		static constexpr uint32_t UCB_FACTOR_BASE = 19652;
 
-		// 複数スレッドで探索する際に, 特定のノードに探索が集中しないようにするために, 探索中のノードに与える一時的なペナルティ.
+		// 複数スレッドで探索する際に, 特定のノードに探索が集中しないようにするために探索中のノードに与える一時的なペナルティ.
 		static constexpr int32_t VIRTUAL_LOSS = 3;
 
 		static constexpr Array<double, 3> EDGE_LABEL_TO_REWARD = { 1.0, 0.0, 0.5 };
@@ -178,9 +175,10 @@ namespace search::mcts
 		* 1. 訪問回数が最も多いノードを選ぶ. ただし, それが2つ以上あった場合は, 価値が最も高いノードを選ぶ.
 		* 2. 勝利確定ノードがあれば訪問回数に関わらず, そのノードを選ぶ. 
 		* 3. 最も訪問回数の多いノードが敗北確定ノードであれば, 次に訪問回数の多いノードを選ぶ.
-		* 4. 引き分け確定ノードと負け確定ノードしかない場合は, 引き分け確定ノードを選ぶ.
+		* 4. 引き分け確定ノードと敗北確定ノードしかない場合は, 引き分け確定ノードを選ぶ.
 		**/
-		void get_pv(Node* root, std::vector<reversi::BoardCoordinate> pv);
+		void get_pv(Node* root, std::vector<reversi::BoardCoordinate>& pv);
+		void collect_search_result();
 
 	public:
 		UCT(UCTOptions& options) : OPTIONS(options), VALUE_FUNC(options.value_func_param_file_path), mutex_pool(), node_gc(), pps_counter(0) { ; }

@@ -20,6 +20,11 @@ namespace search::mcts
 		DRAW = PROVED | static_cast<uint8_t>(reversi::GameResult::DRAW)
 	};
 
+	inline reversi::GameResult edge_label_to_game_result(EdgeLabel label)
+	{
+		return (label & EdgeLabel::PROVED) ? static_cast<reversi::GameResult>(label ^ EdgeLabel::PROVED) : reversi::GameResult::NOT_OVER;
+	}
+
 	/**
 	* @class
 	* @brief Žqƒm[ƒh‚ÖŽŠ‚é•Ó.
@@ -65,10 +70,9 @@ namespace search::mcts
 
 		static uint64_t object_count() { return _object_count; }
 
+		double expected_reward();
 		bool is_expanded() { return !this->edges; }
-
 		Node* create_child_node(int32_t idx) { return (this->child_nodes[idx] = std::make_unique<Node>()).get(); }
-
 		void init_child_nodes() { this->child_nodes = std::make_unique<std::unique_ptr<Node>[]>(this->child_node_num); }
 
 		/**

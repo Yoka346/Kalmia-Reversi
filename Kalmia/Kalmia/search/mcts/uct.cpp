@@ -222,8 +222,6 @@ namespace search::mcts
 			reward = visit_node<false>(game_info, child_node, edge_to_child);
 		}
 
-		node_mutex.unlock();
-
 		update_statistic(current_node, edge_to_current_node, reward);	// ノードと辺の探索情報を更新.
 		return 1.0 - reward;
 	}
@@ -350,5 +348,70 @@ namespace search::mcts
 			else
 				edge_to_parent.label = EdgeLabel::WIN; // 親ノードからみて全ての辺が敗北確定であれば, 親ノードの親からみれば勝利確定.
 		return max_idx;
+	}
+
+	int32_t select_max_visit_count_child_node(Node* parent)
+	{
+		auto edges = parent->edges.get();
+		uint32_t max_visit = 0;
+		auto max_idx = 0;
+		auto draw_idx = -1;
+
+		for (auto i = 0; i < parent->child_node_num; i++)
+		{
+			auto& edge = edges[i];
+			if (edge.is_win())
+				return i;
+
+			if (edge.is_loss())
+				continue;
+
+			if (edge.is_draw())
+				draw_idx = i;	
+
+			if (edge.visit_count > max_visit)
+			{
+				max_visit = edge.visit_count;
+				max_idx = i;
+			}
+		}
+		return (edges[max_idx].is_loss() && draw_idx != -1) ? draw_idx : max_idx;
+	}
+
+	void UCT::get_pv(Node* root, std::vector<reversi::BoardCoordinate>& pv)
+	{
+		if (!root || !root->is_expanded())
+			return;
+
+		auto idx = select_max_visit_count_child_node(root);
+		pv.emplace_back(root->edges[idx].move.coord);
+		
+		if (!root->child_nodes)
+			get_pv(root->child_nodes[idx].get(), pv);
+	}
+
+	void UCT::collect_search_result()
+	{
+		auto& si = this->_search_info;
+		auto& root_eval = si.root_eval;
+		auto& child_evals = si.child_evals = DynamicArray<MoveEvaluation>(this->root->child_node_num);
+		GameInfo game_info(this->root_state, PositionFeature(this->root_state));
+
+		root_eval.effort = 1.0;
+		root_eval.playout_count = this->root->visit_count;
+		root_eval.expected_reward = this->root->expected_reward();
+		root_eval.game_result = edge_label_to_game_result(this->root_edge_label);
+
+		auto edges = this->root->edges.get();
+		for (auto i = 0; i < child_evals.length(); i++)
+		{
+			auto& child_eval = child_evals[i];
+			auto& edge = edges[i];
+			child_eval.effort = edge.visit_count / this->root->visit_count;
+			child_eval.playout_count = edge.visit_count;
+			child_eval.expected_reward = edge.expected_reward();
+			child_eval.game_result = edge_label_to_game_result(edge.label);
+			get_pv(this->root->child_nodes[i].get(), child_eval.pv);
+		}
 	}
 }

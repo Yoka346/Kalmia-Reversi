@@ -13,6 +13,6 @@
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\search\\mcts\\node.h",
+  "SelectedNode": "\\Kalmia\\Kalmia\\reversi\\types.h",
   "PreviewInSolutionExplorer": false
 }
