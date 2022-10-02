@@ -17,7 +17,7 @@ namespace search::mcts
 		int32_t thread_num = std::thread::hardware_concurrency();
 
 		// メモリ上のNodeオブジェクトの数(Node::object_count())の上限.
-		uint64_t node_num_limit = 2e+7;
+		uint64_t node_num_limit = static_cast<uint64_t>(2e+7);
 
 		// 価値関数のパラメータファイルの場所.
 		std::string value_func_param_file_path;
@@ -77,7 +77,7 @@ namespace search::mcts
 		std::mutex& get(const reversi::Position& pos)
 		{
 			// pos.calc_hash_code() & (SIZE - 1) は pos.calc_hash_code() % SIZE と同じ意味. SIZE == 2^n だから成り立つ.
-			this->pool[pos.calc_hash_code() & (SIZE - 1)];
+			return this->pool[pos.calc_hash_code() & (SIZE - 1)];
 		}
 	};
 
@@ -185,7 +185,7 @@ namespace search::mcts
 
 		bool is_searching() { return this->_is_searching; }
 
-		int32_t search_ellapsed_ms() 
+		uint64_t search_ellapsed_ms() 
 		{ 
 			using namespace std::chrono;
 			if (this->_is_searching.load())

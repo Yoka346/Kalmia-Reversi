@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="engine\engine.cpp" />
     <ClCompile Include="engine\engine_option.cpp" />
+    <ClCompile Include="engine\kalmia.cpp" />
     <ClCompile Include="engine\random_mover.cpp" />
     <ClCompile Include="evaluate\feature.cpp" />
     <ClCompile Include="evaluate\position_eval.cpp" />
@@ -157,6 +158,7 @@
   <ItemGroup>
     <ClInclude Include="engine\engine.h" />
     <ClInclude Include="engine\engine_option.h" />
+    <ClInclude Include="engine\kalmia.h" />
     <ClInclude Include="engine\random_mover.h" />
     <ClInclude Include="evaluate\feature.h" />
     <ClInclude Include="evaluate\position_eval.h" />

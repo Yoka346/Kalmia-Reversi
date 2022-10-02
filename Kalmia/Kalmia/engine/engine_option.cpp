@@ -42,6 +42,8 @@ namespace engine
 	{
 		assert(!_type.empty());
 
+		this->_last_err_msg = "";
+
 		if ((_type != "button" && value.empty())
 			|| (_type == "check" && value != "true" && value != "false"))
 			return *this;
@@ -57,7 +59,7 @@ namespace engine
 			this->_current_value = value;
 
 		if (this->on_value_change)
-			this->on_value_change(*this);
+			this->on_value_change(*this, this->_last_err_msg);
 		
 		return *this;
 	}

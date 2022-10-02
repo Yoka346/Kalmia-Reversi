@@ -15,7 +15,7 @@ namespace engine
 		std::map<std::string, EngineOption> options;
 
 		// event handlers
-		void on_rand_seed_change(const EngineOption& sender) { this->rand = Random(sender); }
+		void on_rand_seed_change(const EngineOption& sender, string& err_msg) { this->rand = Random(sender); }
 
 	public:
 		RandomMover() : Engine(NAME, VERSION), rand(), options() { init_options(); }

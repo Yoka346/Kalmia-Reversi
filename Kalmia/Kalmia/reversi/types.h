@@ -84,6 +84,6 @@ namespace reversi
 		NOT_OVER = -2
 	};
 
-	constexpr Array<GameResult, 3> TO_OPPONENT_GAME_RESULT = { GameResult::LOSS, GameResult::WIN, GameResult::LOSS };
-	constexpr GameResult to_opponent_result(GameResult result) { return  TO_OPPONENT_GAME_RESULT[result]; }
+	constexpr GameResult TO_OPPONENT_GAME_RESULT[3] = {GameResult::LOSS, GameResult::WIN, GameResult::LOSS};
+	constexpr GameResult to_opponent_result(GameResult result) { return  TO_OPPONENT_GAME_RESULT[static_cast<size_t>(result)]; }
 }

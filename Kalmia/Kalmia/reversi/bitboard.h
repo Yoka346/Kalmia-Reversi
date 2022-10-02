@@ -24,7 +24,7 @@ namespace reversi
 		int32_t empty_count() const { return std::popcount(empties()); }
 		uint64_t calc_player_mobility() const { return calc_mobility(this->_player, this->_opponent); }
 		uint64_t calc_opponent_mobility() const {return calc_mobility(this->_opponent, this->_player);}
-		uint64_t calc_flipped_discs(BoardCoordinate& coord) const { return reversi::calc_flipped_discs(this->_player, this->_opponent, coord); }
+		uint64_t calc_flipped_discs( const BoardCoordinate& coord) const { return reversi::calc_flipped_discs(this->_player, this->_opponent, coord); }
 
 		void update(const BoardCoordinate& coord, const uint64_t& flipped)
 		{

@@ -1,5 +1,8 @@
 #include "uct.h"
 
+#include <iomanip>
+#include <algorithm>
+
 #include "../../utils/math_functions.h"
 #include "../../utils/exception.h"
 
@@ -15,6 +18,7 @@ namespace search::mcts
 	void UCT::set_root_state(const Position& pos)
 	{
 		this->root_state = pos;
+		this->node_gc.add(move(this->root));
 		this->root.reset(new Node());
 		init_root_child_nodes();
 	}
@@ -196,30 +200,68 @@ namespace search::mcts
 		if (!current_node->is_expanded())
 			current_node->expand(game_info.position());
 
-		auto child_idx = select_child_node(current_node, edge_to_current_node);
-		auto& edge_to_child = this->root->edges[child_idx];
-		bool first_visit = !edge_to_child.visit_count.load();
-		add_virtual_loss(current_node, edge_to_child);
-		game_info.update(edge_to_child.move);
-
 		float reward;
-		if (first_visit)	// 末端の辺である.
+		if (current_node->edges[0].move == BoardCoordinate::PASS)
 		{
-			node_mutex.unlock();
-			reward = predict_reward(game_info);
+			if constexpr (AFTER_PASS)	// パスが2回続いた -> 終局.
+			{
+				auto res = game_info.position().get_game_result();
+				current_node->edges[0].label = game_result_to_edge_label(res);
+				edge_to_current_node.label = game_result_to_edge_label(to_opponent_result(res));
+				node_mutex.unlock();
+				reward = EDGE_LABEL_TO_REWARD[current_node->edges[0].label];
+			}
+			else if (current_node->edges[0].is_proved())
+			{
+				node_mutex.unlock();
+				edge_to_current_node.label = to_opponent_edge_label(current_node->edges[0].label);
+				reward = EDGE_LABEL_TO_REWARD[current_node->edges[0].label];
+			}
+			else
+			{
+				// パスノードは評価せずに, さらに1手先を読んで評価.
+				if (!current_node->child_nodes)
+				{
+					current_node->init_child_nodes();
+					current_node->create_child_node(0);
+				}
+				node_mutex.unlock();
+
+				game_info.pass();
+				reward = visit_node<true>(game_info, current_node->child_nodes[0], current_node->edges[0]);
+			}
 		}
-		else	// 辺の先に子ノードがある, もしくは子ノードを作るべき辺である.
+		else
 		{
-			if (!current_node->child_nodes)
-				current_node->init_child_nodes();
+			auto child_idx = select_child_node(current_node, edge_to_current_node);
+			auto& edge_to_child = this->root->edges[child_idx];
+			bool first_visit = !edge_to_child.visit_count.load();
+			add_virtual_loss(current_node, edge_to_child);
+			game_info.update(edge_to_child.move);
 
-			auto child_node = current_node->child_nodes[child_idx].get();
-			if (!child_node)
-				child_node = current_node->create_child_node(child_idx);	
+			if (edge_to_child.is_proved())	// 勝敗が確定している辺である.
+			{
+				node_mutex.unlock();
+				reward = EDGE_LABEL_TO_REWARD[edge_to_child.label];
+			}
+			else if (first_visit)	// 末端の辺である.
+			{
+				node_mutex.unlock();
+				reward = predict_reward(game_info);
+			}
+			else	// 辺の先に子ノードがある, もしくは子ノードを作るべき辺である.
+			{
+				if (!current_node->child_nodes)
+					current_node->init_child_nodes();
 
-			node_mutex.unlock();
+				auto child_node = current_node->child_nodes[child_idx].get();
+				if (!child_node)
+					child_node = current_node->create_child_node(child_idx);
 
-			reward = visit_node<false>(game_info, child_node, edge_to_child);
+				node_mutex.unlock();
+
+				reward = visit_node<false>(game_info, child_node, edge_to_child);
+			}
 		}
 
 		update_statistic(current_node, edge_to_current_node, reward);	// ノードと辺の探索情報を更新.
@@ -413,5 +455,7 @@ namespace search::mcts
 			child_eval.game_result = edge_label_to_game_result(edge.label);
 			get_pv(this->root->child_nodes[i].get(), child_eval.pv);
 		}
+
+		sort(child_evals.begin(), child_evals.end(), [](MoveEvaluation& x, MoveEvaluation& y) { x.playout_count > y.playout_count; });
 	}
 }

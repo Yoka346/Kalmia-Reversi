@@ -14,7 +14,7 @@ namespace engine
 	void RandomMover::init_options()
 	{
 		using namespace placeholders;
-		EventHandler func = bind(&RandomMover::on_rand_seed_change, this, _1);
+		EventHandler func = bind(&RandomMover::on_rand_seed_change, this, _1, _2);
 		this->options["rand_seed"] = EngineOption(12345678, 0, INT32_MAX, this->options.size(), func);
 	};
 
@@ -33,7 +33,7 @@ namespace engine
 	void RandomMover::get_options(EngineOptions& options)
 	{
 		for (auto& option : this->options)
-			options.push_back(option);
+			options.emplace_back(option);
 	}
 
 	void quit() {}

@@ -549,8 +549,9 @@ namespace protocol
 			return;
 		}
 
-		if (!this->engine->set_option(arg_strs[0], arg_strs[1]))
-			gtp_failure(id, "invalid option.");
+		std::string err_msg;
+		if (!this->engine->set_option(arg_strs[0], arg_strs[1], err_msg))
+			gtp_failure(id, err_msg);
 		else
 			gtp_success(id);
 	}

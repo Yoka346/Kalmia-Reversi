@@ -99,7 +99,7 @@ namespace reversi
 
 			uint64_t flipped = (coord != BoardCoordinate::PASS) ? this->_bitboard.calc_flipped_discs(coord) : 0ULL;
 			Move move(coord, flipped);
-			return update(move);
+			return update<false>(move);
 		}
 
 		void undo(Move& move)

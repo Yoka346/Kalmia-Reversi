@@ -40,8 +40,8 @@ namespace io
 		bool enabled_auto_flush = true;
 
 	public:
-		Logger(std::string& path) : ofs(path) { this->null_stream = new NullStream(); this->sub_os = dynamic_cast<std::ostream*>(this->null_stream); }
-		Logger(std::string& path, std::ostream* sub_stream) : ofs(path), sub_os(sub_stream) { this->null_stream = nullptr; }
+		Logger(const std::string& path) : ofs(path) { this->null_stream = new NullStream(); this->sub_os = dynamic_cast<std::ostream*>(this->null_stream); }
+		Logger(const std::string& path, std::ostream* sub_stream) : ofs(path), sub_os(sub_stream) { this->null_stream = nullptr; }
 		~Logger() { if (this->null_stream) delete this->null_stream; }
 		template<class T> Logger& operator <<(T t);
 		void flush() { this->ofs.flush(); this->sub_os->flush(); }

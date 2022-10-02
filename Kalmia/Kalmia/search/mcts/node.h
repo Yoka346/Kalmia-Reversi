@@ -25,6 +25,16 @@ namespace search::mcts
 		return (label & EdgeLabel::PROVED) ? static_cast<reversi::GameResult>(label ^ EdgeLabel::PROVED) : reversi::GameResult::NOT_OVER;
 	}
 
+	inline EdgeLabel game_result_to_edge_label(reversi::GameResult result)
+	{
+		return static_cast<EdgeLabel>(EdgeLabel::PROVED | static_cast<uint8_t>(result));
+	}
+
+	inline EdgeLabel to_opponent_edge_label(EdgeLabel label)
+	{
+		return game_result_to_edge_label(to_opponent_result(edge_label_to_game_result(label)));
+	}
+
 	/**
 	* @class
 	* @brief qƒm[ƒh‚ÖŠ‚é•Ó.
