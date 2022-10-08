@@ -106,8 +106,8 @@ namespace utils
 
 		DynamicArray(DynamicArray<ElementType>&& src) : _length(src._length), data(std::move(src.data)) { ; }
 
-		const ElementType* begin() const { return &this->data[0]; }
-		const ElementType* end() const { return this->data + this->_length; }
+		const ElementType* begin() const { return this->data.get(); }
+		const ElementType* end() const { return this->data.get() + this->_length; }
 
 		ElementType& operator[](size_t idx)
 		{
@@ -132,7 +132,8 @@ namespace utils
 		DynamicArray<ElementType>& operator=(DynamicArray<ElementType>&& right)
 		{
 			this->_length = right._length;
-			this->data.reset(std::move(right.data));
+			this->data.reset();
+			this->data = std::move(right.data);
 			return *this;
 		}
 

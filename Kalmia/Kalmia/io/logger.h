@@ -43,7 +43,16 @@ namespace io
 		Logger(const std::string& path) : ofs(path) { this->null_stream = new NullStream(); this->sub_os = dynamic_cast<std::ostream*>(this->null_stream); }
 		Logger(const std::string& path, std::ostream* sub_stream) : ofs(path), sub_os(sub_stream) { this->null_stream = nullptr; }
 		~Logger() { if (this->null_stream) delete this->null_stream; }
-		template<class T> Logger& operator <<(T t);
+
+		template<class T> Logger& operator <<(T t)
+		{
+			this->ofs << t;
+			(*this->sub_os) << t;
+			if (this->enabled_auto_flush)
+				flush();
+			return *this;
+		}
+
 		void flush() { this->ofs.flush(); this->sub_os->flush(); }
 		void enable_auto_flush() { this->enabled_auto_flush = true; }
 		void disable_auto_flush() { this->enabled_auto_flush = false; }

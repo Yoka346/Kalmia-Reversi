@@ -79,7 +79,7 @@ namespace search::mcts
 
 		auto child_idx = select_root_child_node();
 		if (this->root->edges[child_idx].is_proved())	// 勝敗が判明しているのであれば探索不要.
-			return;
+			return SearchEndStatus::PROVED;
 
 		this->_is_searching = true;
 		this->search_stop_flag = false;
@@ -234,7 +234,7 @@ namespace search::mcts
 			current_node->expand(game_info.position());
 
 		float reward;
-		if (current_node->edges[0].move == BoardCoordinate::PASS)
+		if (current_node->edges[0].move.coord == BoardCoordinate::PASS)
 		{
 			if constexpr (AFTER_PASS)	// パスが2回続いた -> 終局.
 			{
@@ -261,7 +261,7 @@ namespace search::mcts
 				node_mutex.unlock();
 
 				game_info.pass();
-				reward = visit_node<true>(game_info, current_node->child_nodes[0], current_node->edges[0]);
+				reward = visit_node<true>(game_info, current_node->child_nodes[0].get(), current_node->edges[0]);
 			}
 		}
 		else

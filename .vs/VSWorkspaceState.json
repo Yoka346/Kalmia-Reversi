@@ -11,6 +11,6 @@
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\reversi\\bitboard.h",
+  "SelectedNode": "\\Kalmia\\Kalmia\\engine\\kalmia.cpp",
   "PreviewInSolutionExplorer": false
 }

@@ -392,10 +392,7 @@ namespace protocol
 			gtp_failure(id, "invalid color.");
 			return;
 		}
-
-		BoardCoordinate move;
-		this->engine->generate_move(color, move);
-		gtp_success(id, coordinate_to_string(move));
+		gtp_success(id, coordinate_to_string(this->engine->generate_move(color)));
 	}
 
 	void GTP::exec_showboard_command(int id, istringstream& args)

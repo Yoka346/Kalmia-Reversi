@@ -36,10 +36,4 @@ namespace engine
 		this->position_history.pop_back();
 		return true;
 	}
-
-	void Engine::generate_move(DiscColor color, BoardCoordinate& move)
-	{
-		if (this->_position.side_to_move() != color)
-			this->_position.pass();
-	}
 }

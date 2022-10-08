@@ -37,8 +37,8 @@ namespace evaluation
 	void PositionFeature::init_update_callbacks()
 	{
 		using namespace placeholders;
-		this->update_callbacks[Player::FIRST] = bind(&PositionFeature::update_after_first_player_move, this, _1);
-		this->update_callbacks[Player::SECOND] = bind(&PositionFeature::update_after_second_player_move, this, _1);
+		this->update_callbacks[Player::FIRST] = [this](const Move& move) { update_after_first_player_move(move); };
+		this->update_callbacks[Player::SECOND] = [this](const Move& move) { update_after_second_player_move(move); };
 	}
 
 	void PositionFeature::update(const Move& move)

@@ -64,9 +64,9 @@ namespace engine
 		return *this;
 	}
 
-	EngineOption::operator int() const
+	EngineOption::operator int32_t() const
 	{
 		assert(_type == "check" || _type == "spin");
-		return (_type == "spin") ? stoi(this->_current_value) : this->_current_value == "true";
+		return (_type == "spin") ? stol(this->_current_value) : this->_current_value == "true";
 	}
 }

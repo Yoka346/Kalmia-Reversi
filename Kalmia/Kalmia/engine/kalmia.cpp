@@ -165,20 +165,30 @@ namespace engine
 		return this->search_task.wait_for(timeout_ms) == future_status::ready;
 	}
 
+	void Kalmia::quit()
+	{
+		if (this->tree.is_searching())
+		{
+			this->tree.send_stop_search_signal();
+			write_log("Kalmia recieved quit signal. Current calculation will be suspended.\n");
+		}
+		this->logger.flush();
+	}
+
 	BoardCoordinate Kalmia::generate_mid_game_move(reversi::DiscColor color)
 	{
 		// ToDo: 時間制御を実装する.
 		this->timer[color].start();
 		this->_is_thinking = true;
 
-		write_log("start search.\n");
+		write_log("Start search.\n");
 
 		this->search_task = this->tree.search_async(this->options["playout"]);
 		wait_for_search();
 
 		write_log(search_end_status_to_string(this->search_task.get()));
 		write_log("\n");
-		write_log("end search.\n");
+		write_log("End search.\n");
 
 		auto& search_info = this->tree.get_search_info();
 		write_log(search_info_to_string(search_info));
@@ -187,15 +197,15 @@ namespace engine
 		auto move_num = (SQUARE_NUM - 4) - this->_position.empty_square_count() + 1;
 		auto move_selector = 
 			(move_num <= this->options["stochastic_move_num"])
-			? select_move<MoveSelection::STOCHASTICALLY>
-			: select_move<MoveSelection::BEST>;
+			? &Kalmia::select_move<MoveSelection::STOCHASTICALLY>
+			: &Kalmia::select_move<MoveSelection::BEST>;
 		auto select_move = bind(move_selector, this, _1, _2);
 		bool extra_search_is_needed;
 		auto move = select_move(search_info, extra_search_is_needed);
 
 		if (extra_search_is_needed)
 		{
-			write_log("\nstart extra search.\n");
+			write_log("\nStart extra search.\n");
 			this->logger.flush();
 
 			this->search_task = this->tree.search_async(this->options["playout"]);
@@ -203,7 +213,7 @@ namespace engine
 
 			write_log(search_end_status_to_string(this->search_task.get()));
 			write_log("\n");
-			write_log("end extra search.\n");
+			write_log("End extra search.\n");
 
 			auto& new_search_info = this->tree.get_search_info();
 			move = select_move(new_search_info, extra_search_is_needed);
@@ -251,7 +261,7 @@ namespace engine
 
 		// 確率的選択のときのみ用いる変数.
 		double t_inv;
-		DynamicArray<double> exp_po_counts;
+		DynamicArray<double> exp_po_counts(0);
 		double exp_po_count_sum;
 
 		if constexpr (MOVE_SELECT == MoveSelection::STOCHASTICALLY)

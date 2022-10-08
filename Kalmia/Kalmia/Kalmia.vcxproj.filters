@@ -48,9 +48,6 @@
     <ClCompile Include="engine\random_mover.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="io\logger.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="engine\engine.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

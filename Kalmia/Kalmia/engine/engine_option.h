@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <string>
 #include <functional>
 
 namespace engine
@@ -59,7 +60,7 @@ namespace engine
 		// 代入演算子. これが呼び出されたタイミングでon_value_changedハンドラが呼び出される.
 		EngineOption& operator=(const std::string& value);
 
-		operator int32_t() const { std::stol(this->_current_value); }
+		operator int32_t() const;
 		const std::string& to_string() const { return this->_current_value; }
 	};
 }
