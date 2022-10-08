@@ -6,6 +6,8 @@
 #include "../../utils/math_functions.h"
 #include "../../utils/exception.h"
 
+//#define SINGLE_THREAD
+
 using namespace std;
 using namespace std::chrono;
 
@@ -15,6 +17,33 @@ using namespace evaluation;
 
 namespace search::mcts
 {
+	const SearchInfo& UCT::get_search_info()
+	{
+		auto& si = this->_search_info;
+		auto& root_eval = si.root_eval;
+		auto& child_evals = si.child_evals = DynamicArray<MoveEvaluation>(this->root->child_node_num);
+		GameInfo game_info(this->root_state, PositionFeature(this->root_state));
+
+		root_eval.effort = 1.0;
+		root_eval.playout_count = this->root->visit_count;
+		root_eval.expected_reward = this->root->expected_reward();
+		root_eval.game_result = edge_label_to_game_result(this->root_edge_label);
+
+		auto edges = this->root->edges.get();
+		for (auto i = 0; i < child_evals.length(); i++)
+		{
+			auto& child_eval = child_evals[i];
+			auto& edge = edges[i];
+			child_eval.effort = edge.visit_count / this->root->visit_count;
+			child_eval.playout_count = edge.visit_count;
+			child_eval.expected_reward = edge.expected_reward();
+			child_eval.game_result = edge_label_to_game_result(edge.label);
+			get_pv(this->root->child_nodes[i].get(), child_eval.pv);
+		}
+
+		return this->_search_info;
+	}
+
 	void UCT::set_root_state(const Position& pos)
 	{
 		this->root_state = pos;
@@ -42,7 +71,8 @@ namespace search::mcts
 		return false;
 	}
 
-	void UCT::search(uint32_t playout_num, int32_t time_limit_ms)
+#ifndef SINGLE_THREAD
+	SearchEndStatus UCT::search(uint32_t playout_num, int32_t time_limit_ms)
 	{
 		if (!this->root)
 			throw invalid_operation("Set root state before search.");
@@ -51,15 +81,17 @@ namespace search::mcts
 		if (this->root->edges[child_idx].is_proved())	// 勝敗が判明しているのであれば探索不要.
 			return;
 
-		this->_is_searching.store(true);
-		this->search_stop_flag.store(false);
+		this->_is_searching = true;
+		this->search_stop_flag = false;
 		this->pps_counter = 0;
 		vector<thread> search_threads;
-		this->search_start_time = high_resolution_clock::now();
 
-		auto thread_num = this->OPTIONS.thread_num;
+		auto thread_num = this->options.thread_num;
 		auto playout_num_per_thread = playout_num / thread_num;	// プレイアウト数をスレッド数で割って, 均等に各スレッドにタスクを割り当てる. 全てのスレッドがほぼ同時にタスクを終えることを想定しているが, 
-																// もしそうでなければ, スレッドの待機が発生して非効率かもしれない. ToDo: 各スレッドの処理時間が概ね均等かどうか調べる.
+			
+		this->search_start_time = high_resolution_clock::now();
+		future<SearchEndStatus> end_status = exec_search_stop_condition_checker(time_limit_ms);
+
 		for (int32_t i = 0; i < thread_num; i++)
 			search_threads.emplace_back(
 				thread(
@@ -72,17 +104,23 @@ namespace search::mcts
 		for (auto& thread : search_threads)	
 			thread.join();
 
-		GameInfo game_info(root_state, PositionFeature(root_state));
-		search_kernel(game_info, playout_num % thread_num, time_limit_ms);	// 余りはシングルスレッドで片づける. 高々 1以上(thread_num - 1)以下のプレイアウト数なので.
-
+		if (!this->search_stop_flag)
+		{
+			GameInfo game_info(root_state, PositionFeature(root_state));
+			search_kernel(game_info, playout_num % thread_num, time_limit_ms);	// 余りはシングルスレッドで片づける. 高々 1以上(thread_num - 1)以下のプレイアウト数なので.
+		}
+		
+		this->_is_searching = false;
+		end_status.wait();
 		this->search_end_time = high_resolution_clock::now();
-		this->_is_searching.store(false);
+
+		return end_status.get();
 	}
 
-#ifdef _DEBUG
+#else
 
 	// マルチスレッドだとエラーの発生場所の特定が難しいので, デバッグ用にシングルスレッドで探索する関数を用意している.
-	void UCT::search_on_single_thread(uint32_t playout_num, int32_t time_limit_ms)
+	SearchEndStatus UCT::search(uint32_t playout_num, int32_t time_limit_ms)
 	{
 		if (!this->root)
 			throw invalid_operation("Set root state before search.");
@@ -91,16 +129,20 @@ namespace search::mcts
 		if (this->root->edges[child_idx].is_proved())	// 勝敗が判明しているのであれば探索不要.
 			return;
 
-		this->search_stop_flag.store(false);
+		this->_is_searching = true;
+		this->search_stop_flag = false;
 		this->pps_counter = 0;
-		this->_is_searching.store(true);
 		this->search_start_time = high_resolution_clock::now();
+		future<SearchEndStatus> res = exec_search_stop_condition_checker(time_limit_ms);
 
 		GameInfo game_info(root_state, PositionFeature(root_state));
-		search_kernel(game_info, playout_num, time_limit_ms);	
+		search_kernel(game_info, playout_num, time_limit_ms);
 
+		this->_is_searching = false;
+		res.wait();
 		this->search_end_time = high_resolution_clock::now();
-		this->_is_searching.store(false);
+
+		return res.get();
 	}
 
 #endif
@@ -155,16 +197,7 @@ namespace search::mcts
 
 	void UCT::search_kernel(GameInfo& game_info, uint32_t playout_num, int32_t time_limit_ms)
 	{
-		auto stop =
-		[&, this]
-		{
-			return search_stop_flag.load()
-				|| this->search_ellapsed_ms() >= time_limit_ms
-				|| root_edge_label & EdgeLabel::PROVED
-				|| Node::object_count() >= OPTIONS.node_num_limit;
-		};
-
-		for (uint32_t i = 0; i < playout_num && !stop(); i++)
+		for (uint32_t i = 0; i < playout_num && !this->search_stop_flag; i++)
 		{
 			auto gi = game_info;	// ルートのゲームの情報をコピー. MCTSでは, 末端ノードに達したら一気にルートに戻るので, undoするよりもコピーのほうが速い.
 			visit_root_node(gi);
@@ -432,30 +465,66 @@ namespace search::mcts
 			get_pv(root->child_nodes[idx].get(), pv);
 	}
 
-	void UCT::collect_search_result()
+	future<SearchEndStatus> UCT::exec_search_stop_condition_checker(int32_t time_limit_ms)
 	{
-		auto& si = this->_search_info;
-		auto& root_eval = si.root_eval;
-		auto& child_evals = si.child_evals = DynamicArray<MoveEvaluation>(this->root->child_node_num);
-		GameInfo game_info(this->root_state, PositionFeature(this->root_state));
+		return async([&, this]()
+			  {
+				  while (_is_searching)
+				  {
+					  if (root_edge_label & EdgeLabel::PROVED)
+					  {
+						  send_stop_search_signal();
+						  return SearchEndStatus::PROVED;
+					  }
 
-		root_eval.effort = 1.0;
-		root_eval.playout_count = this->root->visit_count;
-		root_eval.expected_reward = this->root->expected_reward();
-		root_eval.game_result = edge_label_to_game_result(this->root_edge_label);
+					  if (search_stop_flag)
+						  return SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL;
+
+					  if (search_ellapsed_ms() >= time_limit_ms)
+					  {
+						  send_stop_search_signal();
+						  return SearchEndStatus::TIMEOUT;
+					  }
+
+					  if (Node::object_count() >= options.node_num_limit)
+					  {
+						  send_stop_search_signal();
+						  return SearchEndStatus::SUSPENDED_DUE_TO_OVER_NODES;
+					  }
+
+					  if (can_do_early_stopping(time_limit_ms))
+					  {
+						  send_stop_search_signal();
+						  return SearchEndStatus::EARLY_STOPPING;
+					  }
+
+					  this_thread::sleep_for(milliseconds(10));
+				  }
+				  return SearchEndStatus::COMPLETE;
+			  });
+	}
+
+	bool UCT::can_do_early_stopping(int32_t time_limit_ms)
+	{
+		if (search_ellapsed_ms() < time_limit_ms * 0.1)	// 最低でも制限時間の10%は探索に費やす.
+			return false;
 
 		auto edges = this->root->edges.get();
-		for (auto i = 0; i < child_evals.length(); i++)
+		uint32_t first_po_count = 0;
+		uint32_t second_po_count = 0;
+		for (auto i = 0; i < this->root->child_node_num; i++)
 		{
-			auto& child_eval = child_evals[i];
 			auto& edge = edges[i];
-			child_eval.effort = edge.visit_count / this->root->visit_count;
-			child_eval.playout_count = edge.visit_count;
-			child_eval.expected_reward = edge.expected_reward();
-			child_eval.game_result = edge_label_to_game_result(edge.label);
-			get_pv(this->root->child_nodes[i].get(), child_eval.pv);
+			if (edge.visit_count > first_po_count)
+			{
+				second_po_count = first_po_count;
+				first_po_count = edge.visit_count;
+			}
+			else if (edge.visit_count > second_po_count)
+				second_po_count = edge.visit_count;
 		}
 
-		sort(child_evals.begin(), child_evals.end(), [](MoveEvaluation& x, MoveEvaluation& y) { x.playout_count > y.playout_count; });
+		// 仮に残りのプレイアウトを全て次善手に費やしたとしても, 最善手のプレイアウト回数を超えることがない場合, これ以上の探索は無意味.
+		return (first_po_count - second_po_count) > pps() * (time_limit_ms - search_ellapsed_ms()) * 1.0e-3;
 	}
 }

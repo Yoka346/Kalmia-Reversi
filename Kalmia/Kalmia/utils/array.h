@@ -132,7 +132,7 @@ namespace utils
 		DynamicArray<ElementType>& operator=(DynamicArray<ElementType>&& right)
 		{
 			this->_length = right._length;
-			this->data = std::move(right.data);
+			this->data.reset(std::move(right.data));
 			return *this;
 		}
 

@@ -6,7 +6,7 @@ namespace engine
 {
 	class EngineOption;
 
-	using EventHandler = std::function<void(const EngineOption&, std::string&)>;
+	using EventHandler = std::function<void(EngineOption&, std::string&)>;
 	using EngineOptions = std::vector<std::pair<std::string, EngineOption>>;
 
 	std::string engine_options_to_string(EngineOptions options);
@@ -20,7 +20,7 @@ namespace engine
 	{
 
 	private:
-		inline static const EventHandler NULL_HANDLER = [](const EngineOption& sender, std::string& err_msg) {};
+		inline static const EventHandler NULL_HANDLER = [](EngineOption& sender, std::string& err_msg) {};
 
 		// オプションのデフォルト値.
 		std::string _default_value;
@@ -59,7 +59,7 @@ namespace engine
 		// 代入演算子. これが呼び出されたタイミングでon_value_changedハンドラが呼び出される.
 		EngineOption& operator=(const std::string& value);
 
-		operator int() const;
+		operator int32_t() const { std::stol(this->_current_value); }
 		const std::string& to_string() const { return this->_current_value; }
 	};
 }

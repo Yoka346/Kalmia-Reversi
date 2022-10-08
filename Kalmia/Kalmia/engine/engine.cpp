@@ -41,6 +41,5 @@ namespace engine
 	{
 		if (this->_position.side_to_move() != color)
 			this->_position.pass();
-		// ToDo: ‚±‚±‚©‚ç
 	}
 }

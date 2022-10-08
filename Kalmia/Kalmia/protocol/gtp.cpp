@@ -254,8 +254,7 @@ namespace protocol
 			return;
 		}
 
-		BoardCoordinate move;
-		this->engine->generate_move(color, move);
+		auto move = this->engine->generate_move(color);
 		this->engine->update_position(color, move);
 		gtp_success(id, coordinate_to_string(move));
 	}

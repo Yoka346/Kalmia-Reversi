@@ -14,17 +14,18 @@ namespace engine
 		Random rand;
 		std::map<std::string, EngineOption> options;
 
+		void init_options();
+
 		// event handlers
-		void on_rand_seed_change(const EngineOption& sender, string& err_msg) { this->rand = Random(sender); }
+		void on_rand_seed_change(EngineOption& sender, string& err_msg) { this->rand = Random(sender); }
 
 	public:
 		RandomMover() : Engine(NAME, VERSION), rand(), options() { init_options(); }
 		RandomMover(uint64_t rand_seed) : Engine(NAME, VERSION), rand(rand_seed), options() { init_options(); }
-		void init_options();
-		bool set_option(const std::string& name, const std::string& value, std::string& err_msg);
-		void get_options(EngineOptions& options);
-		void generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move);
-		bool stop_thinking(std::chrono::milliseconds timeout_ms);
-		void quit() {}
+		bool set_option(const std::string& name, const std::string& value, std::string& err_msg) override;
+		void get_options(EngineOptions& options) override;
+		reversi::BoardCoordinate generate_move(reversi::DiscColor color) override;
+		bool stop_thinking(std::chrono::milliseconds timeout_ms) override;
+		void quit() override { }
 	};
 }

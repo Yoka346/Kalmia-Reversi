@@ -12,6 +12,12 @@
 
 namespace engine
 {
+	enum class MoveSelection
+	{
+		STOCHASTICALLY,
+		BEST
+	};
+
 	class Kalmia : public Engine
 	{
 	private:
@@ -22,29 +28,40 @@ namespace engine
 
 		search::mcts::UCT tree;
 		utils::Random rand;
-		std::future<void> think_task;
+		std::future<search::mcts::SearchEndStatus> search_task;
 		io::Logger logger;
 
-		double softmax_temperture = 0.0;
+		double softmax_temperature = 1.0;
 
-		bool think_task_is_completed();
+		bool search_task_is_completed();
 		void stop_pondering();
 		void write_log(const std::string& str);
-		void get_search_info_string(std::string& str);
+		std::string search_info_to_string(const search::mcts::SearchInfo& search_info);
+
+		reversi::BoardCoordinate generate_mid_game_move(reversi::DiscColor color);
+		void wait_for_search();
+		template <MoveSelection MOVE_SELECT>
+		reversi::BoardCoordinate select_move(const search::mcts::SearchInfo& search_info, bool& extra_search_is_need);
 
 		// event handlers
-		void on_softmax_temperture_changed(const EngineOption& sender, std::string& err_message);
+		void on_thread_num_changed(EngineOption& sender, std::string& err_message);
+		void on_node_num_limit_changed(EngineOption& sender, std::string& err_message);
+		void on_softmax_temperature_changed(EngineOption& sender, std::string& err_message);
 
 	public:
-		Kalmia(search::mcts::UCTOptions tree_options, const std::string& log_file_path);
-		Kalmia(search::mcts::UCTOptions tree_options, const std::string& log_file_path, std::ostream* log_out);
+		Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path);
+		Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path, std::ostream* log_out);
+
 		void init_options(); 
-		bool set_option(const std::string& name, const std::string& value, std::string& err_msg);
-		void get_options(EngineOptions& options);
-		bool update_position(reversi::DiscColor color, reversi::BoardCoordinate move);
-		bool undo_position();
-		void generate_move(reversi::DiscColor color, reversi::BoardCoordinate& move);
-		bool stop_thinking(std::chrono::milliseconds timeout_ms);
-		void quit();
+		bool set_option(const std::string& name, const std::string& value, std::string& err_msg) override;
+		void get_options(EngineOptions& options) override;
+		bool update_position(reversi::DiscColor color, reversi::BoardCoordinate move) override;
+		bool undo_position() override;
+	    reversi::BoardCoordinate generate_move(reversi::DiscColor color) override;
+		bool stop_thinking(std::chrono::milliseconds timeout_ms) override;
+		void quit() override;
 	};
+
+	template reversi::BoardCoordinate Kalmia::select_move<MoveSelection::STOCHASTICALLY>(const search::mcts::SearchInfo&, bool&);
+	template reversi::BoardCoordinate Kalmia::select_move<MoveSelection::BEST>(const search::mcts::SearchInfo&, bool&);
 }

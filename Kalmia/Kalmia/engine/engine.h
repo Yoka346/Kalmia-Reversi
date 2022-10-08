@@ -1,15 +1,22 @@
 #pragma once
+
+#include <vector>
+#include <tuple>
+#include <functional>
+#include <future>
+
 #include "../utils//game_timer.h"
 #include "../reversi/types.h"
 #include "../reversi/move.h"
 #include "../reversi/position.h"
 #include "engine_option.h"
-#include <vector>
-#include <tuple>
-#include <functional>
 
 namespace engine
 {
+	/**
+	* @class
+	* @brief vlƒGƒ“ƒWƒ“‚ªŒp³‚·‚é’ŠÛƒNƒ‰ƒX.
+	**/
 	class Engine
 	{
 	protected:
@@ -103,11 +110,11 @@ namespace engine
 		* @fn
 		* @brief Å‘Pè‚ğ¶¬‚·‚é.
 		* @param (side_to_move) è”Ô.
-		* @param (move) ¶¬‚³‚ê‚½’…è‚ÌŠi”[æ.
-		* @note ‚±‚ÌŠÖ”‚Ístop_thinkingŠÖ”‚ªŒÄ‚Î‚ê‚½Û‚É’¼‚¿‚ÉI—¹‚µ, b’è‚ÌÅ‘Pè‚ğmove‚ÉŠi”[‚µ‚È‚¯‚ê‚Î‚È‚ç‚È‚¢.
+		* @return Å‘Pè
+		* @note ‚±‚ÌŠÖ”‚Ístop_thinkingŠÖ”‚ªŒÄ‚Î‚ê‚½Û‚É’¼‚¿‚ÉI—¹‚µ, b’è‚ÌÅ‘Pè‚ğ•Ô‚³‚È‚¯‚ê‚Î‚È‚ç‚È‚¢.
 		* ‚Ü‚½, vl’†‚Í_is_thinking‚ğtrue‚É, vlI—¹‚ğfalse‚É‚µ‚È‚¯‚ê‚Î‚È‚ç‚È‚¢.
 		**/
-		virtual void generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move) = 0;
+		virtual reversi::BoardCoordinate generate_move(reversi::DiscColor color) = 0;
 
 		/**
 		* @fn

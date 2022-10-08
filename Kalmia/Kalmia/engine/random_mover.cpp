@@ -1,9 +1,11 @@
 #include "random_mover.h"
+
+#include <future>
+
 #include "../utils/array.h"
 #include "../reversi/constant.h"
 #include "../reversi/types.h"
 #include "../reversi/move.h"
-#include <functional>
 
 using namespace std;
 using namespace utils;
@@ -38,15 +40,20 @@ namespace engine
 
 	void quit() {}
 
-	void RandomMover::generate_move(reversi::DiscColor side_to_move, reversi::BoardCoordinate& move)
+	BoardCoordinate RandomMover::generate_move(reversi::DiscColor color)
 	{
-		if (this->_position.side_to_move() != side_to_move)
+		this->timer[color].start();
+		this->_is_thinking = true;
+		if (this->_position.side_to_move() != color)
 			this->_position.pass();
 
 		Array<Move, MAX_MOVE_NUM> moves;
 		auto num = this->_position.get_next_moves(moves);
 		auto idx = this->rand.next(num);
-		move = num ? moves[idx].coord : BoardCoordinate::PASS;
+		auto move = num ? moves[idx].coord : BoardCoordinate::PASS;
+		this->timer[color].stop();
+		this->_is_thinking = false;
+		return move;
 	}
 
 	// ’…èŒˆ’è‚Íˆêu‚ÅI‚í‚é‚Ì‚Å“Á‚É‚â‚é‚±‚Æ‚Í‚È‚¢.
