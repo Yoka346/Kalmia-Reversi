@@ -26,7 +26,7 @@ namespace protocol
 		std::ofstream logger;
 
 		void gtp_success(int id, const std::string& msg);
-		 void gtp_success(int id) { std::string empty = "";  gtp_success(id, empty); }
+		void gtp_success(int id) { std::string empty = "";  gtp_success(id, empty); }
 		void gtp_failure(int id, const std::string& msg);
 		CommandHandler to_handler(void (GTP::*exec_cmd)(int, std::istringstream&));
 

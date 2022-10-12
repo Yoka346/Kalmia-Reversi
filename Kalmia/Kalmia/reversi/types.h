@@ -76,7 +76,7 @@ namespace reversi
 		return static_cast<Player>(player ^ Player::SECOND);
 	}
 
-	enum class GameResult : int8_t
+	enum GameResult : int8_t
 	{
 		WIN = 0,
 		LOSS = 1,
@@ -85,5 +85,5 @@ namespace reversi
 	};
 
 	constexpr GameResult TO_OPPONENT_GAME_RESULT[3] = {GameResult::LOSS, GameResult::WIN, GameResult::LOSS};
-	constexpr GameResult to_opponent_result(GameResult result) { return  TO_OPPONENT_GAME_RESULT[static_cast<size_t>(result)]; }
+	constexpr GameResult to_opponent_game_result(GameResult result) { return  TO_OPPONENT_GAME_RESULT[static_cast<size_t>(result)]; }
 }

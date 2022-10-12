@@ -32,7 +32,7 @@ namespace search::mcts
 
 	inline EdgeLabel to_opponent_edge_label(EdgeLabel label)
 	{
-		return game_result_to_edge_label(to_opponent_result(edge_label_to_game_result(label)));
+		return game_result_to_edge_label(to_opponent_game_result(edge_label_to_game_result(label)));
 	}
 
 	/**
@@ -48,7 +48,7 @@ namespace search::mcts
 
 		std::atomic<uint32_t> visit_count;
 
-		// •ñV‚Ì‘˜a(‚±‚±‚Å‚¢‚¤•ñV‚Æ‚Í‰¿’lŠÖ”‚Ìo—Í‚Ì—İÏ’l).
+		// •ñV‚Ì‘˜a(‚±‚±‚Å‚¢‚¤•ñV‚Æ‚Í‰¿’lŠÖ”‚Ìo—Í).
 		std::atomic<double> reward_sum;
 		EdgeLabel label;
 
@@ -81,7 +81,7 @@ namespace search::mcts
 		static uint64_t object_count() { return _object_count; }
 
 		double expected_reward();
-		bool is_expanded() { return !this->edges; }
+		bool is_expanded() { return this->edges.get(); }
 		Node* create_child_node(int32_t idx) { return (this->child_nodes[idx] = std::make_unique<Node>()).get(); }
 		void init_child_nodes() { this->child_nodes = std::make_unique<std::unique_ptr<Node>[]>(this->child_node_num); }
 

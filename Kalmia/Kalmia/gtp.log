@@ -1,0 +1,24 @@
+Input: genmove b
+Status: success
+Output: E6
+
+Input: genmove w
+Status: success
+Output: F6
+
+Input: genmove b
+Status: success
+Output: F5
+
+Input: genmove w
+Status: success
+Output: D6
+
+Input: clear_board
+Status: success
+Output: 
+
+Input: quit
+Status: success
+Output: 
+

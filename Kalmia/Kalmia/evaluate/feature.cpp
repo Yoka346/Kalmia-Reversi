@@ -8,7 +8,7 @@ using namespace reversi;
 
 namespace evaluation
 {
-	PositionFeature::PositionFeature(Position& pos) : _features(), features(_features.t_splitted.features), _side_to_move(Player::FIRST), update_callbacks()
+	PositionFeature::PositionFeature(const Position& pos) : _features(), features(_features.t_splitted.features), _side_to_move(Player::FIRST), update_callbacks()
 	{
 		init_features(pos);
 		init_update_callbacks();
@@ -17,10 +17,12 @@ namespace evaluation
 	PositionFeature::PositionFeature(const PositionFeature& src) : _features(), features(_features.t_splitted.features), _side_to_move(src._side_to_move), update_callbacks()
 	{
 		this->_features = src._features;
+		this->_side_to_move = src._side_to_move;
+		this->_empty_square_count = src._empty_square_count;
 		init_update_callbacks();
 	}
 
-	void PositionFeature::init_features(Position& pos)
+	void PositionFeature::init_features(const Position& pos)
 	{
 		auto& features = this->_features.t_splitted.features;
 		for (int32_t i = 0; i < features.length(); i++)

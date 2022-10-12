@@ -1,3 +1,5 @@
+#ifdef _DEBUG
+
 #include "mobility_test.h"
 #include "test_common.h"
 #include "../reversi/mobility.h"
@@ -44,3 +46,5 @@ void test::calc_mobility_test()
 		assert(expected == actual);
 	}
 }
+
+#endif

@@ -44,7 +44,9 @@ namespace search::mcts
 		// Principal Variation(最善応手列).
 		std::vector<reversi::BoardCoordinate> pv;
 
-		MoveEvaluation() { ; }
+		MoveEvaluation() 
+			: move(reversi::BoardCoordinate::NULL_COORD), effort(0.0), playout_count(0u), 
+			expected_reward(0.0), game_result(reversi::GameResult::NOT_OVER), pv() { ; }
 	};
 
 	struct SearchInfo
@@ -65,7 +67,7 @@ namespace search::mcts
 		PROVED,		// 勝敗が確定した.
 		TIMEOUT,	// 制限時間を迎えたため探索を終了した.
 		SUSPENDED_BY_STOP_SIGNAL,	// UCT::send_stop_search_signal関数によって探索が中断された.
-		SUSPENDED_DUE_TO_OVER_NODES,	// ノード数が規定値をオーバーしたため探索が中断された.
+		OVER_NODES,	// ノード数が規定値をオーバーしたため探索が中断された.
 		EARLY_STOPPING		// 探索が早期終了の条件を満たしたため終了した.
 	};
 
@@ -84,7 +86,7 @@ namespace search::mcts
 		/**
 		* @fn
 		* @brief 盤面をキーとして, プールからmutexを取得する.
-		* @detail 極々稀にキーが衝突するが, 無駄なロックが発生するだけなので特に問題はない. むしろ衝突回避の処理を挟む方が高コスト.
+		* @detail 極稀にキーが衝突するが, 無駄なロックが発生するだけなので特に問題はない. 
 		**/
 		std::mutex& get(const reversi::Position& pos)
 		{
@@ -96,7 +98,7 @@ namespace search::mcts
 	/**
 	* @class
 	* @brief UCT(Upper Confidence Tree, 信頼上限木)を表すクラス.
-	* @detail UCTはルートノードを持ち, そのルートノードから木が展開されている. 探索に関わる処理は全てのこのクラスのメンバ関数として実装されている.
+	* @detail UCTはルートノードを持ち, そのルートノードから木が展開されていく. 探索に関わる処理は全てのこのクラスのメンバ関数として実装されている.
 	**/
 	class UCT
 	{
@@ -116,7 +118,7 @@ namespace search::mcts
 		// 複数スレッドで探索する際に, 特定のノードに探索が集中しないようにするために探索中のノードに与える一時的なペナルティ.
 		static constexpr int32_t VIRTUAL_LOSS = 3;
 
-		static constexpr Array<double, 3> EDGE_LABEL_TO_REWARD = { 1.0, 0.0, 0.5 };
+		static constexpr Array<double, 3> GAME_RESULT_TO_REWARD = { 1.0, 0.0, 0.5 };
 
 		evaluation::ValueFunction<evaluation::ValueRepresentation::WIN_RATE> value_func;
 
@@ -134,8 +136,8 @@ namespace search::mcts
 		std::chrono::steady_clock::time_point search_start_time;
 		std::chrono::steady_clock::time_point search_end_time;
 		bool early_stopping_is_enabled = true;
-		bool search_stop_flag = true;
-		bool _is_searching = false;
+		std::atomic<bool> search_stop_flag = true;
+		std::atomic<bool> _is_searching = false;
 
 		void init_root_child_nodes();
 
@@ -143,7 +145,7 @@ namespace search::mcts
 		* @fn
 		* @detail 探索ワーカー. 探索スレッド数だけ並列にこの関数が実行される.
 		**/
-		void search_kernel(GameInfo& game_info, uint32_t playout_num, int32_t time_limit_ms);
+		void search_kernel(GameInfo& game_info, uint32_t playout_num);
 
 		void visit_root_node(GameInfo& game_info);
 
@@ -153,10 +155,10 @@ namespace search::mcts
 		int32_t select_root_child_node();
 		int32_t select_child_node(Node* parent, Edge& edge_to_parent);
 
-		float predict_reward(GameInfo& game_info)
+		double predict_reward(GameInfo& game_info)
 		{
 			this->pps_counter++;
-			return 1.0f - this->value_func.predict(game_info.feature());
+			return 1.0 - this->value_func.predict(game_info.feature());
 		}
 
 		/**
@@ -167,8 +169,8 @@ namespace search::mcts
 		{
 			if constexpr (VIRTUAL_LOSS != 1)
 			{
-				node->visit_count += 1 - VIRTUAL_LOSS;
-				edge.visit_count += 1 - VIRTUAL_LOSS;
+				node->visit_count -= VIRTUAL_LOSS - 1;
+				edge.visit_count -= VIRTUAL_LOSS - 1;
 			}
 			edge.reward_sum += reward;
 		}
@@ -179,12 +181,7 @@ namespace search::mcts
 			edge.visit_count += VIRTUAL_LOSS;
 		}
 
-		/**
-		* @fn
-		* @brief 探索の終了条件を満たしているかどうかを定期的に確認するスレッドを立ち上げる.
-		* @detail 探索の終了条件とは, 時間制限, ノード数制限, 勝敗が確定しているかどうか, 早期終了が可能かどうかの4つ.
-		**/
-		std::future<SearchEndStatus> exec_search_stop_condition_checker(int32_t time_limit_ms);
+		bool can_stop_search(int32_t time_limit_ms, SearchEndStatus& end_status);
 
 		bool can_do_early_stopping(int32_t time_limit_ms);
 
@@ -204,16 +201,18 @@ namespace search::mcts
 		UCTOptions options;
 
 		UCT(const std::string& value_func_param_file_path) : UCT(UCTOptions(), value_func_param_file_path) { ; }
-		UCT(const UCTOptions& options, const std::string& value_func_param_file_path) : options(options), value_func(value_func_param_file_path), mutex_pool(), node_gc(), pps_counter(0) { ; }
+		UCT(const UCTOptions& options, const std::string& value_func_param_file_path) 
+			: options(options), value_func(value_func_param_file_path), mutex_pool(), node_gc(), 
+			pps_counter(0), root_edge_label(EdgeLabel::NOT_PROVED) { ; }
 
 		bool is_searching() { return this->_is_searching; }
-
+		
 		uint64_t search_ellapsed_ms() 
 		{ 
 			using namespace std::chrono;
 			if (this->_is_searching)
 				return duration_cast<milliseconds>(high_resolution_clock::now() - this->search_start_time).count();
-			return duration_cast<milliseconds>(high_resolution_clock::now() - this->search_end_time).count();
+			return duration_cast<milliseconds>(this->search_end_time - this->search_start_time).count();
 		}
 
 		double pps() { return this->pps_counter / (this->search_ellapsed_ms() * 1.0e-3); }
@@ -233,18 +232,28 @@ namespace search::mcts
 
 		/**
 		* @fn
-		* @brief 探索を行う. 制限時間はINT32_MAX[ms](約24.8日)
+		* @brief 探索を行う. 制限時間はINT32_MAX[cs](約248日)
 		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
 		**/
 		SearchEndStatus search(uint32_t playout_num) { search(playout_num, INT32_MAX); }
-		SearchEndStatus search(uint32_t playout_num, int32_t time_limit_ms);
+
+		/**
+		* @fn
+		* @brief 探索を行う. 
+		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
+		* @param (time_limit_cs) 制限時間. 単位はcs(centi second).
+		**/
+		SearchEndStatus search(uint32_t playout_num, int32_t time_limit_cs);
 
 		/**
 		* @fn
 		* @brief 呼び出し側とは別のスレッドで探索を行う.
 		**/
-		std::future<SearchEndStatus> search_async(uint32_t playout_num) { return search_async(playout_num, INT32_MAX); }
-		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_ms) { return std::async([&]() { return search(playout_num, time_limit_ms); }); }
+		std::future<SearchEndStatus> search_async(uint32_t playout_num) 
+		{ 
+			return search_async(playout_num, INT32_MAX); 
+		}
+		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs) { return std::async([=]() { return search(playout_num, time_limit_cs); }); }
 		void send_stop_search_signal() { if (this->_is_searching) this->search_stop_flag = true; }
 	};
 

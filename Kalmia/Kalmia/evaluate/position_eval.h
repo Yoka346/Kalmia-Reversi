@@ -166,6 +166,7 @@ namespace evaluation
 
 			if constexpr (VALUE_REPS == ValueRepresentation::WIN_RATE)
 				v = utils::std_sigmoid(v);
+
 			return v;
 		}
 	};

@@ -306,11 +306,11 @@ namespace evaluation
     public:
         const utils::ReadonlyArray<uint16_t, ALL_PATTERN_NUM> features;
 
-        PositionFeature(reversi::Position& pos);
+        PositionFeature(const reversi::Position& pos);
         PositionFeature(const PositionFeature& src);
         reversi::Player side_to_move() const { return this->_side_to_move; }
         int32_t empty_square_count() const { return this->_empty_square_count; }
-        void init_features(reversi::Position& pos);
+        void init_features(const reversi::Position& pos);
         void update(const reversi::Move& move); 
         void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);

@@ -17,7 +17,7 @@ namespace search
 		evaluation::PositionFeature _feature;
 
 	public:
-		GameInfo(const reversi::Position& pos, const evaluation::PositionFeature feature) :_position(pos), _feature(feature) { ; }
+		GameInfo(const reversi::Position& pos, const evaluation::PositionFeature& feature) :_position(pos), _feature(feature) { ; }
 
 		const reversi::Position& position() { return this->_position; }
 		const evaluation::PositionFeature& feature() { return this->_feature; }

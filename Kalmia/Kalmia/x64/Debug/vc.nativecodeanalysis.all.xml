@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?><DEFECTS><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\reversi\</FILEPATH>
+      <FILENAME>position.h</FILENAME>
+      <LINE>158</LINE>
+      <COLUMN>41</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '+' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '+' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>reversi::Position::calc_hash_code::&lt;lambda_1&gt;::()</FUNCTION>
+    <DECORATED>??R&lt;lambda_1&gt;@?1??calc_hash_code@Position@reversi@@QEBA_KXZ@QEBA@H@Z</DECORATED>
+    <FUNCLINE>156</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\reversi\</FILEPATH>
+      <FILENAME>position.h</FILENAME>
+      <LINE>158</LINE>
+      <COLUMN>23</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '*' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '*' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>reversi::Position::calc_hash_code::&lt;lambda_1&gt;::()</FUNCTION>
+    <DECORATED>??R&lt;lambda_1&gt;@?1??calc_hash_code@Position@reversi@@QEBA_KXZ@QEBA@H@Z</DECORATED>
+    <FUNCLINE>156</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\reversi\</FILEPATH>
+      <FILENAME>position.h</FILENAME>
+      <LINE>159</LINE>
+      <COLUMN>47</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '+' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '+' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>reversi::Position::calc_hash_code::&lt;lambda_1&gt;::()</FUNCTION>
+    <DECORATED>??R&lt;lambda_1&gt;@?1??calc_hash_code@Position@reversi@@QEBA_KXZ@QEBA@H@Z</DECORATED>
+    <FUNCLINE>156</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\reversi\</FILEPATH>
+      <FILENAME>position.h</FILENAME>
+      <LINE>159</LINE>
+      <COLUMN>29</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '*' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '*' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>reversi::Position::calc_hash_code::&lt;lambda_1&gt;::()</FUNCTION>
+    <DECORATED>??R&lt;lambda_1&gt;@?1??calc_hash_code@Position@reversi@@QEBA_KXZ@QEBA@H@Z</DECORATED>
+    <FUNCLINE>156</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\reversi\</FILEPATH>
+      <FILENAME>position.h</FILENAME>
+      <LINE>159</LINE>
+      <COLUMN>24</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '+' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '+' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>reversi::Position::calc_hash_code::&lt;lambda_1&gt;::()</FUNCTION>
+    <DECORATED>??R&lt;lambda_1&gt;@?1??calc_hash_code@Position@reversi@@QEBA_KXZ@QEBA@H@Z</DECORATED>
+    <FUNCLINE>156</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\reversi\</FILEPATH>
+      <FILENAME>position.h</FILENAME>
+      <LINE>153</LINE>
+      <COLUMN>43</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '+' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '+' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>reversi::Position::calc_hash_code</FUNCTION>
+    <DECORATED>?calc_hash_code@Position@reversi@@QEBA_KXZ</DECORATED>
+    <FUNCLINE>149</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\</FILEPATH>
+      <FILENAME>feature.h</FILENAME>
+      <LINE>157</LINE>
+      <COLUMN>47</COLUMN>
+    </SFA>
+    <DEFECTCODE>26451</DEFECTCODE>
+    <DESCRIPTION>演算のオーバーフロー: 4 バイトの値に演算子 '-' を使用し、結果を 8 バイトの値にキャストしています。オーバーフローを避けるため、演算子 '-' を呼び出す前に値を幅の広い型にキャストしてください (io.2)。</DESCRIPTION>
+    <FUNCTION>evaluation::mirror_feature</FUNCTION>
+    <DECORATED>?mirror_feature@evaluation@@YAGGH@Z</DECORATED>
+    <FUNCLINE>153</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT></DEFECTS>

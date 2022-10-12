@@ -7,6 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kalmia", "Kalmia\Kalmia.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KalmiaTest", "KalmiaTest\KalmiaTest.csproj", "{69FDF842-0D97-4D8F-A12D-832814C996CA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{1E61E33F-5AE4-4524-986A-1FC3D5F3691D}"
+	ProjectSection(SolutionItems) = preProject
+		Graph1.dgml = Graph1.dgml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -51,34 +51,12 @@ namespace Kalmia
 #if DEVELOP
         static void DevTest()
         {
-            const int SAMPLE_NUM = 1000;
-            const string IN_PATH = "kalmia_value_func.dat";
-            const string OUT_PATH = "value_func_predict_test_data.csv";
-
-            Span<Reversi.BoardPosition> moves = stackalloc Reversi.BoardPosition[48];
-            var valueFunc = new ValueFunction(IN_PATH);
-            //using var sw = new StreamWriter(OUT_PATH);
-            //sw.WriteLine("player,opponent,move,v0,v1");
-            //for (var i = 0; i < SAMPLE_NUM; i++)
-            //{
-            //    ulong p, o;
-            //    do
-            //    {
-            //        p = (ulong)Random.Shared.NextInt64();
-            //        o = (ulong)Random.Shared.NextInt64();
-            //        p ^= p & o;
-            //    } while (BitManipulations.PopCount(p | o) >= 63);
-            //    var board = new Reversi.FastBoard(Reversi.DiscColor.Black, new Reversi.Bitboard(p, o));
-            //    var bf = new BoardFeature(board);
-            //    var v0 = valueFunc.F(bf);
-
-            //    var num = board.GetNextPositionCandidates(moves);
-            //    var move = moves[Random.Shared.Next(num)];
-            //    var flipped = board.Update(move);
-            //    bf.Update(move, flipped);
-            //    var v1 = valueFunc.F(bf);
-            //    sw.WriteLine($"{p},{o},{(int)move},{v0},{v1}");
-            //}
+            KalmiaConfig config = new KalmiaConfig();
+            config.PlayoutCount = 32000;
+            config.ValueFuncParamFile = @"kalmia_value_func.dat";
+            GTP.Mainloop(new KalmiaEngine(config,
+                         CreateFilePath(KALMIA_LOG_DIR_PATH, KALMIA_LOG_FILE_NAME)),
+                         CreateFilePath(GTP_LOG_DIR_PATH, GTP_LOG_FILE_NAME));
         }
 #endif
 

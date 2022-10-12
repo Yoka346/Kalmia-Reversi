@@ -25,7 +25,7 @@ namespace engine
 		case SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL:
 			return "suspended.";
 
-		case SearchEndStatus::SUSPENDED_DUE_TO_OVER_NODES:
+		case SearchEndStatus::OVER_NODES:
 			return "over nodes.";
 		}
 		return "early stopping.";
@@ -35,12 +35,14 @@ namespace engine
 		: Engine(NAME, VERSION), tree(value_func_param_file_path), logger(log_file_path)
 	{
 		init_options();
+		this->tree.set_root_state(this->_position);
 	}
 
 	Kalmia::Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path, std::ostream* log_out)
 		: Engine(NAME, VERSION), tree(value_func_param_file_path), logger(log_file_path, log_out)
 	{
 		init_options();
+		this->tree.set_root_state(this->_position);
 	}
 
 	void Kalmia::init_options()
@@ -61,7 +63,7 @@ namespace engine
 						 1000, INT32_MAX, this->options.size(), bind(&Kalmia::on_node_num_limit_changed, this, _1, _2));
 
 		// 1‰ñ‚ÌŽvl‚É‚¨‚¯‚é’TõƒCƒeƒŒ[ƒVƒ‡ƒ“‚Ì‰ñ”.
-		this->options["playout"] = EngineOption(320000, 1, INT32_MAX, this->options.size());
+		this->options["playout"] = EngineOption(3200000, 1, INT32_MAX, this->options.size());
 
 		// ’TõŒ‹‰Ê‚É‰ž‚¶‚½Šm—¦“I‚È’…Žè‚ð‰½Žè–Ú‚Ü‚Ås‚¤‚©.
 		this->options["stochastic_move_num"] = EngineOption(0, 0, SQUARE_NUM - 4, this->options.size());
@@ -81,8 +83,8 @@ namespace engine
 		// •K—v‚Èê‡‚É’Tõ‚ð‰„’·‚·‚é‚©‚Ç‚¤‚©.
 		this->options["enable_additional_search"] = EngineOption(false, this->options.size());
 
-		// ’Tõî•ñ‚ð‰½msŠÔŠu‚Å•\Ž¦‚·‚é‚©.
-		this->options["show_search_info_interval_ms"] = EngineOption(5000, 100, INT32_MAX, this->options.size());
+		// ’Tõî•ñ‚ð‰½csŠÔŠu‚Å•\Ž¦‚·‚é‚©.
+		this->options["show_search_info_interval_cs"] = EngineOption(500, 10, INT32_MAX, this->options.size());
 	}
 
 	bool Kalmia::set_option(const string& name, const string& value, std::string& err_msg)
@@ -104,12 +106,19 @@ namespace engine
 			options.emplace_back(option);
 	}
 
+	void Kalmia::clear_position() 
+	{ 
+		Engine::clear_position();
+		this->tree.set_root_state(this->_position);
+		write_log("Tree was cleared.\n");
+	}
+
 	bool Kalmia::update_position(DiscColor color, BoardCoordinate coord)
 	{
 		if (!Engine::update_position(color, coord))
 			return false;
 
-		if (this->search_task.valid() && search_task_is_completed())
+		if (this->search_task.valid() && !search_task_is_completed())
 		{
 			stop_pondering();
 			write_log("Stop pondering.\n\n");
@@ -119,9 +128,6 @@ namespace engine
 		if (!this->tree.transition_root_state_to_child_state(coord))
 			this->tree.set_root_state(this->_position);
 
-		ostringstream oss;
-		oss << "\nopponent's move is " << coordinate_to_string(coord) << "\n";
-		write_log(oss.str());
 		this->logger.flush();
 		return true;
 	}
@@ -178,7 +184,6 @@ namespace engine
 	BoardCoordinate Kalmia::generate_mid_game_move(reversi::DiscColor color)
 	{
 		// ToDo: ŽžŠÔ§Œä‚ðŽÀ‘•‚·‚é.
-		this->timer[color].start();
 		this->_is_thinking = true;
 
 		write_log("Start search.\n");
@@ -222,16 +227,15 @@ namespace engine
 		}
 
 		this->logger.flush();
-		this->timer[color].stop();
 		this->_is_thinking = false;
 		return move;
 	}
 
 	void Kalmia::wait_for_search()
 	{
-		milliseconds show_search_info_interval_ms(this->options["show_search_info_interval_ms"]);
+		milliseconds show_search_info_interval_ms(this->options["show_search_info_interval_cs"] * 10);
 		auto start_time = high_resolution_clock::now();
-		while (this->tree.is_searching())
+		while (this->search_task.wait_for(milliseconds::zero()) != future_status::ready)
 		{
 			this_thread::sleep_for(milliseconds(10));
 			
@@ -243,7 +247,6 @@ namespace engine
 				start_time = time_now;
 			}
 		}
-		this->search_task.wait();
 	}
 
 	template<MoveSelection MOVE_SELECT>
@@ -318,7 +321,7 @@ namespace engine
 
 	bool Kalmia::search_task_is_completed()
 	{
-		return (this->search_task.wait_for(milliseconds::zero()) == future_status::ready);
+		return this->search_task.wait_for(milliseconds::zero()) == future_status::ready;
 	}
 
 	void Kalmia::stop_pondering()
@@ -344,14 +347,14 @@ namespace engine
 
 		for (auto& child_eval : search_info.child_evals)
 		{
-			oss << "| " << coordinate_to_string(child_eval.move) << " |";
-			oss << "|" << right << setw(12) << fixed << setprecision(2) << child_eval.expected_reward * 100.0 << "%|";
-			oss << "|" << right << setw(6) << fixed << setprecision(2) << child_eval.effort * 100.0 << "%|";
-			oss << "|" << right << setw(13) << child_eval.playout_count << "|";
-			oss << "|" << right << setw(5) << child_eval.pv.size() << "|";
+			oss << "| " << coordinate_to_string(child_eval.move);
+			oss << "|" << right << setw(12) << fixed << setprecision(2) << child_eval.expected_reward * 100.0 << "%";
+			oss << "|" << right << setw(5) << fixed << setprecision(2) << child_eval.effort * 100.0 << "%";
+			oss << "|" << right << setw(13) << child_eval.playout_count << "";
+			oss << "|" << right << setw(5) << child_eval.pv.size();
 			oss << "|";
 			for (auto& move : child_eval.pv)
-				oss << move << " ";
+				oss << coordinate_to_string(move) << " ";
 			oss << "\n";
 		}
 		return oss.str();

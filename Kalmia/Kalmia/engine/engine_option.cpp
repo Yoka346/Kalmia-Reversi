@@ -32,7 +32,7 @@ namespace engine
 
 	EngineOption::EngineOption(string& value, size_t idx, const EventHandler& on_value_change) : _default_value(value), _current_value(value), _idx(0), _type("string"), _min(0), _max(0) {}
 
-	EngineOption::EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change) : _min(min), _max(max), _idx(idx), on_value_change(on_value_change)
+	EngineOption::EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change) : _min(min), _max(max), _idx(idx), _type("spin"), on_value_change(on_value_change)
 	{
 		auto valur_str = std::to_string(value);
 		this->_default_value = this->_current_value = valur_str;

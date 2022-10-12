@@ -1,3 +1,5 @@
+#ifdef _DEBUG
+
 #include "position_feature_init_test.h"
 #include "test_common.h"
 
@@ -60,3 +62,5 @@ namespace test
 		}
 	}
 }
+
+#endif

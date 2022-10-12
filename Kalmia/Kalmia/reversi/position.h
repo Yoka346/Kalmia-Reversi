@@ -141,7 +141,7 @@ namespace reversi
 		GameResult get_game_result() const
 		{
 			int32_t diff = get_disc_diff();
-			if (!diff)
+			if (diff == 0)
 				return GameResult::DRAW;
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
 		}
@@ -154,7 +154,7 @@ namespace reversi
 			utils::LoopUnroller<7>()(
 				[&](const int32_t i)
 				{
-					auto j = i << 1;
+					const auto j = i << 1;
 					h0 ^= HASH_RANK[j * HASH_RANK_LEN_0 + p[j]];
 					h1 ^= HASH_RANK[(j + 1) * HASH_RANK_LEN_0 + p[j + 1]];
 				});

@@ -22,7 +22,7 @@ namespace engine
 	{
 	private:
 		inline static const std::string NAME = "Kalmia";
-		inline static const std::string VERSION = "1.5";
+		inline static const std::string VERSION = "2.0";
 
 		std::map<std::string, EngineOption> options;
 
@@ -54,6 +54,7 @@ namespace engine
 
 		void init_options(); 
 		bool set_option(const std::string& name, const std::string& value, std::string& err_msg) override;
+		void clear_position() override;
 		void get_options(EngineOptions& options) override;
 		bool update_position(reversi::DiscColor color, reversi::BoardCoordinate move) override;
 		bool undo_position() override;

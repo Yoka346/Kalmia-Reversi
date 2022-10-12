@@ -1,3 +1,5 @@
+#ifdef _DEBUG
+
 #include "position_eval_test.h"
 
 #include "test_common.h"
@@ -70,3 +72,5 @@ namespace test
 		}
 	}
 }
+
+#endif

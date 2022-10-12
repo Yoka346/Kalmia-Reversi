@@ -1,3 +1,5 @@
+#ifdef _DEBUG
+
 #include "flip_test.h"
 #include "test_common.h"
 #include "../reversi/flip.h"
@@ -45,3 +47,5 @@ void test::calc_flipped_discs_test()
 		assert(expected == actual);
 	}
 }
+
+#endif
