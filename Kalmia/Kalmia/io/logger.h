@@ -12,7 +12,9 @@ namespace io
 	**/
 	class NullStream : public std::streambuf, public std::ostream
 	{
-		char buf_[128];
+	public:
+		NullStream() : buf_(), std::ostream(this) {}
+
 	protected:
 		virtual int overflow(int c)
 		{
@@ -20,8 +22,8 @@ namespace io
 			return (c == eof()) ? '\0' : c;
 		}
 
-	public:
-		NullStream() : buf_(), std::ostream(this) {}
+	private:
+		char buf_[128];
 	};
 
 	/**
@@ -32,13 +34,6 @@ namespace io
 	**/
 	class Logger
 	{
-	private:
-		NullStream* null_stream;
-
-		std::ofstream ofs;
-		std::ostream* sub_os;
-		bool enabled_auto_flush = true;
-
 	public:
 		Logger(const std::string& path) : ofs(path) { this->null_stream = new NullStream(); this->sub_os = dynamic_cast<std::ostream*>(this->null_stream); }
 		Logger(const std::string& path, std::ostream* sub_stream) : ofs(path), sub_os(sub_stream) { this->null_stream = nullptr; }
@@ -56,5 +51,12 @@ namespace io
 		void flush() { this->ofs.flush(); this->sub_os->flush(); }
 		void enable_auto_flush() { this->enabled_auto_flush = true; }
 		void disable_auto_flush() { this->enabled_auto_flush = false; }
+
+	private:
+		NullStream* null_stream;
+
+		std::ofstream ofs;
+		std::ostream* sub_os;
+		bool enabled_auto_flush = true;
 	};
 }

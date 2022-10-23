@@ -81,22 +81,22 @@ namespace protocol
 
 	void GTP::mainloop(Engine* engine, const std::string& log_file_path)
 	{
-		if (!this->quit)
+		if (!this->quit_flag)
 			throw invalid_operation("cannnot execute mainloop before another mainloop has been quit.");
 
 		if (engine == nullptr)
 			throw invalid_argument("specified engine was null.");
 
 		this->engine = engine;
-		this->quit = false;
+		this->quit_flag = false;
 		this->logger = ofstream(log_file_path);
 
-		this->engine->on_message_is_sent = [](const string& msg) {cerr << msg; };	// ログなどのテキスト情報はGTPではエラー出力に出力するのが一般的.
+		this->engine->on_message_is_sent = [](const string& msg) { cerr << msg; };	// ログなどのテキスト情報はGTPではエラー出力に出力するのが一般的.
 
 		int id;
 		string cmd_name;
 		string line;
-		while (!GTP::quit)
+		while (!GTP::quit_flag)
 		{
 			getline(*this->gtp_in, line);
 
@@ -173,7 +173,7 @@ namespace protocol
 	void GTP::exec_quit_command(int id, istringstream& args)
 	{
 		this->engine->quit();
-		this->quit = true;
+		this->quit_flag = true;
 		gtp_success(id);
 	}
 
@@ -254,7 +254,7 @@ namespace protocol
 			return;
 		}
 
-		auto move = this->engine->generate_move(color);
+		auto move = this->engine->go(color);
 		this->engine->update_position(color, move);
 		gtp_success(id, coordinate_to_string(move));
 	}
@@ -303,8 +303,15 @@ namespace protocol
 
 		milliseconds main_time_ms(main_time * 1000);
 		milliseconds byoyomi_ms(byoyomi * 1000);
-		this->engine->set_time(DiscColor::BLACK, main_time_ms, byoyomi_ms, byoyomi_stones, milliseconds::zero());
-		this->engine->set_time(DiscColor::WHITE, main_time_ms, byoyomi_ms, byoyomi_stones, milliseconds::zero());
+
+		for (auto c = 0; c <= 1; c++)
+		{
+			auto color = static_cast<DiscColor>(c);
+			this->engine->set_main_time(color, main_time_ms);
+			this->engine->set_byoyomi(color, byoyomi_ms);
+			this->engine->set_byoyomi_stones(color, byoyomi_stones);
+			this->engine->set_time_inc(color, milliseconds::zero());
+		}
 		gtp_success(id);
 	}
 
@@ -347,7 +354,8 @@ namespace protocol
 		}
 
 		milliseconds time_left_ms(time_left * 1000);
-		this->engine->set_time_left(color, time_left_ms, byoyomi_stones_left);
+		this->engine->set_main_time(color, time_left_ms);
+		this->engine->set_byoyomi_stones(color, byoyomi_stones_left);
 		gtp_success(id);
 	}
 
@@ -392,7 +400,7 @@ namespace protocol
 			gtp_failure(id, "invalid color.");
 			return;
 		}
-		gtp_success(id, coordinate_to_string(this->engine->generate_move(color)));
+		gtp_success(id, coordinate_to_string(this->engine->go(color)));
 	}
 
 	void GTP::exec_showboard_command(int id, istringstream& args)

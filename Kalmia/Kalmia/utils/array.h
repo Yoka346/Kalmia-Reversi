@@ -15,9 +15,6 @@ namespace utils
 	template<class ElementType, size_t LEN>
 	class Array
 	{
-	private:
-		ElementType data[LEN];
-
 	public:
 		constexpr Array() : data() { ; }
 
@@ -58,6 +55,9 @@ namespace utils
 		constexpr size_t length() const { return LEN; }
 		constexpr ElementType* as_raw_array() { return this->data; }
 		constexpr const ElementType* as_raw_array() const { return this->data; }
+
+	private:
+		ElementType data[LEN];
 	};
 
 	/**
@@ -68,9 +68,6 @@ namespace utils
 	template<class ElementType, size_t LEN>
 	class ReadonlyArray
 	{
-	private:
-		Array<ElementType, LEN>& data;
-
 	public:
 		constexpr ReadonlyArray(Array<ElementType, LEN>& data) : data(data) {}
 
@@ -81,6 +78,9 @@ namespace utils
 		constexpr bool operator==(const Array<ElementType, LEN>& right) const { return this->data == right; }
 		constexpr size_t length() const { return LEN; }
 		const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
+
+	private:
+		Array<ElementType, LEN>& data;
 	};
 
 	/**
@@ -90,10 +90,6 @@ namespace utils
 	template<class ElementType>
 	class DynamicArray
 	{
-	private:
-		std::unique_ptr<ElementType[]> data;
-		size_t _length;
-
 	public:
 		DynamicArray(size_t length) : data(std::make_unique<ElementType[]>(length)), _length(length) { ; }
 
@@ -108,6 +104,8 @@ namespace utils
 
 		const ElementType* begin() const { return this->data.get(); }
 		const ElementType* end() const { return this->data.get() + this->_length; }
+		ElementType* begin() { return this->data.get(); }
+		ElementType* end() { return this->data.get() + this->_length; }
 
 		ElementType& operator[](size_t idx)
 		{
@@ -124,7 +122,8 @@ namespace utils
 		DynamicArray<ElementType>& operator=(const DynamicArray<ElementType>& right) 
 		{ 
 			this->_length = right._length;
-			this->data.reset(std::make_unique<ElementType[]>(this->_length));
+			this->data.reset();
+			this->data = std::make_unique<ElementType[]>(this->_length);
 			std::memcpy(this->data.get(), right.data.get(), sizeof(ElementType) * this->_length);
 			return *this;
 		}
@@ -141,6 +140,10 @@ namespace utils
 		size_t length() const { return this->_length; }
 		ElementType* as_raw_array() { return this->data.get(); }
 		const ElementType* as_raw_array() const { return this->data.get(); }
+
+	private:
+		std::unique_ptr<ElementType[]> data;
+		size_t _length;
 	};
 
 	/**
@@ -150,9 +153,6 @@ namespace utils
 	template<class ElementType>
 	class ReadonlyDynamicArray
 	{
-	private:
-		DynamicArray<ElementType>& data;
-
 	public:
 		ReadonlyDynamicArray(DynamicArray<ElementType>& data) : data(data) { ; }
 
@@ -163,5 +163,8 @@ namespace utils
 		bool operator==(const DynamicArray<ElementType>& right) const { return this->data == right; }
 		size_t length() const { return this->data.length(); }
 		const ElementType* as_raw_array() const { return this->data.as_raw_array(); }
+
+	private:
+		DynamicArray<ElementType>& data;
 	};
 }

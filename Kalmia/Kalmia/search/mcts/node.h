@@ -54,12 +54,17 @@ namespace search::mcts
 
 		Edge() : move(), visit_count(0), reward_sum(0.0), label(EdgeLabel::NOT_PROVED) { ; }
 		Edge(const reversi::Move& move) : move(move), visit_count(0), reward_sum(0.0), label(EdgeLabel::NOT_PROVED) { ; }
+		Edge(const Edge& edge)
+			: move(edge.move), visit_count(edge.visit_count.load()), 
+			reward_sum(edge.reward_sum.load()), label(edge.label){ }
 
-		double expected_reward() { return this->reward_sum / this->visit_count; }
+		double expected_reward() const { return this->reward_sum / this->visit_count; }
 		bool is_proved() { return this->label & EdgeLabel::PROVED; }
 		bool is_win() { return this->label == EdgeLabel::WIN; }
 		bool is_loss() { return this->label == EdgeLabel::LOSS; }
 		bool is_draw() { return this->label == EdgeLabel::DRAW; }
+		bool prior_to(const Edge& edge) const;
+		const Edge& operator=(const Edge& right);
 	};
 
 	struct Node

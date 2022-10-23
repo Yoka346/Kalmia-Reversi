@@ -16,6 +16,13 @@ namespace search::mcts
 	**/
 	class NodeGarbageCollector
 	{
+	public:
+		NodeGarbageCollector() : garbage(), worker_thread(std::thread([this]() { worker(); })) { ; }
+		~NodeGarbageCollector() { this->stop_flag.store(true); this->worker_thread.join(); }
+
+		void add(std::unique_ptr<Node> node);
+		void collect();
+
 	private:
 		static constexpr int32_t COLLECT_INTERVAL_MS = 100;
 
@@ -26,12 +33,5 @@ namespace search::mcts
 		std::atomic<bool> stop_flag = false;
 
 		void worker();
-
-	public:
-		NodeGarbageCollector() : garbage(), worker_thread(std::thread([this]() { worker(); })) { ; }
-		~NodeGarbageCollector() { this->stop_flag.store(true); this->worker_thread.join(); }
-
-		void add(std::unique_ptr<Node> node);
-		void collect();		
 	};
 }

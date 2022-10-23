@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 
 #include "../utils/random.h"
@@ -17,15 +18,6 @@ namespace reversi
 	**/
 	class Position
 	{
-	private:
-		// Rankというのはチェス用語で, 盤面の水平方向のラインを意味する.
-		static constexpr int32_t HASH_RANK_LEN_0 = 16;
-		static constexpr int32_t HASH_RANK_LEN_1 = 256;
-		static utils::Array<uint64_t, HASH_RANK_LEN_0 * HASH_RANK_LEN_1> HASH_RANK;
-
-		Bitboard _bitboard;
-		DiscColor _side_to_move;
-
 	public:
 		static size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
 
@@ -77,6 +69,9 @@ namespace reversi
 
 		bool is_legal(const BoardCoordinate& coord) const { return (coord == BoardCoordinate::PASS) ? can_pass() : this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
 		void pass() { this->_side_to_move = opponent_color(); this->_bitboard.swap(); }
+
+		void put_player_disc_at(BoardCoordinate coord) { this->_bitboard.put_player_disc_at(coord); }
+		void put_opponent_disc_at(BoardCoordinate coord) { this->_bitboard.put_opponent_disc_at(coord); }
 
 		template<bool CHECK_LEGALITY>
 		bool update(const Move& move) 
@@ -143,6 +138,7 @@ namespace reversi
 			int32_t diff = get_disc_diff();
 			if (diff == 0)
 				return GameResult::DRAW;
+
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
 		}
 
@@ -160,6 +156,16 @@ namespace reversi
 				});
 			return h0 ^ h1;
 		}
+
+	private:
+		// Rankというのはチェス用語で, 盤面の水平方向のラインを意味する.
+		static constexpr int32_t HASH_RANK_LEN_0 = 16;
+		static constexpr int32_t HASH_RANK_LEN_1 = 256;
+		static utils::Array<uint64_t, HASH_RANK_LEN_0* HASH_RANK_LEN_1> HASH_RANK;
+
+		Bitboard _bitboard;
+		DiscColor _side_to_move;
+
 	};
 
 	inline Array<uint64_t, Position::HASH_RANK_LEN_0* Position::HASH_RANK_LEN_1> Position::HASH_RANK(Position::init_hash_rank);

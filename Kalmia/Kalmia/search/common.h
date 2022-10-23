@@ -12,10 +12,6 @@ namespace search
 	**/
 	class GameInfo
 	{
-	private:
-		reversi::Position _position;
-		evaluation::PositionFeature _feature;
-
 	public:
 		GameInfo(const reversi::Position& pos, const evaluation::PositionFeature& feature) :_position(pos), _feature(feature) { ; }
 
@@ -24,5 +20,9 @@ namespace search
 
 		void update(const reversi::Move& move) { this->_position.update<false>(move); this->_feature.update(move); }
 		void pass() { this->_position.pass(); this->_feature.pass(); }
+
+	private:
+		reversi::Position _position;
+		evaluation::PositionFeature _feature;
 	};
 }

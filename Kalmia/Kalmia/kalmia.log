@@ -1,55 +1,43 @@
 Start search.
-ellapsed=5010[ms] 2180638[po] 435255[pps] winning_rate=51.55%
-|move|winning_rate|effort|playout count|depth|pv
-| D3|       45.13%| 2.30%|        50249|   13|C5 C6 E3 C4 D6 E7 D7 E8 F8 F7 F6 E6 C2 
-| C4|       49.68%|12.69%|       276695|   17|E3 F5 E6 F6 C5 C3 C6 D3 D2 F3 C2 C1 E1 B4 B3 A3 E2 
-| F5|       48.60%| 6.62%|       144423|   15|D6 C4 D3 C3 F4 F6 F3 E3 B4 G5 E6 G3 E2 D1 E1 
-| E6|       52.30%|78.38%|      1709279|   15|F6 F5 D6 C5 G4 D7 C6 F7 C4 C7 E7 E8 F4 B3 C3 
+ellapsed=5038ms[ms] 712884[nodes] 141502[nps] 708438[po] winning_rate=49.28%
+|move|win_rate|effort|simulation|depth|pv
+| C4 |  49.85%|40.86%|    289489|   14|C4 C5 C6 E3 C4 D6 E7 D7 C7 F8 E6 B5 A6 C2 
+| E6 |  49.60%|32.26%|    228509|   18|E6 E3 F5 E6 F6 C5 C3 C6 D3 D2 F3 C2 C1 E1 B4 B3 A3 E2 
+| F5 |  48.75%|20.61%|    146021|   15|F5 D6 C4 D3 C3 F4 F6 F3 E3 B4 G5 E6 G3 C2 D7 
+| D3 |  45.67%| 6.27%|     44419|   15|D3 F4 D3 C4 C3 D6 F6 C6 C5 D2 E7 F5 B6 B5 F3 
+ellapsed=10033ms[ms] 1364425[nodes] 135994[nps] 1360886[po] winning_rate=50.87%
+|move|win_rate|effort|simulation|depth|pv
+| E6 |  51.86%|64.39%|    876253|   14|E6 C5 C6 E3 C4 D6 E7 D7 C7 F8 E6 B5 A6 C2 
+| C4 |  49.81%|21.38%|    290896|   18|C4 E3 F5 E6 F6 C5 C3 C6 D3 D2 F3 C2 C1 E1 B4 B3 A3 E2 
+| F5 |  48.69%|10.81%|    147171|   15|F5 D6 C4 D3 C3 F4 F6 F3 E3 B4 G5 E6 G3 C2 E7 
+| D3 |  45.52%| 3.42%|     46566|   17|D3 F6 F5 D6 C5 G4 C7 F4 C3 B5 B6 D3 A5 B3 G6 E7 D2 
 early stopping.
 End search.
-ellapsed=7500[ms] 3200000[po] 426663[pps] winning_rate=51.86%
-|move|winning_rate|effort|playout count|depth|pv
-| D3|       46.93%| 3.09%|        98735|   16|C5 F6 F5 E6 E3 C3 F3 C4 B4 C6 C2 A3 B3 C1 D6 E2 
-| C4|       49.61%| 8.71%|       278829|   17|E3 F5 E6 F6 C5 C3 C6 D3 D2 F3 C2 C1 E1 B4 B3 A3 E2 
-| F5|       48.23%| 4.78%|       152870|   15|D6 C4 D3 C3 F4 F6 F3 E3 B4 G5 E6 G3 E2 D1 E1 
-| E6|       52.48%|83.42%|      2669566|   19|F6 F5 D6 E7 G5 G4 F7 D7 F3 F8 E8 C6 C5 H5 D8 C8 C7 E2 G2 
-Start search.
-ellapsed=5015[ms] 4676003[po] 400088[pps] winning_rate=47.02%
-|move|winning_rate|effort|playout count|depth|pv
-| F4|       46.56%|23.94%|      1119303|   20|C3 C4 D3 C2 F3 D6 G4 F6 E7 F7 C5 C6 D2 F8 B3 E3 F5 B4 E2 F1 
-| D6|       41.99%| 2.55%|       119194|   16|C5 F6 C4 B5 A6 D3 C6 F5 D7 C7 E3 F3 E7 C8 D2 C1 
-| F6|       47.35%|73.51%|      3437506|   20|F5 D6 E7 G5 G4 F7 D7 F8 C5 E3 F3 F4 C4 C3 D3 C8 C7 F2 E8 C2 
-early stopping.
-End search.
-ellapsed=7780[ms] 5869565[po] 411310[pps] winning_rate=46.82%
-|move|winning_rate|effort|playout count|depth|pv
-| F4|       46.60%|33.63%|      1973997|   18|C3 C4 D3 D6 F6 C6 F5 G5 F3 E7 C5 G4 D7 E3 G3 B5 B4 B6 
-| D6|       41.84%| 2.32%|       136238|   16|C5 F6 C4 B5 A6 D3 C6 F5 D7 C7 E3 F3 E7 C8 D2 C1 
-| F6|       47.11%|64.05%|      3759330|   20|F5 D6 E7 G5 G4 F7 D7 F8 C5 E3 F3 F4 C4 C3 D3 C8 C7 F2 E8 C2 
-Start search.
-ellapsed=5011[ms] 5930568[po] 433296[pps] winning_rate=53.67%
-|move|winning_rate|effort|playout count|depth|pv
-| D3|       39.76%| 0.43%|        25397|   12|E7 F5 F4 G3 F3 G4 E3 D6 G5 F7 D7 G6 
-| C4|       36.93%| 0.30%|        17960|   12|E7 F5 F4 G3 F3 G4 E3 D6 G5 D3 F2 H5 
-| F5|       53.82%|99.13%|      5878840|   21|D6 C5 E3 D3 F4 E2 C3 C4 F3 D2 B4 B3 C6 A5 E1 F1 G1 C7 C2 C1 B1 
-| G6|       28.66%| 0.14%|         8375|    8|D6 C3 F5 C4 E7 D7 C6 B6 
-early stopping.
-End search.
-ellapsed=7409[ms] 6959329[po] 431907[pps] winning_rate=54.10%
-|move|winning_rate|effort|playout count|depth|pv
-| D3|       39.75%| 0.37%|        25798|   12|E7 F5 F4 G3 F3 G4 E3 D6 G5 F7 D7 G6 
-| C4|       37.05%| 0.27%|        18619|   12|E7 F5 F4 G3 F3 G4 E3 D6 G5 D3 F2 H5 
-| F5|       54.23%|99.24%|      6906250|   21|D6 C5 E3 D3 F4 E2 C3 C4 F3 D2 B4 B3 C6 A5 E1 F1 G1 C7 C2 C1 B1 
-| G6|       28.63%| 0.12%|         8662|    8|D6 C3 F5 C4 E7 D7 C6 F7 
-Start search.
-ellapsed=5004[ms] 9138113[po] 446017[pps] winning_rate=45.94%
-|move|winning_rate|effort|playout count|depth|pv
-| F4|       45.09%|30.93%|      2825981|   17|G5 E7 D7 G6 G4 H5 E3 H3 G3 F2 H4 F3 G2 D3 E8 E2 D2 
-| D6|       46.33%|69.07%|      6312135|   20|E7 G5 G4 F4 E3 F3 E2 D7 G6 H3 H5 H7 G3 F8 F7 H2 D3 F2 D2 G8 
-early stopping.
-End search.
-ellapsed=7239[ms] 10106249[po] 442049[pps] winning_rate=46.22%
-|move|winning_rate|effort|playout count|depth|pv
-| F4|       45.09%|27.96%|      2825981|   17|G5 E7 D7 G6 G4 H5 E3 H3 G3 F2 H4 F3 G2 D3 E8 E2 D2 
-| D6|       46.66%|72.04%|      7280268|   19|E7 G5 G4 F4 C6 F7 G3 F3 D7 G6 C5 H4 C3 H3 E3 D2 H5 H6 E1 
+ellapsed=11746ms[ms] 1585009[nodes] 134940[nps] 1585019[po] winning_rate=51.05%
+|move|win_rate|effort|simulation|depth|pv
+| E6 |  51.94%|69.36%|   1099345|   14|E6 C5 C6 E3 C4 D6 E7 D7 C7 F8 E6 B5 A6 C2 
+| C4 |  49.81%|18.35%|    290896|   18|C4 E3 F5 E6 F6 C5 C3 C6 D3 D2 F3 C2 C1 E1 B4 B3 A3 E2 
+| F5 |  48.69%| 9.29%|    147171|   15|F5 D6 C4 D3 C3 F4 F6 F3 E3 B4 G5 E6 G3 C2 E7 
+| D3 |  45.38%| 3.00%|     47607|   15|D3 F6 F5 D6 C5 G4 G5 F4 D7 C4 E7 C6 F3 E2 F2 
 Tree was cleared.
+Start search.
+ellapsed=5022ms[ms] 727221[nodes] 144807[nps] 726590[po] winning_rate=50.47%
+|move|win_rate|effort|simulation|depth|pv
+| D6 |  51.52%|68.95%|    500987|   13|D6 F5 C6 C5 D6 D3 F4 C7 C2 E6 B5 B1 D2 
+| F4 |  48.57%|12.96%|     94173|   14|F4 D3 C5 D6 C6 F5 F3 F6 E3 E2 C3 G3 G4 C2 
+| C5 |  48.11%|10.30%|     74834|   15|C5 E6 F3 E3 F6 G3 D6 C4 D3 C3 F4 G4 D2 E2 E1 
+| E3 |  47.43%| 7.79%|     56592|   16|E3 C6 C5 E6 F6 D3 C3 B4 F4 B3 C2 D1 E7 F7 B1 C1 
+ellapsed=10036ms[ms] 1381532[nodes] 137658[nps] 1380353[po] winning_rate=51.52%
+|move|win_rate|effort|simulation|depth|pv
+| D6 |  52.39%|76.03%|   1049500|   15|D6 F5 C6 C5 D6 D3 F4 F3 C4 E6 F6 F7 G6 C7 G4 
+| F4 |  49.70%|12.50%|    172614|   15|F4 D3 C6 D6 C5 F5 F3 F6 E3 E2 C3 G3 G4 F2 D1 
+| C5 |  47.98%| 6.19%|     85425|   15|C5 E6 F3 E3 F6 G3 D6 C4 D3 C3 F4 G4 D2 E2 E1 
+| E3 |  47.50%| 5.27%|     72814|   15|E3 C6 C5 E6 D7 C3 F6 E7 C7 C4 D3 B6 B4 B5 A4 
+early stopping.
+End search.
+ellapsed=10722ms[ms] 1465075[nodes] 136642[nps] 1465083[po] winning_rate=51.70%
+|move|win_rate|effort|simulation|depth|pv
+| D6 |  52.55%|77.42%|   1134230|   15|D6 F5 C6 C5 D6 D3 F4 F3 C4 E6 F6 F7 G6 C7 G4 
+| F4 |  49.70%|11.78%|    172614|   15|F4 D3 C6 D6 C5 F5 F3 F6 E3 E2 C3 G3 G4 F2 D1 
+| C5 |  47.98%| 5.83%|     85425|   15|C5 E6 F3 E3 F6 G3 D6 C4 D3 C3 F4 G4 D2 E2 E1 
+| E3 |  47.50%| 4.97%|     72814|   19|E3 C6 C5 E6 F5 B4 B5 D3 C7 F6 D7 F4 C4 E7 F3 C3 G3 F2 E1 

@@ -19,6 +19,7 @@ namespace utils
 		uint32_t next(uint32_t min, uint32_t upper_bound);
 		uint64_t next_64(uint64_t upper_bound);
 		uint64_t next_64(uint64_t min, uint64_t upper_bound);
+		std::mt19937_64& generator() { return this->rand; }
 
 		/**
 		* @fn
@@ -34,7 +35,7 @@ namespace utils
 		* @detail	ƒ‰ƒ“ƒ_ƒ€‚È32bit•‚“®¬”“_”‚ð¶¬‚·‚é‚½‚ß‚É, ‚Ü‚¸‰¼”•”53bit‚ð—”¶¬Ší‚Å¶¬‚µ, 1.0 * 2^53‚ðæ‚¶‚é‚±‚Æ‚Å,
 		*			0.0ˆÈã1.0–¢–ž‚ÌŽÀ”‚Æ‚·‚é.
 		**/
-		float next_double() { return (this->rand() >> 11) * (1.0f / (1ULL << 53)); }
+		double next_double() { return (this->rand() >> 11) * (1.0f / (1ULL << 53)); }
 
 	private:
 		static std::random_device rand_device;

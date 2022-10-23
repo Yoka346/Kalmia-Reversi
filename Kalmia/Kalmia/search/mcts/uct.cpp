@@ -2,11 +2,13 @@
 
 #include <iomanip>
 #include <algorithm>
+#include <cstring>
 
+#include "../../utils/array.h"
 #include "../../utils/math_functions.h"
 #include "../../utils/exception.h"
 
-#define SINGLE_THREAD
+//#define SINGLE_THREAD
 
 using namespace std;
 using namespace std::chrono;
@@ -20,6 +22,7 @@ namespace search::mcts
 	const SearchInfo& UCT::get_search_info()
 	{
 		auto& si = this->_search_info;
+
 		auto& root_eval = si.root_eval;
 		auto& child_evals = si.child_evals = DynamicArray<MoveEvaluation>(this->root->child_node_num);
 		GameInfo game_info(this->root_state, PositionFeature(this->root_state));
@@ -32,10 +35,13 @@ namespace search::mcts
 		else
 			root_eval.expected_reward = GAME_RESULT_TO_REWARD[static_cast<int32_t>(root_eval.game_result)];
 
-		auto edges = this->root->edges.get();
+		DynamicArray<Edge> edges(this->root->child_node_num);
+		memcpy(edges.begin(), this->root->edges.get(), sizeof(Edge) * this->root->child_node_num);
+		sort(edges.begin(), edges.end(), [](const auto& e0, const auto& e1) { return e0.prior_to(e1); });
+
 		for (auto i = 0; i < child_evals.length(); i++)
 		{
-			auto& child_eval = child_evals[i];
+			MoveEvaluation& child_eval = child_evals[i];
 			auto& edge = edges[i];
 			child_eval.move = edge.move.coord;
 			child_eval.effort = static_cast<double>(edge.visit_count) / this->root->visit_count;
@@ -46,6 +52,8 @@ namespace search::mcts
 				child_eval.expected_reward = edge.expected_reward();
 			else
 				child_eval.expected_reward = GAME_RESULT_TO_REWARD[static_cast<int32_t>(child_eval.game_result)];
+
+			child_eval.pv.emplace_back(child_eval.move);
 			get_pv(this->root->child_nodes[i].get(), child_eval.pv);
 		}
 
@@ -93,13 +101,13 @@ namespace search::mcts
 
 		this->_is_searching = true;
 		this->search_stop_flag = false;
-		this->pps_counter = 0;
+		this->_node_count = 0;
 		vector<future<void>> search_threads;
 
 		auto thread_num = this->options.thread_num;
-		auto playout_num_per_thread = playout_num / thread_num;	// プレイアウト数をスレッド数で割って, 均等に各スレッドにタスクを割り当てる. 全てのスレッドがほぼ同時にタスクを終えることを想定しているが, 
+		auto playout_num_per_thread = playout_num / thread_num;
 			
-		auto time_limit_ms = time_limit_cs * 10;
+		milliseconds time_limit_ms(time_limit_cs * 10);
 		this->search_start_time = high_resolution_clock::now();
 
 		for (int32_t i = 0; i < thread_num; i++)
@@ -260,6 +268,7 @@ namespace search::mcts
 
 		if (first_visit)
 		{
+			this->_node_count++;
 			game_info.position().calc_flipped_discs(edge_to_child.move);
 			game_info.update(edge_to_child.move);
 			update_statistic(this->root.get(), edge_to_child, predict_reward(game_info));
@@ -281,25 +290,28 @@ namespace search::mcts
 		if (!current_node->is_expanded())
 			current_node->expand(game_info.position());
 
+		auto edges = current_node->edges.get();
 		float reward;
-		if (current_node->edges[0].move.coord == BoardCoordinate::PASS)
+		if (edges[0].move.coord == BoardCoordinate::PASS)
 		{
 			if constexpr (AFTER_PASS)	// パスが2回続いた -> 終局.
 			{
+				if(edges[0].visit_count == 0)
+					this->_node_count++;
 				auto res = game_info.position().get_game_result();
-				current_node->edges[0].label = game_result_to_edge_label(res);
+				edges[0].label = game_result_to_edge_label(res);
 				edge_to_current_node.label = game_result_to_edge_label(to_opponent_game_result(res));
 
 				node_mutex.unlock();
 
-				reward = GAME_RESULT_TO_REWARD[edge_label_to_game_result(current_node->edges[0].label)];
+				reward = GAME_RESULT_TO_REWARD[edge_label_to_game_result(edges[0].label)];
 			}
-			else if (current_node->edges[0].is_proved())
+			else if (edges[0].is_proved())
 			{
 				node_mutex.unlock();
 
-				edge_to_current_node.label = to_opponent_edge_label(current_node->edges[0].label);
-				reward = GAME_RESULT_TO_REWARD[edge_label_to_game_result(current_node->edges[0].label)];
+				edge_to_current_node.label = to_opponent_edge_label(edges[0].label);
+				reward = GAME_RESULT_TO_REWARD[edge_label_to_game_result(edges[0].label)];
 			}
 			else
 			{
@@ -313,15 +325,15 @@ namespace search::mcts
 				node_mutex.unlock();
 
 				game_info.pass();
-				reward = visit_node<true>(game_info, current_node->child_nodes[0].get(), current_node->edges[0]);
+				reward = visit_node<true>(game_info, current_node->child_nodes[0].get(), edges[0]);
 			}
 
-			update_statistic(current_node, current_node->edges[0], reward);
+			update_pass_node_statistic(current_node, edges[0], reward);
 			return 1.0 - reward;
 		}
 
 		auto child_idx = select_child_node(current_node, edge_to_current_node);
-		auto& edge_to_child = current_node->edges[child_idx];
+		auto& edge_to_child = edges[child_idx];
 		bool first_visit = !edge_to_child.visit_count.load();
 		add_virtual_loss(current_node, edge_to_child);
 
@@ -335,6 +347,7 @@ namespace search::mcts
 		{
 			node_mutex.unlock();
 
+			this->_node_count++;
 			game_info.position().calc_flipped_discs(edge_to_child.move);
 			game_info.update(edge_to_child.move);
 			reward = predict_reward(game_info);
@@ -516,12 +529,19 @@ namespace search::mcts
 
 		auto idx = select_max_visit_count_child_node(root);
 		pv.emplace_back(root->edges[idx].move.coord);
-		
-		if (root->child_nodes)
-			get_pv(root->child_nodes[idx].get(), pv);
+
+		auto child_node = root->child_nodes ? root->child_nodes[idx].get() : nullptr;
+		if (child_node && child_node->is_expanded())
+			get_pv(child_node, pv);
+		else if (pv.size() >= 2 && pv[pv.size() - 1] == BoardCoordinate::PASS && pv[pv.size() - 2] == BoardCoordinate::PASS)
+		{
+			// pvの末尾にパスが2連続で存在するときは終局なので取り除く.
+			pv.pop_back();
+			pv.pop_back();
+		}
 	}
 
-	bool UCT::can_stop_search(int32_t time_limit_ms, SearchEndStatus& end_status)
+	bool UCT::can_stop_search(milliseconds time_limit_ms, SearchEndStatus& end_status)
 	{
 		if (this->root_edge_label & EdgeLabel::PROVED)
 		{
@@ -554,7 +574,7 @@ namespace search::mcts
 		return false;
 	}
 
-	bool UCT::can_do_early_stopping(int32_t time_limit_ms)
+	bool UCT::can_do_early_stopping(milliseconds time_limit_ms)
 	{
 		if (search_ellapsed_ms() < time_limit_ms * 0.1)	// 最低でも制限時間の10%は探索に費やす.
 			return false;
@@ -575,6 +595,6 @@ namespace search::mcts
 		}
 
 		// 仮に残りのプレイアウトを全て次善手に費やしたとしても, 最善手のプレイアウト回数を超えることがない場合, これ以上の探索は無意味.
-		return (first_po_count - second_po_count) > pps() * (time_limit_ms - search_ellapsed_ms()) * 1.0e-3;
+		return (first_po_count - second_po_count) > nps() * (time_limit_ms.count() - search_ellapsed_ms().count()) * 1.0e-3;
 	}
 }

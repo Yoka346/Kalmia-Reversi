@@ -92,18 +92,6 @@ namespace evaluation
 		using Weight = utils::DynamicArray<utils::Array<ValueFuncParam, 2>>;
 		using PackedWeight = utils::DynamicArray<PackedValueFuncParam>;
 
-	private:
-		// •]‰¿‘ÎÛ‚Ì”Õ–Ê‚É‚¨‚¯‚é‹ó‚«ƒ}ƒX‚ÌÅ‘å”.
-		static constexpr int32_t MAX_EMPTY_COUNT = reversi::SQUARE_NUM - 4;
-
-		int32_t _phase_num;
-		int32_t _move_count_per_phase;
-		utils::Array<int32_t, reversi::SQUARE_NUM - 4 + 1> empty_count_to_phase;
-		Weight weight;
-
-		void init_empty_count_to_phase_table();
-		void expand_packed_weight(PackedWeight& packed_weight);
-
 	public:
 		int32_t phase_num() { return this->_phase_num; }
 		int32_t move_count_per_phase() { return this->_move_count_per_phase; }
@@ -133,7 +121,7 @@ namespace evaluation
 		* @param (pos_feature) Œ»İ‚Ì”Õ–Ê‚Ì“Á’¥.
 		* @return —\‘ª’l. VALUE_REPS‚ªDISC_DIFF‚Å‚ ‚ê‚Î, ÅIÎ·‚Ì—\‘ª’l. WIN_RATE‚Å‚ ‚ê‚Î, —\‘zŸ—¦.
 		**/
-		float predict(const PositionFeature& pos_feature) const 
+		float predict(const PositionFeature& pos_feature) const
 		{
 			return predict(this->empty_count_to_phase[pos_feature.empty_square_count()], pos_feature);
 		}
@@ -149,7 +137,7 @@ namespace evaluation
 		{
 			auto& w = this->weight[phase][pos_feature.side_to_move()];
 			auto& f = pos_feature.features;
-			auto v = 
+			auto v =
 				w.corner3x3[f[0]] + w.corner3x3[f[1]] + w.corner3x3[f[2]] + w.corner3x3[f[3]]
 				+ w.corner_edge_x[f[4]] + w.corner_edge_x[f[5]] + w.corner_edge_x[f[6]] + w.corner_edge_x[f[7]]
 				+ w.edge_2x[f[8]] + w.edge_2x[f[9]] + w.edge_2x[f[10]] + w.edge_2x[f[11]]
@@ -169,6 +157,18 @@ namespace evaluation
 
 			return v;
 		}
+
+	private:
+		// •]‰¿‘ÎÛ‚Ì”Õ–Ê‚É‚¨‚¯‚é‹ó‚«ƒ}ƒX‚ÌÅ‘å”.
+		static constexpr int32_t MAX_EMPTY_COUNT = reversi::SQUARE_NUM - 4;
+
+		int32_t _phase_num;
+		int32_t _move_count_per_phase;
+		utils::Array<int32_t, reversi::SQUARE_NUM - 4 + 1> empty_count_to_phase;
+		Weight weight;
+
+		void init_empty_count_to_phase_table();
+		void expand_packed_weight(PackedWeight& packed_weight);
 	};
 
 	template class ValueFunction<ValueRepresentation::DISC_DIFF>;

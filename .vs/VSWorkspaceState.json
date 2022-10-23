@@ -4,13 +4,12 @@
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
     "\\Kalmia\\Kalmia\\engine",
-    "\\Kalmia\\Kalmia\\evaluate",
-    "\\Kalmia\\Kalmia\\reversi",
+    "\\Kalmia\\Kalmia\\protocol",
     "\\Kalmia\\Kalmia\\search",
     "\\Kalmia\\Kalmia\\search\\mcts",
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\engine\\engine.h",
+  "SelectedNode": "\\Kalmia\\Kalmia\\protocol\\gtp.cpp",
   "PreviewInSolutionExplorer": false
 }

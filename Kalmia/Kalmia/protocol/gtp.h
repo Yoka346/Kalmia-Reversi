@@ -15,12 +15,19 @@ namespace protocol
 	{
 	public:
 		using CommandHandler = std::function<void(int, std::istringstream&)>;
-		using CommandsMap = std::map <std::string, CommandHandler>;
+		using CommandMap = std::map <std::string, CommandHandler>;
+
+		inline static const std::string VERSION = "2.0";
+
+		GTP(std::istream* gtp_in = &std::cin, std::ostream* gtp_out = &std::cout) : engine(engine), gtp_in(gtp_in), gtp_out(gtp_out), commands(), quit_flag(true), logger() { init(); }
+		void init();
+		void mainloop(engine::Engine* engine, const std::string& log_file_path);
+		void mainloop(engine::Engine* engine) { std::string null_path = ""; mainloop(engine, null_path); }
 
 	private:
 		engine::Engine* engine;
-		CommandsMap commands;
-		bool quit;
+		CommandMap commands;
+		bool quit_flag;
 		std::istream* gtp_in;
 		std::ostream* gtp_out;
 		std::ofstream logger;
@@ -77,13 +84,5 @@ namespace protocol
 
 		// EngineOptionの値を設定するコマンド.
 		void exec_set_option_command(int id, std::istringstream& args);
-
-	public:
-		inline static const std::string VERSION = "2.0";
-
-		GTP(std::istream* gtp_in = &std::cin, std::ostream* gtp_out = &std::cout) : engine(engine), gtp_in(gtp_in), gtp_out(gtp_out), commands(), quit(true), logger() { init(); }
-		void init();
-		void mainloop(engine::Engine* engine, const std::string& log_file_path);
-		void mainloop(engine::Engine* engine) { std::string null_path = ""; mainloop(engine, null_path); }
 	};
 }

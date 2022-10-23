@@ -1,76 +1,8 @@
 ﻿  モジュール依存関係のソースをスキャンしています...
-  kalmia.cpp
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\io\logger.h(20,20): warning C4805: '==': 演算中の 'int' 型と 'bool' 型の混用は安全ではありません
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\engine\kalmia.cpp(62,35): warning C4244: '引数': 'uint64_t' から 'int32_t' への変換です。データが失われる可能性があります。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::init_empty_count_to_phase_table(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(104): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::init_empty_count_to_phase_table' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::expand_packed_weight(evaluation::ValueFunction<evaluation::DISC_DIFF>::PackedWeight &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(105): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::expand_packed_weight' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction(const std::string)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(112): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction(int32_t)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(111): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::init_weight_with_rand_num(float,float)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(115): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::init_weight_with_rand_num' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::save_to_file(const std::string &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(116): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::save_to_file' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_symmetric_pattern_feature(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(122): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_symmetric_pattern_feature' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_opponent(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(128): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_opponent' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::init_empty_count_to_phase_table(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(104): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::init_empty_count_to_phase_table' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::expand_packed_weight(evaluation::ValueFunction<evaluation::WIN_RATE>::PackedWeight &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(105): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::expand_packed_weight' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction(const std::string)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(112): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction(int32_t)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(111): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::init_weight_with_rand_num(float,float)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(115): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::init_weight_with_rand_num' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::save_to_file(const std::string &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(116): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::save_to_file' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_symmetric_pattern_feature(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(122): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_symmetric_pattern_feature' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_opponent(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(128): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_opponent' の宣言を確認してください
-  main.cpp
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\io\logger.h(20,20): warning C4805: '==': 演算中の 'int' 型と 'bool' 型の混用は安全ではありません
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::init_empty_count_to_phase_table(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(104): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::init_empty_count_to_phase_table' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::expand_packed_weight(evaluation::ValueFunction<evaluation::DISC_DIFF>::PackedWeight &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(105): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::expand_packed_weight' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction(const std::string)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(112): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction(int32_t)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(111): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::init_weight_with_rand_num(float,float)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(115): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::init_weight_with_rand_num' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::save_to_file(const std::string &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(116): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::save_to_file' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_symmetric_pattern_feature(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(122): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_symmetric_pattern_feature' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(174): warning C4661: 'void evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_opponent(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(128): message : 'evaluation::ValueFunction<evaluation::DISC_DIFF>::copy_player_weight_to_opponent' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::init_empty_count_to_phase_table(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(104): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::init_empty_count_to_phase_table' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::expand_packed_weight(evaluation::ValueFunction<evaluation::WIN_RATE>::PackedWeight &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(105): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::expand_packed_weight' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction(const std::string)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(112): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction(int32_t)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(111): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::ValueFunction' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::init_weight_with_rand_num(float,float)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(115): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::init_weight_with_rand_num' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::save_to_file(const std::string &)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(116): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::save_to_file' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_symmetric_pattern_feature(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(122): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_symmetric_pattern_feature' の宣言を確認してください
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(175): warning C4661: 'void evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_opponent(void)': 明示的なテンプレートのインスタンス化要求に対して適切な定義がありません。
-C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\Kalmia\evaluate\position_eval.h(128): message : 'evaluation::ValueFunction<evaluation::WIN_RATE>::copy_player_weight_to_opponent' の宣言を確認してください
+  node.cpp
   コード生成しています。
-  27 of 2585 functions ( 1.0%) were compiled, the rest were copied from previous compilation.
+  0 of 2958 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    2 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   コード生成が終了しました。
   Kalmia.vcxproj -> C:\Users\yu_ok\source\repos\Yoka346\Kalmia-Reversi\Kalmia\x64\Release\Kalmia.exe

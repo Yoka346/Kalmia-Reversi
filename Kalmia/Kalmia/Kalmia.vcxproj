@@ -142,8 +142,11 @@
     <ClCompile Include="engine\random_mover.cpp" />
     <ClCompile Include="evaluate\feature.cpp" />
     <ClCompile Include="evaluate\position_eval.cpp" />
+    <ClCompile Include="io\sync_stream.cpp" />
+    <ClCompile Include="io\sync_stream.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="protocol\gtp.cpp" />
+    <ClCompile Include="protocol\usi.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
     <ClCompile Include="reversi\types.cpp" />
@@ -168,6 +171,8 @@
     <ClInclude Include="evaluate\position_eval.h" />
     <ClInclude Include="io\logger.h" />
     <ClInclude Include="protocol\gtp.h" />
+    <ClInclude Include="protocol\simple_shell_protocol.h" />
+    <ClInclude Include="protocol\usi.h" />
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />
     <ClInclude Include="reversi\mobility.h" />

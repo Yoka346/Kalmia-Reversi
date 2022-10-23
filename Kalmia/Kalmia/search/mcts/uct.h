@@ -77,11 +77,6 @@ namespace search::mcts
 	**/
 	class MutexPool
 	{
-	private:
-		static constexpr size_t SIZE = 1 << 16;	// 余剰の計算が楽になるのでサイズは2^nにする.
-
-		Array<std::mutex, SIZE> pool;
-
 	public:
 		/**
 		* @fn
@@ -93,6 +88,11 @@ namespace search::mcts
 			// pos.calc_hash_code() & (SIZE - 1) は pos.calc_hash_code() % SIZE と同じ意味. SIZE == 2^n だから成り立つ.
 			return this->pool[pos.calc_hash_code() & (SIZE - 1)];
 		}
+
+	private:
+		static constexpr size_t SIZE = 1 << 16;	// 余剰の計算が楽になるのでサイズは2^nにする.
+
+		Array<std::mutex, SIZE> pool;
 	};
 
 	/**
@@ -102,6 +102,66 @@ namespace search::mcts
 	**/
 	class UCT
 	{
+	public:
+		UCTOptions options;
+
+		UCT(const std::string& value_func_param_file_path) : UCT(UCTOptions(), value_func_param_file_path) { ; }
+		UCT(const UCTOptions& options, const std::string& value_func_param_file_path)
+			: options(options), value_func(value_func_param_file_path), mutex_pool(), node_gc(),
+			_node_count(0), root_edge_label(EdgeLabel::NOT_PROVED)
+		{
+			;
+		}
+
+		bool is_searching() { return this->_is_searching; }
+
+		std::chrono::milliseconds search_ellapsed_ms()
+		{
+			using namespace std::chrono;
+			if (this->_is_searching)
+				return duration_cast<milliseconds>(high_resolution_clock::now() - this->search_start_time);
+			return duration_cast<milliseconds>(this->search_end_time - this->search_start_time);
+		}
+
+		uint32_t node_count() { return this->_node_count.load(); }
+		double nps() { return this->_node_count / (this->search_ellapsed_ms().count() * 1.0e-3); }
+		const SearchInfo& get_search_info();
+
+		void enable_early_stopping() { this->early_stopping_is_enabled = true; }
+		void disable_early_stopping() { this->early_stopping_is_enabled = false; }
+		void set_root_state(const reversi::Position& pos);
+
+		/**
+		* @fn
+		* @brief ルート盤面を着手によって次の盤面に遷移させる.
+		* @param (move) 着手位置.
+		* @return 遷移できたらtrue.
+		**/
+		bool transition_root_state_to_child_state(reversi::BoardCoordinate move);
+
+		/**
+		* @fn
+		* @brief 探索を行う. 制限時間は(INT32_MAX / 10)[cs](約24.8日)
+		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
+		**/
+		SearchEndStatus search(uint32_t playout_num) { search(playout_num, INT32_MAX / 10); }
+
+		/**
+		* @fn
+		* @brief 探索を行う.
+		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
+		* @param (time_limit_cs) 制限時間. 単位はcs(centi second).
+		**/
+		SearchEndStatus search(uint32_t playout_num, int32_t time_limit_cs);
+
+		/**
+		* @fn
+		* @brief 呼び出し側とは別のスレッドで探索を行う.
+		**/
+		std::future<SearchEndStatus> search_async(uint32_t playout_num) { return search_async(playout_num, INT32_MAX / 10); }
+		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs) { return std::async([=]() { return search(playout_num, time_limit_cs); }); }
+		void send_stop_search_signal() { if (this->_is_searching) this->search_stop_flag = true; }
+
 	private:
 		// ルートノード直下の子ノードのFPU(First Play Urgency).
 		// FPUは未訪問ノードの期待報酬の初期値. ルートノード直下以外の子ノードは, 親ノードの期待報酬をFPUとして用いる.
@@ -129,8 +189,8 @@ namespace search::mcts
 		std::unique_ptr<Node> root;
 		EdgeLabel root_edge_label;
 
-		// pps(playout per second)を計算するためのカウンター.
-		std::atomic<uint32_t> pps_counter;
+		// ノード数. ノードに初めて訪問したときに加算される. ただし, 前回の探索から引き継いだノードは計算に入れていない.
+		std::atomic<uint32_t> _node_count;
 
 		SearchInfo _search_info;
 		std::chrono::steady_clock::time_point search_start_time;
@@ -155,11 +215,7 @@ namespace search::mcts
 		int32_t select_root_child_node();
 		int32_t select_child_node(Node* parent, Edge& edge_to_parent);
 
-		double predict_reward(GameInfo& game_info)
-		{
-			this->pps_counter++;
-			return 1.0 - this->value_func.predict(game_info.feature());
-		}
+		double predict_reward(GameInfo& game_info) { return 1.0 - this->value_func.predict(game_info.feature()); }
 
 		/**
 		* @fn
@@ -175,15 +231,26 @@ namespace search::mcts
 			edge.reward_sum += reward;
 		}
 
+		/**
+		* @fn
+		* @brief パスノード用のupdate_statistic関数. virtual lossを取り除く処理が省かれている.
+		**/
+		void update_pass_node_statistic(Node* node, Edge& edge, double reward)
+		{
+			node->visit_count++;
+			edge.visit_count++;
+			edge.reward_sum += reward;
+		}
+
 		void add_virtual_loss(Node* node, Edge& edge)
 		{
 			node->visit_count += VIRTUAL_LOSS;
 			edge.visit_count += VIRTUAL_LOSS;
 		}
 
-		bool can_stop_search(int32_t time_limit_ms, SearchEndStatus& end_status);
+		bool can_stop_search(std::chrono::milliseconds time_limit_ms, SearchEndStatus& end_status);
 
-		bool can_do_early_stopping(int32_t time_limit_ms);
+		bool can_do_early_stopping(std::chrono::milliseconds time_limit_ms);
 
 		/**
 		* @fn
@@ -192,69 +259,10 @@ namespace search::mcts
 		* ノードの選び方の詳細:
 		* 1. 訪問回数が最も多いノードを選ぶ. ただし, それが2つ以上あった場合は, 価値が最も高いノードを選ぶ.
 		* 2. 勝利確定ノードがあれば訪問回数に関わらず, そのノードを選ぶ. 
-		* 3. 最も訪問回数の多いノードが敗北確定ノードであれば, 次に訪問回数の多いノードを選ぶ.
+		* 3. 訪問回数に関わらず, 敗北確定ノードは選ばない. ただし, 敗北確定ノードしかない場合は選ぶしかない.
 		* 4. 引き分け確定ノードと敗北確定ノードしかない場合は, 引き分け確定ノードを選ぶ.
 		**/
 		void get_pv(Node* root, std::vector<reversi::BoardCoordinate>& pv);
-
-	public:
-		UCTOptions options;
-
-		UCT(const std::string& value_func_param_file_path) : UCT(UCTOptions(), value_func_param_file_path) { ; }
-		UCT(const UCTOptions& options, const std::string& value_func_param_file_path) 
-			: options(options), value_func(value_func_param_file_path), mutex_pool(), node_gc(), 
-			pps_counter(0), root_edge_label(EdgeLabel::NOT_PROVED) { ; }
-
-		bool is_searching() { return this->_is_searching; }
-		
-		uint64_t search_ellapsed_ms() 
-		{ 
-			using namespace std::chrono;
-			if (this->_is_searching)
-				return duration_cast<milliseconds>(high_resolution_clock::now() - this->search_start_time).count();
-			return duration_cast<milliseconds>(this->search_end_time - this->search_start_time).count();
-		}
-
-		double pps() { return this->pps_counter / (this->search_ellapsed_ms() * 1.0e-3); }
-		const SearchInfo& get_search_info();
-
-		void enable_early_stopping() { this->early_stopping_is_enabled = true; }
-		void disable_early_stopping() { this->early_stopping_is_enabled = false; }
-		void set_root_state(const reversi::Position& pos);
-
-		/**
-		* @fn
-		* @brief ルート盤面を着手によって次の盤面に遷移させる.
-		* @param (move) 着手位置.
-		* @return 遷移できたらtrue.
-		**/
-		bool transition_root_state_to_child_state(reversi::BoardCoordinate move);
-
-		/**
-		* @fn
-		* @brief 探索を行う. 制限時間はINT32_MAX[cs](約248日)
-		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
-		**/
-		SearchEndStatus search(uint32_t playout_num) { search(playout_num, INT32_MAX); }
-
-		/**
-		* @fn
-		* @brief 探索を行う. 
-		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
-		* @param (time_limit_cs) 制限時間. 単位はcs(centi second).
-		**/
-		SearchEndStatus search(uint32_t playout_num, int32_t time_limit_cs);
-
-		/**
-		* @fn
-		* @brief 呼び出し側とは別のスレッドで探索を行う.
-		**/
-		std::future<SearchEndStatus> search_async(uint32_t playout_num) 
-		{ 
-			return search_async(playout_num, INT32_MAX); 
-		}
-		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs) { return std::async([=]() { return search(playout_num, time_limit_cs); }); }
-		void send_stop_search_signal() { if (this->_is_searching) this->search_stop_flag = true; }
 	};
 
 	template double UCT::visit_node<true>(GameInfo&, Node*, Edge&);

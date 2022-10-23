@@ -294,15 +294,6 @@ namespace evaluation
 	**/
     class PositionFeature
     {
-    private:
-        FeatureTable _features;
-        reversi::Player _side_to_move;
-        int32_t _empty_square_count;
-        std::function<void(const reversi::Move&)> update_callbacks[2];    
-        void init_update_callbacks();
-        void update_after_first_player_move(const reversi::Move& move);
-        void update_after_second_player_move(const reversi::Move& move);
-
     public:
         const utils::ReadonlyArray<uint16_t, ALL_PATTERN_NUM> features;
 
@@ -311,9 +302,18 @@ namespace evaluation
         reversi::Player side_to_move() const { return this->_side_to_move; }
         int32_t empty_square_count() const { return this->_empty_square_count; }
         void init_features(const reversi::Position& pos);
-        void update(const reversi::Move& move); 
+        void update(const reversi::Move& move);
         void pass() { this->_side_to_move = reversi::to_opponent_player(this->_side_to_move); }
         const PositionFeature& operator=(const PositionFeature& right);
-        bool operator==(const PositionFeature& right) { return this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right.features.begin()); }
+        bool operator==(const PositionFeature& right) { return this->_side_to_move == right._side_to_move && std::equal(this->features.begin(), this->features.end(), right.features.begin()); } 
+
+    private:
+        FeatureTable _features;
+        reversi::Player _side_to_move;
+        int32_t _empty_square_count;
+        std::function<void(const reversi::Move&)> update_callbacks[2];    
+        void init_update_callbacks();
+        void update_after_first_player_move(const reversi::Move& move);
+        void update_after_second_player_move(const reversi::Move& move);
     };
 }
