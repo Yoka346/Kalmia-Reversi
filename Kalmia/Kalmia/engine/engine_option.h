@@ -22,7 +22,7 @@ namespace engine
 	public:
 		EngineOption() { ; }
 		EngineOption(bool value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
-		EngineOption(const std::string& value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
+		EngineOption(const char* value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 
 		const std::string& default_value() const { return this->_default_value; }

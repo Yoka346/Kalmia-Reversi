@@ -44,6 +44,11 @@ namespace reversi
 		int black_disc_count() const { return (this->_side_to_move == DiscColor::BLACK) ? player_disc_count() : opponent_disc_count(); }
 		int white_disc_count() const { return (this->_side_to_move == DiscColor::WHITE) ? player_disc_count() : opponent_disc_count(); }
 		
+		bool operator==(const Position& right)
+		{
+			return this->_side_to_move == right._side_to_move && this->_bitboard == right._bitboard;
+		}
+
 		/**
 		* @fn
 		* @brief 指定された座標のマスにあるディスクの色を取得する.

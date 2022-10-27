@@ -1,11 +1,15 @@
 #include "kalmia.h"
 
 #include <algorithm>
+#include <filesystem>
+
+#include "../config.h"
 
 #define SHOW_LOG	
 
 using namespace std;
 using namespace std::chrono;
+using namespace std::filesystem;
 
 using namespace utils;
 using namespace io;
@@ -34,13 +38,13 @@ namespace engine
 	}
 
 	Kalmia::Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path)
-		: Engine(NAME, VERSION, AUTHOR), value_func_param_file_path(value_func_param_file_path), logger(log_file_path)
+		: Engine(NAME, VERSION, AUTHOR), logger(log_file_path)
 	{
 		init_options();
 	}
 
 	Kalmia::Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path, std::ostream* log_out)
-		: Engine(NAME, VERSION, AUTHOR), value_func_param_file_path(value_func_param_file_path), logger(log_file_path, log_out)
+		: Engine(NAME, VERSION, AUTHOR), logger(log_file_path, log_out)
 	{
 		init_options();
 	}
@@ -51,6 +55,11 @@ namespace engine
 
 		// サーバーやGUIと通信する際の遅延. 
 		this->options["latency_ms"] = EngineOption(50, 0, INT32_MAX, this->options.size());
+
+		ostringstream oss;
+		oss << EVAL_DIR << "value_func_weight.bin";
+		this->options["value_func_weight_path"] =
+			EngineOption(oss.str().c_str(), this->options.size());
 
 		// 探索スレッド数
 		this->options["thread_num"] = 
@@ -89,7 +98,7 @@ namespace engine
 
 	void Kalmia::quit()
 	{
-		if (this->tree->is_searching())
+		if (this->tree.get() && this->tree->is_searching())
 		{
 			this->tree->send_stop_search_signal();
 			write_log("Kalmia recieved quit signal. Current calculation will be suspended.\n");
@@ -139,23 +148,35 @@ namespace engine
 		timer.set_increment(inc);
 	}
 
-	void Kalmia::on_ready()
+	bool Kalmia::on_ready()
 	{
 		try
 		{
+			string value_func_param_path = this->options["value_func_weight_path"].current_value();
+			if (!exists(value_func_param_path))
+			{
+				ostringstream oss;
+				oss << "Cannot find value func weight file: \"" << value_func_param_path << "\"";
+				send_err_message(oss.str());
+				return false;
+			}
+
 			if (this->tree.get())
 			{
 				auto prev_tree = move(this->tree);
-				this->tree = make_unique<UCT>(prev_tree->options, this->value_func_param_file_path);
+				this->tree = make_unique<UCT>(prev_tree->options, value_func_param_path);
 			}
 			else
-				this->tree = make_unique<UCT>(UCTOptions(), this->value_func_param_file_path);
+				this->tree = make_unique<UCT>(UCTOptions(), value_func_param_path);
 		}
 		catch (invalid_argument ex)
 		{
 			send_err_message(ex.what());
 		}
+
 		this->tree->set_root_state(position());
+
+		return true;
 	}
 
 	void Kalmia::on_cleared_position() 
@@ -340,6 +361,7 @@ namespace engine
 			write_log(search_info_to_string(new_search_info));
 		}
 
+		send_all_search_info();
 		this->logger.flush();
 		return move;
 	}
@@ -355,16 +377,7 @@ namespace engine
 			auto time_now = high_resolution_clock::now();
 			if (duration_cast<milliseconds>(time_now - start_time) >= show_search_info_interval_ms)
 			{
-				auto& search_info = this->tree->get_search_info();
-				ThinkInfo think_info;
-				collect_think_info(search_info, think_info);
-				send_think_info(think_info);
-
-				MultiPV multi_pv;
-				collect_multi_pv(search_info, multi_pv);
-				send_multi_pv(multi_pv);
-
-				write_log(search_info_to_string(search_info));
+				send_all_search_info();
 				start_time = time_now;
 			}
 		}

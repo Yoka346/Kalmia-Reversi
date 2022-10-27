@@ -82,6 +82,7 @@ namespace protocol
 		this->logger = ofstream(log_file_path);
 
 		using namespace placeholders;
+		this->engine->on_err_message_is_sent = [this](string msg) { usi_failure(msg); };
 		this->engine->on_think_info_is_sent = bind(&USI::on_think_info_is_sent, this, _1);
 		this->engine->on_multi_pv_is_sent = bind(&USI::on_multi_pv_is_sent, this, _1);
 
@@ -221,30 +222,47 @@ namespace protocol
 			<< " type " << option.second.type()
 			<< " default " << option.second.default_value() 
 			<< "\n";
-
+		u_out << "usiok\n";
 		u_out.flush();
 	}
 
 	void USI::exec_isready_command(istringstream& iss) 
 	{
-		this->engine->ready();
-		this->usi_out << IOLock::LOCK << "readyok\n";
-		this->usi_out.flush();
+		if (this->engine->ready())
+		{
+			this->usi_out << IOLock::LOCK << "readyok\n";
+			this->usi_out.flush();
+		}
 	}
 
 	void USI::exec_setoption_command(istringstream& iss) 
 	{
+		if (iss.eof())
+		{
+			usi_failure("specify name and value of option.");
+			return;
+		}
+
 		string token;
 		string option_name;
 
 		iss >> token;
-		if (token != "name")	// USIの仕様には無いが利便性のためにnameを省略できるようにする.
-			iss >> option_name;
-		else if(!iss.eof())
-			option_name = token;
+		if (token == "name")
+		{	// USIの仕様には無いが利便性のためにnameを省略できるようにする.
+			if (!iss.eof())
+				iss >> option_name;
+			else
+			{
+				usi_failure("specify a name of option.");
+				return;
+			}
+		}
 		else
+			option_name = token;
+
+		if (iss.eof())
 		{
-			usi_failure("specify a name of option.");
+			usi_failure("specify a value.");
 			return;
 		}
 
@@ -291,6 +309,43 @@ namespace protocol
 			return;
 		}
 
+		while (!iss.eof())
+		{
+			iss >> token;
+			BoardCoordinate move = parse_coordinate(token);
+			if (move == BoardCoordinate::NULL_COORD)
+			{
+				usi_failure("invalid coordinate.");
+				return;
+			}
+
+			if (!pos.update<true>(move))
+			{
+				ostringstream oss;
+				oss << "illegal move: " << token;
+				usi_failure(oss.str());
+				return;
+			}
+		}
+
+		Array<Move, MAX_MOVE_NUM> moves;
+		auto current_pos = this->engine->position();
+		auto move_num = current_pos.get_next_moves(moves);
+		for (auto i = 0; i < move_num; i++)
+		{
+			auto& move = moves[i];
+			current_pos.calc_flipped_discs(move);
+			current_pos.update<false>(move);
+
+			if (current_pos == pos)
+			{
+				this->engine->update_position(current_pos.side_to_move(), move.coord);
+				return;
+			}
+
+			current_pos.undo(move);
+		}
+
 		this->engine->set_position(pos);
 	}
 
@@ -298,7 +353,7 @@ namespace protocol
 	{
 		if (!go_command_has_done())
 		{
-			auto& go_future = this->go_command_future;
+			future<BoardCoordinate>& go_future = this->go_command_future;
 			if (go_future.valid() && !go_command_has_done())
 			{
 				usi_failure("Cannnot execute multiple go commands");

@@ -17,6 +17,9 @@
 // BMI2を用いる場合にdefineする.
 #define USE_BMI2
 
+#define EVAL_DIR "eval/"	// 評価関数のパラメータファイルを格納するディレクトリ.
+#define LOG_DIR "log/"		// ログファイルを格納するディレクトリ.
+
 
 /*
 * 以下, 書き換え不要

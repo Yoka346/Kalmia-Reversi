@@ -34,7 +34,7 @@ namespace engine
 		double get_eval_score_max() override { return 100.0; }
 
 	protected:
-		void on_ready() override;
+		bool on_ready() override;
 		void on_cleared_position() override;
 		void on_position_was_set() override;
 		void on_undid_position() override;
@@ -48,7 +48,6 @@ namespace engine
 		inline static const std::string AUTHOR = "Yoka346";
 
 		std::unique_ptr<search::mcts::UCT> tree;
-		std::string value_func_param_file_path;
 		utils::Random rand;
 		std::future<search::mcts::SearchEndStatus> search_task;
 		io::Logger logger;
@@ -71,6 +70,7 @@ namespace engine
 		reversi::BoardCoordinate select_move(const search::mcts::SearchInfo& search_info, bool& extra_search_is_need);
 
 		// event handlers
+		void on_value_func_weight_path_changed(EngineOption& sender, std::string& err_message);
 		void on_thread_num_changed(EngineOption& sender, std::string& err_message);
 		void on_node_num_limit_changed(EngineOption& sender, std::string& err_message);
 		void on_softmax_temperature_changed(EngineOption& sender, std::string& err_message);

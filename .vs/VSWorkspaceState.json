@@ -10,6 +10,6 @@
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\protocol\\gtp.cpp",
+  "SelectedNode": "\\Kalmia\\Kalmia\\test\\position_feature_update_test.cpp",
   "PreviewInSolutionExplorer": false
 }

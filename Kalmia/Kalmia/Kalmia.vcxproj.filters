@@ -194,9 +194,6 @@
     <ClInclude Include="engine\kalmia.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="protocol\simple_shell_protocol.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="protocol\usi.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>

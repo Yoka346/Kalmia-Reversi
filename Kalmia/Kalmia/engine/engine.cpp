@@ -11,7 +11,14 @@ namespace engine
 	void Engine::send_think_info(ThinkInfo& think_info) { this->on_think_info_is_sent(think_info); }
 	void Engine::send_multi_pv(MultiPV& multi_pv) { this->on_multi_pv_is_sent(multi_pv); }
 
-	void Engine::ready() { on_ready(); this->_state = EngineState::READY; }
+	bool Engine::ready() 
+	{ 
+		if (!on_ready()) 
+			return false; 
+		this->_state = EngineState::READY; 
+		return true;
+	}
+
 	void Engine::start_game() { on_start_game(); this->_state = EngineState::PLAYING; }
 	void Engine::end_game() { on_end_game(); this->_state = EngineState::GAME_OVER; }
 

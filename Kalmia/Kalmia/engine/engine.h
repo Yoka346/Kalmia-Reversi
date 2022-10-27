@@ -92,7 +92,7 @@ namespace engine
 		const reversi::Position& position() const { return this->_position; }
 		const EvalScoreType score_type() const { return this->_score_type; }
 
-		void ready();
+		bool ready();
 		void start_game();
 		void end_game();
 		void set_position(reversi::Position& pos);
@@ -188,7 +188,7 @@ namespace engine
 		std::map<std::string, EngineOption> options;
 
 		bool stop_flag() { return this->_stop_flag.load(); }
-		virtual void on_ready() { ; }
+		virtual bool on_ready() { return true; }
 		virtual void on_start_game() { ; }
 		virtual void on_end_game() { ; }
 		virtual void on_cleared_position() { ; }
