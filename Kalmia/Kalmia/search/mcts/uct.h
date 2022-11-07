@@ -47,6 +47,8 @@ namespace search::mcts
 		MoveEvaluation() 
 			: move(reversi::BoardCoordinate::NULL_COORD), effort(0.0), playout_count(0u), 
 			expected_reward(0.0), game_result(reversi::GameResult::NOT_OVER), pv() { ; }
+
+		bool prior_to(const MoveEvaluation& move_eval) const;
 	};
 
 	struct SearchInfo

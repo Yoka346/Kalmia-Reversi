@@ -127,6 +127,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +151,8 @@
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />
     <ClCompile Include="reversi\types.cpp" />
+    <ClCompile Include="search\endgame\search.cpp" />
+    <ClCompile Include="search\endgame\tt.cpp" />
     <ClCompile Include="search\mcts\gc.cpp" />
     <ClCompile Include="search\mcts\node.cpp" />
     <ClCompile Include="search\mcts\uct.cpp" />
@@ -178,6 +181,8 @@
     <ClInclude Include="reversi\move.h" />
     <ClInclude Include="reversi\position.h" />
     <ClInclude Include="search\common.h" />
+    <ClInclude Include="search\endgame\search.h" />
+    <ClInclude Include="search\endgame\tt.h" />
     <ClInclude Include="search\mcts\gc.h" />
     <ClInclude Include="search\mcts\node.h" />
     <ClInclude Include="search\mcts\uct.h" />

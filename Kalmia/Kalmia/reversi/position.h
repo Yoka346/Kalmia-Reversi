@@ -35,6 +35,7 @@ namespace reversi
 
 		Position(Bitboard bitboard, DiscColor side_to_move) : _bitboard(bitboard), _side_to_move(side_to_move) { ; }
 
+		const Bitboard& bitboard() const { return this->_bitboard; }
 		DiscColor side_to_move() const { return this->_side_to_move; }
 		DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
 		int empty_square_count() const { return this->_bitboard.empty_count(); }
@@ -48,6 +49,8 @@ namespace reversi
 		{
 			return this->_side_to_move == right._side_to_move && this->_bitboard == right._bitboard;
 		}
+
+		void set_bitboard(const Bitboard& bitboard) { this->_bitboard = bitboard; }
 
 		/**
 		* @fn
@@ -97,9 +100,10 @@ namespace reversi
 				if (!is_legal(coord))
 					return false;
 
-			uint64_t flipped = (coord != BoardCoordinate::PASS) ? this->_bitboard.calc_flipped_discs(coord) : 0ULL;
-			Move move(coord, flipped);
-			return update<false>(move);
+			uint64_t flipped = this->_bitboard.calc_flipped_discs(coord);;
+			this->_side_to_move = opponent_color();
+			this->_bitboard.update(coord, flipped);
+			return true;
 		}
 
 		void undo(Move& move)
@@ -108,7 +112,7 @@ namespace reversi
 			this->_side_to_move = opponent_color();
 		}
 
-		int get_next_moves(Array<Move, MAX_MOVE_NUM>& moves) const
+		int32_t get_next_moves(Array<Move, MAX_MOVE_NUM>& moves) const
 		{
 			uint64_t mobility = this->_bitboard.calc_player_mobility();
 			auto move_count = 0;
@@ -116,6 +120,21 @@ namespace reversi
 			FOREACH_BIT(coord, mobility)
 				moves[move_count++].coord = static_cast<BoardCoordinate>(coord);
 			return move_count;
+		}
+
+		int32_t get_next_move_num_after(BoardCoordinate move) const
+		{
+			Bitboard bitboard = this->_bitboard;
+			uint64_t flipped = bitboard.calc_flipped_discs(move);
+			bitboard.update(move, flipped);
+			return std::popcount(bitboard.calc_player_mobility());
+		}
+
+		int32_t get_next_move_num_after(Move& move) const
+		{
+			Bitboard bitboard = this->_bitboard;
+			bitboard.update(move.coord, move.flipped);
+			return std::popcount(bitboard.calc_player_mobility());
 		}
 
 		void calc_flipped_discs(Move& move) const { move.flipped = this->_bitboard.calc_flipped_discs(move.coord); }

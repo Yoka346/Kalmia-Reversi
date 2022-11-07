@@ -339,6 +339,7 @@ namespace protocol
 
 			if (current_pos == pos)
 			{
+				current_pos.undo(move);
 				this->engine->update_position(current_pos.side_to_move(), move.coord);
 				return;
 			}
@@ -393,7 +394,10 @@ namespace protocol
 	{
 		static const milliseconds TIMEOUT(10000);
 
-		if (this->go_command_future.valid() && !this->go_command_has_done())
+		if (!this->go_command_future.valid())
+			return;
+
+		if (!this->go_command_has_done())
 		{
 			this->stop_go_flag = true;
 			this->engine->stop_thinking(TIMEOUT);
@@ -404,9 +408,9 @@ namespace protocol
 				usi_failure("Timeout!!");
 				return;
 			}
-			usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(this->go_command_future.get()) << "\n";
-			usi_out.flush();
 		}
+		usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(this->go_command_future.get()) << "\n";
+		usi_out.flush();
 	}
 
 	void USI::exec_ponderhit_command(istringstream& iss) 

@@ -80,7 +80,7 @@ namespace engine
 		std::function<void(const MultiPV&)> on_multi_pv_is_sent = [](const MultiPV&) { ; };
 
 		Engine(const std::string& name, const std::string& version, const std::string& author)
-			: _name(name), _version(version), _author(author), _position(), position_history(), _is_thinking(false)
+			: _name(name), _version(version), _author(author), _score_type(EvalScoreType::OTHER), _position(), position_history(), _is_thinking(false)
 		{
 			
 		}
@@ -185,6 +185,7 @@ namespace engine
 		virtual double get_eval_score_max() { return 0.0; }
 
 	protected:
+		EvalScoreType _score_type;
 		std::map<std::string, EngineOption> options;
 
 		bool stop_flag() { return this->_stop_flag.load(); }
@@ -232,7 +233,6 @@ namespace engine
 		reversi::Position _position;
 		std::vector<reversi::Position> position_history;
 		std::atomic<bool> _stop_flag;
-		EvalScoreType _score_type;
 		std::atomic<bool> _is_thinking;
 	};
 }

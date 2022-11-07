@@ -93,6 +93,8 @@ namespace protocol
 
 		this->engine->on_message_is_sent = [](const string& msg) { cerr << msg; };	// ログなどのテキスト情報はGTPではエラー出力に出力するのが一般的.
 
+		this->engine->ready();
+
 		int id;
 		string cmd_name;
 		string line;

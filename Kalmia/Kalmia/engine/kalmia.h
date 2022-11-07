@@ -9,6 +9,7 @@
 #include "../utils/random.h"
 #include "../io/logger.h"
 #include "../search/mcts/uct.h"
+#include "../search/endgame/search.h"
 
 namespace engine
 {
@@ -21,8 +22,8 @@ namespace engine
 	class Kalmia : public Engine
 	{
 	public:
-		Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path);
-		Kalmia(const std::string& value_func_param_file_path, const std::string& log_file_path, std::ostream* log_out);
+		Kalmia(const std::string& log_file_path);
+		Kalmia(const std::string& log_file_path, std::ostream* log_out);
 
 		void init_options();
 		void quit() override;
@@ -30,8 +31,8 @@ namespace engine
 		void set_byoyomi(reversi::DiscColor color, std::chrono::milliseconds byoyomi) override;
 		void set_byoyomi_stones(reversi::DiscColor color, int32_t byoyomi_stones) override;
 		void set_time_inc(reversi::DiscColor color, std::chrono::milliseconds inc) override;
-		double get_eval_score_min() override { return 0.0; }
-		double get_eval_score_max() override { return 100.0; }
+		double get_eval_score_min() override;
+		double get_eval_score_max() override;
 
 	protected:
 		bool on_ready() override;
@@ -46,10 +47,14 @@ namespace engine
 		inline static const std::string NAME = "Kalmia";
 		inline static const std::string VERSION = "2.0";
 		inline static const std::string AUTHOR = "Yoka346";
+		static constexpr int32_t DEFAULT_ENDGAME_SOLVER_TT_SIZE_MIB = 256;
 
+		std::string value_func_weight_path;
 		std::unique_ptr<search::mcts::UCT> tree;
+		search::endgame::EndgameSolver endgame_solver;
 		utils::Random rand;
 		std::future<search::mcts::SearchEndStatus> search_task;
+		std::future < reversi::BoardCoordinate> endgame_solve_task;
 		io::Logger logger;
 		utils::GameTimer timer[2];
 
@@ -60,12 +65,15 @@ namespace engine
 		void stop_if_pondering();
 		void write_log(const std::string& str);
 		std::string search_info_to_string(const search::mcts::SearchInfo& search_info);
-		void send_all_search_info();
+		void send_all_mid_search_info();
+		void send_all_endgame_search_info();
 		void collect_think_info(const search::mcts::SearchInfo& search_info, ThinkInfo& think_info);
 		void collect_multi_pv(const search::mcts::SearchInfo& search_info, MultiPV& multi_pv);
 
 		reversi::BoardCoordinate generate_mid_game_move(bool ponder);
+		reversi::BoardCoordinate generate_end_game_move(bool ponder);
 		void wait_for_mid_search();
+		void wait_for_endgame_search();
 		template <MoveSelection MOVE_SELECT>
 		reversi::BoardCoordinate select_move(const search::mcts::SearchInfo& search_info, bool& extra_search_is_need);
 
@@ -74,6 +82,8 @@ namespace engine
 		void on_thread_num_changed(EngineOption& sender, std::string& err_message);
 		void on_node_num_limit_changed(EngineOption& sender, std::string& err_message);
 		void on_softmax_temperature_changed(EngineOption& sender, std::string& err_message);
+		void on_endgame_move_num_changed(EngineOption& sender, std::string& err_message);
+		void on_endgame_tt_size_mib_changed(EngineOption& sender, std::string& err_message);
 		void on_enable_early_stopping_changed(EngineOption& sender, std::string& err_message);
 	};
 

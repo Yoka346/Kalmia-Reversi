@@ -19,10 +19,7 @@ string create_log_file(const string& file_name);
 int main()
 {
 	create_directories();
-
-	static const string PARAM_PATH = "../test_data/value_func_weight_for_test.bin";
-	unique_ptr<Kalmia> kalmia(new Kalmia(PARAM_PATH, create_log_file("kalmia")));
-
+	unique_ptr<Kalmia> kalmia(new Kalmia(create_log_file("kalmia")));
 	USI usi;
 	usi.mainloop(kalmia.get(), create_log_file("usi"));
 }

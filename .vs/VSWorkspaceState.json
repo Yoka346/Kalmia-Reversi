@@ -3,13 +3,14 @@
     "",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
-    "\\Kalmia\\Kalmia\\engine",
     "\\Kalmia\\Kalmia\\protocol",
+    "\\Kalmia\\Kalmia\\reversi",
     "\\Kalmia\\Kalmia\\search",
+    "\\Kalmia\\Kalmia\\search\\endgame",
     "\\Kalmia\\Kalmia\\search\\mcts",
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\test\\position_feature_update_test.cpp",
+  "SelectedNode": "\\Kalmia\\Kalmia\\search\\endgame\\search.cpp",
   "PreviewInSolutionExplorer": false
 }

@@ -30,7 +30,7 @@ namespace engine
 		this->_default_value = this->_current_value = value_str;
 	}
 
-	EngineOption::EngineOption(const char* value, size_t idx, const EventHandler& on_value_change) : _default_value(value), _current_value(value), _idx(0), _type("string"), _min(0), _max(0) {}
+	EngineOption::EngineOption(const char* value, size_t idx, const EventHandler& on_value_change) : _default_value(value), _current_value(value), _idx(0), _type("string"), _min(0), _max(0), on_value_change(on_value_change) {}
 
 	EngineOption::EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change) : _min(min), _max(max), _idx(idx), _type("spin"), on_value_change(on_value_change)
 	{

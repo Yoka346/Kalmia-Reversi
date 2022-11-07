@@ -19,6 +19,14 @@ using namespace evaluation;
 
 namespace search::mcts
 {
+	bool MoveEvaluation::prior_to(const MoveEvaluation& move_eval) const
+	{
+		int32_t diff = this->playout_count - move_eval.playout_count;
+		if (diff != 0)
+			return diff > 0;
+		return this->expected_reward > move_eval.expected_reward;
+	}
+
 	const SearchInfo& UCT::get_search_info()
 	{
 		auto& si = this->_search_info;
@@ -35,14 +43,10 @@ namespace search::mcts
 		else
 			root_eval.expected_reward = GAME_RESULT_TO_REWARD[static_cast<int32_t>(root_eval.game_result)];
 
-		DynamicArray<Edge> edges(this->root->child_node_num);
-		memcpy(edges.begin(), this->root->edges.get(), sizeof(Edge) * this->root->child_node_num);
-		sort(edges.begin(), edges.end(), [](const auto& e0, const auto& e1) { return e0.prior_to(e1); });
-
 		for (auto i = 0; i < child_evals.length(); i++)
 		{
 			MoveEvaluation& child_eval = child_evals[i];
-			auto& edge = edges[i];
+			auto& edge = this->root->edges[i];
 			child_eval.move = edge.move.coord;
 			child_eval.effort = static_cast<double>(edge.visit_count) / this->root->visit_count;
 			child_eval.playout_count = edge.visit_count;
@@ -56,6 +60,7 @@ namespace search::mcts
 			child_eval.pv.emplace_back(child_eval.move);
 			get_pv(this->root->child_nodes[i].get(), child_eval.pv);
 		}
+		sort(child_evals.begin(), child_evals.end(), [](const auto& e0, const auto& e1) { return e0.prior_to(e1); });
 
 		return this->_search_info;
 	}
@@ -220,7 +225,7 @@ namespace search::mcts
 			{
 				auto res = to_opponent_game_result(pos.get_game_result());
 				auto label = edges[i].label = game_result_to_edge_label(res);
-				if (label == EdgeLabel::WIN)	// 勝利確定の辺1つでもあれば, ルートは勝利確定.
+				if (label == EdgeLabel::WIN)	// 勝利確定の辺が1つでもあれば, ルートは勝利確定.
 				{
 					this->root_edge_label = EdgeLabel::WIN;
 					return;
@@ -395,7 +400,7 @@ namespace search::mcts
 				return i;	// 勝利確定ならそれを選んで終わり.
 			}
 			
-			if (edges->is_loss())
+			if (edge.is_loss())
 			{
 				loss_count++;
 				continue;	// 敗北確定なら選ばない.
@@ -426,7 +431,11 @@ namespace search::mcts
 		}
 
 		if (loss_count + draw_count == this->root->child_node_num)
+		{
 			this->root_edge_label = (draw_count != 0) ? EdgeLabel::DRAW : EdgeLabel::LOSS;
+			if (draw_count != 0)
+				assert(edges[max_idx].label == EdgeLabel::DRAW);
+		}
 
 		return max_idx;
 	}
@@ -492,6 +501,8 @@ namespace search::mcts
 			// 親ノードからみて引き分け確定の辺があれば, 親ノードの親からみても引き分け確定.
 			// 親ノードからみて敗北確定の辺があれば, 親ノードの親からみれば勝利確定.
 			edge_to_parent.label = (draw_count != 0) ? EdgeLabel::DRAW : EdgeLabel::WIN;
+			if (draw_count != 0)
+				assert(edges[max_idx].label == EdgeLabel::DRAW);
 		}
 
 		return max_idx;
