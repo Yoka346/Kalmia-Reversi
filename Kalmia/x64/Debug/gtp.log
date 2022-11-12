@@ -1,8 +1,0 @@
-Input: name
-Status: success
-Output: Random Mover
-
-Input: 
-Status: fail
-Output: unknown command.
-

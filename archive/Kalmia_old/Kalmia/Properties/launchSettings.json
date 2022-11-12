@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Kalmia": {
-      "commandName": "Project",
-      "commandLineArgs": "--mode ruler --difficulty easy"
-    }
-  }
-}
