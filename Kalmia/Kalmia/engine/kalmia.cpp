@@ -382,8 +382,9 @@ namespace engine
 
 		this->search_task = this->tree->search_async(this->options["playout"]);
 		wait_for_mid_search();
+		auto search_end_status = this->search_task.get();
 
-		write_log(search_end_status_to_string(this->search_task.get()));
+		write_log(search_end_status_to_string(search_end_status));
 		write_log("\n");
 		write_log("End search.\n");
 
@@ -400,7 +401,7 @@ namespace engine
 		bool extra_search_is_needed;
 		auto move = select_move(search_info, extra_search_is_needed);
 
-		if (extra_search_is_needed && this->options["enable_extra_search"])
+		if (search_end_status != SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL && extra_search_is_needed && this->options["enable_extra_search"])
 		{
 			write_log("\nStart extra search.\n");
 			this->logger.flush();

@@ -162,7 +162,7 @@ namespace search::mcts
 		**/
 		std::future<SearchEndStatus> search_async(uint32_t playout_num) { return search_async(playout_num, INT32_MAX / 10); }
 		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs) { return std::async([=]() { return search(playout_num, time_limit_cs); }); }
-		void send_stop_search_signal() { if (this->_is_searching) this->search_stop_flag = true; }
+		void send_stop_search_signal() { if (this->_is_searching) this->stop_search_signal_was_sent = true; }
 
 	private:
 		// ルートノード直下の子ノードのFPU(First Play Urgency).
@@ -198,7 +198,7 @@ namespace search::mcts
 		std::chrono::steady_clock::time_point search_start_time;
 		std::chrono::steady_clock::time_point search_end_time;
 		bool early_stopping_is_enabled = true;
-		std::atomic<bool> search_stop_flag = true;
+		std::atomic<bool> stop_search_signal_was_sent = true;
 		std::atomic<bool> _is_searching = false;
 
 		void init_root_child_nodes();
@@ -207,7 +207,7 @@ namespace search::mcts
 		* @fn
 		* @detail 探索ワーカー. 探索スレッド数だけ並列にこの関数が実行される.
 		**/
-		void search_kernel(GameInfo& game_info, uint32_t playout_num);
+		void search_kernel(GameInfo& game_info, uint32_t playout_num, bool& stop_flag);
 
 		void visit_root_node(GameInfo& game_info);
 

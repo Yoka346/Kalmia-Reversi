@@ -71,6 +71,7 @@ namespace search::mcts
 		this->node_gc.add(move(this->root));
 		this->root.reset(new Node());
 		init_root_child_nodes();
+		this->_node_count = 0;
 	}
 
 	bool UCT::transition_root_state_to_child_state(BoardCoordinate move)
@@ -87,6 +88,7 @@ namespace search::mcts
 				this->root_state.update<false>(move);
 				init_root_child_nodes();
 				this->node_gc.add(std::move(prev_root));
+				this->_node_count = 0;
 				return true;
 			}
 
@@ -105,29 +107,30 @@ namespace search::mcts
 			return SearchEndStatus::PROVED;
 
 		this->_is_searching = true;
-		this->search_stop_flag = false;
-		this->_node_count = 0;
+		this->stop_search_signal_was_sent = false;
 		vector<future<void>> search_threads;
 
 		auto thread_num = this->options.thread_num;
 		auto playout_num_per_thread = playout_num / thread_num;
-			
+
 		milliseconds time_limit_ms(time_limit_cs * 10);
 		this->search_start_time = high_resolution_clock::now();
 
+		auto stop_flag = false;
 		for (int32_t i = 0; i < thread_num; i++)
 			search_threads.emplace_back(
 				async(
-				[&, this]
-				{
+					[&, this]
+					{
 						GameInfo game_info(root_state, PositionFeature(root_state));
-						search_kernel(game_info, playout_num_per_thread);
-				}));
+					search_kernel(game_info, playout_num_per_thread, stop_flag);
+					}));
 
-		SearchEndStatus end_status;
+		auto end_status = SearchEndStatus::COMPLETE;
 		while (true)
 		{
-			can_stop_search(time_limit_ms, end_status);
+			if (can_stop_search(time_limit_ms, end_status))
+				stop_flag = true;
 
 			auto done = true;
 			for (auto& future : search_threads)
@@ -139,12 +142,9 @@ namespace search::mcts
 			this_thread::sleep_for(milliseconds(10));
 		}
 
-		if (!this->search_stop_flag)
-		{
-			GameInfo game_info(root_state, PositionFeature(root_state));
-			search_kernel(game_info, playout_num % thread_num);	// 余りはシングルスレッドで片づける. 高々 1以上(thread_num - 1)以下のプレイアウト数なので.
-		}
-		
+		GameInfo game_info(root_state, PositionFeature(root_state));
+		search_kernel(game_info, playout_num % thread_num, stop_flag);	// 余りはシングルスレッドで片づける. 高々 1以上(thread_num - 1)以下のプレイアウト数なので.
+
 		this->_is_searching = false;
 		this->search_end_time = high_resolution_clock::now();
 
@@ -247,9 +247,9 @@ namespace search::mcts
 			this->root_edge_label = (draw_count != 0) ? EdgeLabel::DRAW : EdgeLabel::LOSS;
 	}
 
-	void UCT::search_kernel(GameInfo& game_info, uint32_t playout_num)
+	void UCT::search_kernel(GameInfo& game_info, uint32_t playout_num, bool& stop_flag)
 	{
-		for (uint32_t i = 0; i < playout_num && !this->search_stop_flag; i++)
+		for (uint32_t i = 0; i < playout_num && !stop_flag; i++)
 		{
 			// ルートのゲームの情報をコピー. MCTSでは, 末端ノードに達したら一気にルートに戻るので, undoするよりもコピーのほうが速い.
 			auto gi = game_info;	
@@ -554,30 +554,32 @@ namespace search::mcts
 
 	bool UCT::can_stop_search(milliseconds time_limit_ms, SearchEndStatus& end_status)
 	{
+		if (this->stop_search_signal_was_sent) 
+		{
+			end_status = SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL;
+			return true;
+		}
+
 		if (this->root_edge_label & EdgeLabel::PROVED)
 		{
-			send_stop_search_signal();
 			end_status = SearchEndStatus::PROVED;
 			return true;
 		}
 
 		if (search_ellapsed_ms() >= time_limit_ms)
 		{
-			send_stop_search_signal();
 			end_status = SearchEndStatus::TIMEOUT;
 			return true;
 		}
 
 		if (Node::object_count() >= this->options.node_num_limit)
 		{
-			send_stop_search_signal();
 			end_status = SearchEndStatus::OVER_NODES;
 			return true;
 		}
 
 		if (this->early_stopping_is_enabled && can_do_early_stopping(time_limit_ms))
 		{
-			send_stop_search_signal();
 			end_status = SearchEndStatus::EARLY_STOPPING;
 			return true;
 		}
