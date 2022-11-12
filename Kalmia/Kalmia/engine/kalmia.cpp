@@ -218,10 +218,7 @@ namespace engine
 		this->tree->set_root_state(position());
 		write_log("Tree was cleared.\n");
 
-		if (this->position().empty_square_count() > this->options["endgame_move_num"])
-			this->_score_type = EvalScoreType::WIN_RATE;
-		else
-			this->_score_type = EvalScoreType::DISC_DIFF;
+		update_score_type();
 	}
 
 	void Kalmia::on_position_was_set()
@@ -230,10 +227,7 @@ namespace engine
 		this->tree->set_root_state(position());
 		write_log("Tree was cleared.\n");
 
-		if (position().empty_square_count() > this->options["endgame_move_num"])
-			this->_score_type = EvalScoreType::WIN_RATE;
-		else
-			this->_score_type = EvalScoreType::DISC_DIFF;
+		update_score_type();
 	}
 
 	void Kalmia::on_updated_position(BoardCoordinate move)
@@ -244,6 +238,8 @@ namespace engine
 			this->tree->set_root_state(position());
 
 		this->logger.flush();
+
+		update_score_type();
 	}
 
 	void Kalmia::on_undid_position()
@@ -526,6 +522,14 @@ namespace engine
 			second_child.expected_reward > best_child.expected_reward	// Å‘PŽè‚ÆŽŸ‘PŽè‚Å‰¿’l‚ª‹t“]‚µ‚Ä‚¢‚éê‡‚Í, ’Tõ‚ª•s\•ª.
 			|| second_child.playout_count * ENOUGH_SEARCH_THRESHOLD > best_child.playout_count;		// Å‘PŽè‚ÆŽŸ‘PŽè‚ÌƒvƒŒƒCƒAƒEƒg‰ñ”‚É‘å‚«‚ÈŠJ‚«‚ª‚È‚¢ê‡‚Í’Tõ‰„’·.
 		return child_evals[selected_idx].move;
+	}
+
+	void Kalmia::update_score_type() 
+	{
+		if (position().empty_square_count() > this->options["endgame_move_num"])
+			this->_score_type = EvalScoreType::WIN_RATE;
+		else
+			this->_score_type = EvalScoreType::DISC_DIFF;
 	}
 
 	void Kalmia::on_value_func_weight_path_changed(EngineOption& sender, std::string& err_message)

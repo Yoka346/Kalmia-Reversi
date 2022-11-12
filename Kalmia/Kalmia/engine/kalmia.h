@@ -76,6 +76,7 @@ namespace engine
 		void wait_for_endgame_search();
 		template <MoveSelection MOVE_SELECT>
 		reversi::BoardCoordinate select_move(const search::mcts::SearchInfo& search_info, bool& extra_search_is_need);
+		void update_score_type();
 
 		// event handlers
 		void on_value_func_weight_path_changed(EngineOption& sender, std::string& err_message);

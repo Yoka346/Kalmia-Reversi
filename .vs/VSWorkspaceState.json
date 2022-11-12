@@ -3,7 +3,7 @@
     "",
     "\\Kalmia",
     "\\Kalmia\\Kalmia",
-    "\\Kalmia\\Kalmia\\protocol",
+    "\\Kalmia\\Kalmia\\engine",
     "\\Kalmia\\Kalmia\\reversi",
     "\\Kalmia\\Kalmia\\search",
     "\\Kalmia\\Kalmia\\search\\endgame",
@@ -11,6 +11,6 @@
     "\\Kalmia\\Kalmia\\test",
     "\\Kalmia\\Kalmia\\utils"
   ],
-  "SelectedNode": "\\Kalmia\\Kalmia\\search\\endgame\\search.cpp",
+  "SelectedNode": "\\Kalmia\\Kalmia\\engine\\engine.h",
   "PreviewInSolutionExplorer": false
 }
