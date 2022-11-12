@@ -1,1 +1,10 @@
 .vs/
+Kalmia/Debug/.vs/
+Kalmia/x64/
+Kalmia/Kalmia/Debug/
+Kalmia/Kalmia/DebugWorkDir/
+Kalmia/Kalmia/x64/
+
+*.exe
+*.hint
+*.pdb
