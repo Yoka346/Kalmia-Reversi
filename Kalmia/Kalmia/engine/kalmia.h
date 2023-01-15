@@ -22,8 +22,7 @@ namespace engine
 	class Kalmia : public Engine
 	{
 	public:
-		Kalmia(const std::string& log_file_path);
-		Kalmia(const std::string& log_file_path, std::ostream* log_out);
+		Kalmia();
 
 		void init_options();
 		void quit() override;
@@ -55,10 +54,9 @@ namespace engine
 		utils::Random rand;
 		std::future<search::mcts::SearchEndStatus> search_task;
 		std::future < reversi::BoardCoordinate> endgame_solve_task;
-		io::Logger logger;
+		std::unique_ptr<io::Logger> logger;
+		std::mutex logger_mutex;
 		utils::GameTimer timer[2];
-
-		double softmax_temperature = 1.0;
 
 		bool search_task_is_completed();
 		void stop_pondering();
@@ -82,10 +80,10 @@ namespace engine
 		void on_value_func_weight_path_changed(EngineOption& sender, std::string& err_message);
 		void on_thread_num_changed(EngineOption& sender, std::string& err_message);
 		void on_node_num_limit_changed(EngineOption& sender, std::string& err_message);
-		void on_softmax_temperature_changed(EngineOption& sender, std::string& err_message);
 		void on_endgame_move_num_changed(EngineOption& sender, std::string& err_message);
 		void on_endgame_tt_size_mib_changed(EngineOption& sender, std::string& err_message);
 		void on_enable_early_stopping_changed(EngineOption& sender, std::string& err_message);
+		void on_thought_log_path_changed(EngineOption& sender, std::string& err_message);
 	};
 
 	template reversi::BoardCoordinate Kalmia::select_move<MoveSelection::STOCHASTICALLY>(const search::mcts::SearchInfo&, bool&);

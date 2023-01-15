@@ -1,5 +1,6 @@
 #include "types.h"
 #include "constant.h"
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -47,7 +48,7 @@ namespace reversi
 	
 	DiscColor parse_color(const string& str)
 	{
-		auto lstr = str;
+		string lstr = str;
 		transform(lstr.begin(), lstr.end(), lstr.begin(), tolower);
 		if (lstr == "b" || lstr == "black")
 			return DiscColor::BLACK;

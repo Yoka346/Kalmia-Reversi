@@ -252,7 +252,7 @@ namespace search::mcts
 		for (uint32_t i = 0; i < playout_num && !stop_flag; i++)
 		{
 			// ルートのゲームの情報をコピー. MCTSでは, 末端ノードに達したら一気にルートに戻るので, undoするよりもコピーのほうが速い.
-			auto gi = game_info;	
+			GameInfo gi = game_info;	
 			visit_root_node(gi);
 		}
 	}
@@ -433,6 +433,7 @@ namespace search::mcts
 		if (loss_count + draw_count == this->root->child_node_num)
 		{
 			this->root_edge_label = (draw_count != 0) ? EdgeLabel::DRAW : EdgeLabel::LOSS;
+
 			if (draw_count != 0)
 				assert(edges[max_idx].label == EdgeLabel::DRAW);
 		}

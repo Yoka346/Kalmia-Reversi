@@ -6,12 +6,13 @@
 #include <map>
 #include <functional>
 
+#include "protocol.h"
 #include "../reversi/constant.h"
 #include "../engine/engine.h"
 
 namespace protocol
 {
-	class GTP
+	class GTP : public IProtocol
 	{
 	public:
 		using CommandHandler = std::function<void(int, std::istringstream&)>;

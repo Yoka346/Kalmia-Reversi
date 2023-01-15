@@ -158,7 +158,7 @@ namespace search::mcts
 
 		/**
 		* @fn
-		* @brief 呼び出し側とは別のスレッドで探索を行う.
+		* @brief 呼び出し側とは別スレッドで探索を行う.
 		**/
 		std::future<SearchEndStatus> search_async(uint32_t playout_num) { return search_async(playout_num, INT32_MAX / 10); }
 		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs) { return std::async([=]() { return search(playout_num, time_limit_cs); }); }
@@ -191,7 +191,7 @@ namespace search::mcts
 		std::unique_ptr<Node> root;
 		EdgeLabel root_edge_label;
 
-		// ノード数. ノードに初めて訪問したときに加算される. ただし, 前回の探索から引き継いだノードは計算に入れていない.
+		// ノード数. 未訪問ノードに初めて訪問したときに加算される. ただし, 前回の探索から引き継いだノードは計算に入れていない.
 		std::atomic<uint32_t> _node_count;
 
 		SearchInfo _search_info;

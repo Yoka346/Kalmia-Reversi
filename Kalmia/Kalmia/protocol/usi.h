@@ -9,13 +9,14 @@
 #include <future>
 #include <atomic>
 
+#include "protocol.h"
 #include "../io/sync_stream.h"
 #include "../reversi/constant.h"
 #include "../engine/engine.h"
 
 namespace protocol
 {
-	class USI
+	class USI : public IProtocol
 	{
 	public:
 		using CommandHandler = std::function<void(std::istringstream&)>;

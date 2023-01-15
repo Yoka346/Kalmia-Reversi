@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app.cpp" />
     <ClCompile Include="engine\engine.cpp" />
     <ClCompile Include="engine\engine_option.cpp" />
     <ClCompile Include="engine\kalmia.cpp" />
@@ -166,6 +167,7 @@
     <ClCompile Include="utils\random.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="app.h" />
     <ClInclude Include="engine\engine.h" />
     <ClInclude Include="engine\engine_option.h" />
     <ClInclude Include="engine\kalmia.h" />
@@ -174,6 +176,7 @@
     <ClInclude Include="evaluate\position_eval.h" />
     <ClInclude Include="io\logger.h" />
     <ClInclude Include="protocol\gtp.h" />
+    <ClInclude Include="protocol\protocol.h" />
     <ClInclude Include="protocol\usi.h" />
     <ClInclude Include="reversi\bitboard.h" />
     <ClInclude Include="reversi\flip.h" />

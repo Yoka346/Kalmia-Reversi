@@ -59,10 +59,10 @@ namespace search::mcts
 			reward_sum(edge.reward_sum.load()), label(edge.label){ }
 
 		double expected_reward() const { return this->reward_sum / this->visit_count; }
-		bool is_proved() { return this->label & EdgeLabel::PROVED; }
-		bool is_win() { return this->label == EdgeLabel::WIN; }
-		bool is_loss() { return this->label == EdgeLabel::LOSS; }
-		bool is_draw() { return this->label == EdgeLabel::DRAW; }
+		bool is_proved() const { return this->label & EdgeLabel::PROVED; }
+		bool is_win() const { return this->label == EdgeLabel::WIN; }
+		bool is_loss() const { return this->label == EdgeLabel::LOSS; }
+		bool is_draw() const { return this->label == EdgeLabel::DRAW; }
 		bool prior_to(const Edge& edge) const;
 		const Edge& operator=(const Edge& right);
 	};

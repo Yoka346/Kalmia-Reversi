@@ -71,20 +71,20 @@ namespace evaluation
 			{
 				ValueFuncParamArray* w_array = nullptr;
 				value_func_param_as_array(w[player], w_array);
-				std::memset(w_array->as_raw_array(), 0, sizeof(float) * w_array->length());
+				memset(w_array->as_raw_array(), 0, sizeof(float) * w_array->length());
 			}
 		}
 	}
 
 	template<ValueRepresentation VALUE_REPS>
-	ValueFunction<VALUE_REPS>::ValueFunction(const std::string path) : weight(0)
+	ValueFunction<VALUE_REPS>::ValueFunction(const string path) : weight(0)
 	{
-		std::ifstream ifs(path, std::ios_base::in | std::ios_base::binary);
+		ifstream ifs(path, ios_base::in | ios_base::binary);
 		if (!ifs)
 		{
-			std::ostringstream ss;
+			ostringstream ss;
 			ss << "Cannot open \"" << path << "\".";
-			throw std::invalid_argument(ss.str());
+			throw invalid_argument(ss.str());
 		}
 
 		char b;

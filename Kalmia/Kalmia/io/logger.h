@@ -39,6 +39,8 @@ namespace io
 		Logger(const std::string& path, std::ostream* sub_stream) : ofs(path), sub_os(sub_stream) { this->null_stream = nullptr; }
 		~Logger() { if (this->null_stream) delete this->null_stream; }
 
+		bool is_valid() { return static_cast<bool>(this->ofs); }
+
 		template<class T> Logger& operator <<(T t)
 		{
 			this->ofs << t;

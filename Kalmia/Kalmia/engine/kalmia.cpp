@@ -38,25 +38,12 @@ namespace engine
 		return "early stopping.";
 	}
 
-	string init_value_func_weight_path()
+	Kalmia::Kalmia()
+		: Engine(NAME, VERSION, AUTHOR), endgame_solver(0), logger(new Logger("")), logger_mutex()
 	{
 		ostringstream oss;
 		oss << EVAL_DIR << "value_func_weight.bin";
-		return oss.str();
-	}
-
-	Kalmia::Kalmia(const std::string& log_file_path)
-		: Engine(NAME, VERSION, AUTHOR), endgame_solver(0), logger(log_file_path)
-	{
-		this->value_func_weight_path = init_value_func_weight_path();
-		this->_score_type = EvalScoreType::WIN_RATE;
-		init_options();
-	}
-
-	Kalmia::Kalmia(const std::string& log_file_path, std::ostream* log_out)
-		: Engine(NAME, VERSION, AUTHOR), endgame_solver(0), logger(log_file_path, log_out)
-	{
-		this->value_func_weight_path = init_value_func_weight_path();
+		this->value_func_weight_path = oss.str();
 		this->_score_type = EvalScoreType::WIN_RATE;
 		init_options();
 	}
@@ -65,7 +52,7 @@ namespace engine
 	{
 		using namespace placeholders;
 
-		// サーバーやGUIと通信する際の遅延. 
+		// サーバーやGUIと通信する際の遅延[ms]. 
 		this->options["latency_ms"] = EngineOption(50, 0, INT32_MAX, this->options.size());
 
 		// 価値関数のパラメータファイルの場所.
@@ -81,7 +68,7 @@ namespace engine
 		// ノード数の上限
 		this->options["node_num_limit"] =
 			EngineOption(UCTOptions().node_num_limit,
-						 1000, INT32_MAX, this->options.size(), bind(&Kalmia::on_node_num_limit_changed, this, _1, _2));
+						 1000000, INT32_MAX, this->options.size(), bind(&Kalmia::on_node_num_limit_changed, this, _1, _2));
 
 		// 1回の思考における探索イテレーションの回数.
 		this->options["playout"] = EngineOption(3200000, 1, INT32_MAX, this->options.size());
@@ -90,9 +77,9 @@ namespace engine
 		this->options["stochastic_move_num"] = EngineOption(0, 0, SQUARE_NUM - 4, this->options.size());
 
 		// 確率的な着手を行う場合のソフトマックス温度(大きい値であればあるほど, 不利な手を打つ確率が高くなる.)
-		this->options["softmax_temperature"] = EngineOption("1.0", this->options.size(), bind(&Kalmia::on_softmax_temperature_changed, this, _1, _2));
+		this->options["softmax_temperature"] = EngineOption(1000, 0, INT32_MAX,  this->options.size());
 
-		// 過去の探索結果を次の探索で使い回すかどうか.
+		// 前回の探索結果を次の探索で使い回すかどうか.
 		this->options["reuse_subtree"] = EngineOption(true, this->options.size());
 
 		// 相手の手番中も思考を続行するかどうか.
@@ -112,6 +99,9 @@ namespace engine
 
 		// 探索情報を何cs間隔で表示するか.
 		this->options["show_search_info_interval_cs"] = EngineOption(500, 10, INT32_MAX, this->options.size());
+
+		// 思考ログの保存先
+		this->options["thought_log_path"] = EngineOption("", this->options.size(), bind(&Kalmia::on_thought_log_path_changed, this, _1, _2));
 	}
 
 	void Kalmia::quit()
@@ -121,7 +111,7 @@ namespace engine
 			this->tree->send_stop_search_signal();
 			write_log("Kalmia recieved quit signal. Current calculation will be suspended.\n");
 		}
-		this->logger.flush();
+		this->logger->flush();
 	}
 
 	void Kalmia::set_main_time(DiscColor color, milliseconds main_time)
@@ -193,7 +183,7 @@ namespace engine
 
 			if (this->tree.get())
 			{
-				auto prev_tree = move(this->tree);
+				unique_ptr<UCT> prev_tree = move(this->tree);
 				this->tree = make_unique<UCT>(prev_tree->options, value_func_weight_path);
 			}
 			else
@@ -237,7 +227,7 @@ namespace engine
 		if (!this->tree->transition_root_state_to_child_state(move))
 			this->tree->set_root_state(position());
 
-		this->logger.flush();
+		this->logger->flush();
 
 		update_score_type();
 	}
@@ -252,7 +242,7 @@ namespace engine
 		write_log("Tree was cleared.\n");
 	}
 
-	bool Kalmia::on_stop_thinking(std::chrono::milliseconds timeout)
+	bool Kalmia::on_stop_thinking(milliseconds timeout)
 	{
 		if (this->position().empty_square_count() > this->options["endgame_move_num"])
 		{
@@ -300,7 +290,9 @@ namespace engine
 
 	void Kalmia::write_log(const std::string& str)
 	{
-		this->logger << str;
+		lock_guard<mutex> lock(this->logger_mutex);
+		if(this->logger)
+			*this->logger << str;
 #ifdef SHOW_LOG
 		send_text_message(str);
 #endif
@@ -351,6 +343,7 @@ namespace engine
 		think_info.ellapsed_ms = this->endgame_solver.search_ellapsed();
 		think_info.node_count = this->endgame_solver.total_node_count();
 		think_info.nps = this->endgame_solver.nps();
+		think_info.depth = this->position().empty_square_count();
 		send_think_info(think_info);
 	}
 
@@ -404,7 +397,7 @@ namespace engine
 		if (search_end_status != SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL && extra_search_is_needed && this->options["enable_extra_search"])
 		{
 			write_log("\nStart extra search.\n");
-			this->logger.flush();
+			this->logger->flush();
 
 			this->search_task = this->tree->search_async(this->options["playout"]);
 			wait_for_mid_search();
@@ -420,7 +413,7 @@ namespace engine
 		}
 
 		send_all_mid_search_info();
-		this->logger.flush();
+		this->logger->flush();
 		return move;
 	}
 
@@ -498,7 +491,7 @@ namespace engine
 
 		if constexpr (MOVE_SELECT == MoveSelection::STOCHASTICALLY)
 		{
-			auto t_inv = 1.0 / this->softmax_temperature;
+			auto t_inv = 1.0 / (this->options["softmax_temperature"] * 1.0e-3);
 			DynamicArray<int32_t> indices(child_evals.length());
 			DynamicArray<double> exp_po_counts(child_evals.length());
 			auto exp_po_count_sum = 0.0;
@@ -565,26 +558,6 @@ namespace engine
 			err_message = "Tree was not initialized.";
 	}
 
-	void Kalmia::on_softmax_temperature_changed(EngineOption& sender, string& err_message)
-	{
-		auto& current_value = sender.current_value();
-		try
-		{
-			this->softmax_temperature = std::stod(current_value);
-			if (this->softmax_temperature <= 0.0)
-				throw invalid_argument("");
-		}
-		catch (invalid_argument)
-		{
-			ostringstream oss;
-			oss << "Invalid value \"" << current_value << "\" was specified to \"softmax_temperature\".";
-			oss << " It must be real number which is more than 0.0.";
-			err_message = oss.str();
-
-			sender = sender.default_value();
-		}
-	}
-
 	void Kalmia::on_endgame_move_num_changed(EngineOption& sender, string& err_message)
 	{
 		this->_score_type = (this->position().empty_square_count() > this->options["endgame_move_num"])
@@ -599,7 +572,6 @@ namespace engine
 			err_message = "Cannnot change transposition table size while searching.";
 			return;
 		}
-		this->value_func_weight_path = sender;
 
 		if (state() != EngineState::NOT_READY)
 			this->endgame_solver = EndgameSolver(sender * 1024ULL * 1024ULL);
@@ -616,5 +588,22 @@ namespace engine
 		}
 		else
 			err_message = "Tree was not initialized.";
+	}
+
+	void Kalmia::on_thought_log_path_changed(EngineOption& sender, std::string& err_message)
+	{
+		auto logger = make_unique<Logger>(sender.current_value());
+		if (!sender.current_value().empty() && !logger->is_valid())
+		{
+			ostringstream oss;
+			oss << "Cannnot open \"" << sender << "\".";
+			err_message = oss.str();
+			return;
+		}
+
+		lock_guard<mutex> lock(this->logger_mutex);
+		if (this->logger)
+			unique_ptr<Logger> tmp = move(this->logger);
+		this->logger = move(logger);
 	}
 }

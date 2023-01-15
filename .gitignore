@@ -5,6 +5,8 @@ Kalmia/Kalmia/Debug/
 Kalmia/Kalmia/DebugWorkDir/
 Kalmia/Kalmia/x64/
 
+memo.txt
+
 *.exe
 *.hint
 *.pdb
