@@ -329,7 +329,7 @@ namespace protocol
 		}
 
 		Array<Move, MAX_MOVE_NUM> moves;
-		auto current_pos = this->engine->position();
+		Position current_pos = this->engine->position();
 		auto move_num = current_pos.get_next_moves(moves);
 		for (auto i = 0; i < move_num; i++)
 		{

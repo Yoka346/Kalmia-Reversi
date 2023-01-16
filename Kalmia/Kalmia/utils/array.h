@@ -141,6 +141,12 @@ namespace utils
 		ElementType* as_raw_array() { return this->data.get(); }
 		const ElementType* as_raw_array() const { return this->data.get(); }
 
+		void reset(size_t len)
+		{
+			this->data.reset(new ElementType[len]);
+			this->_length = len;
+		}
+
 	private:
 		std::unique_ptr<ElementType[]> data;
 		size_t _length;

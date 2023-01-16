@@ -48,6 +48,7 @@ namespace engine
 		init_options();
 	}
 
+	// ToDo: 1è‚ÌŠÔ‚ğŒÅ’è‚·‚éƒIƒvƒVƒ‡ƒ“‚Ì’Ç‰Á.
 	void Kalmia::init_options()
 	{
 		using namespace placeholders;

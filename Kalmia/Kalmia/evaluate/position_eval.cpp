@@ -76,6 +76,7 @@ namespace evaluation
 		}
 	}
 
+	// ToDo: reinterpret_cast‚ğ—p‚¢‚Ä‚¢‚é•”•ª‚ğunion‚Å‘‚«’¼‚·.
 	template<ValueRepresentation VALUE_REPS>
 	ValueFunction<VALUE_REPS>::ValueFunction(const string path) : weight(0)
 	{
@@ -102,7 +103,7 @@ namespace evaluation
 		while (!ifs.eof() && ++phase_count != this->_phase_num)
 		{
 			bool native_is_little_endian = (std::endian::native == std::endian::little);
-			if (file_is_little_endian == native_is_little_endian)
+			if (file_is_little_endian && native_is_little_endian)
 				ifs.read(reinterpret_cast<char*>(&packed_weight[phase_count]), sizeof(PackedValueFuncParam));
 			else
 			{

@@ -5,6 +5,7 @@
 
 namespace protocol
 {
+	// 各プロトコルクラスが実装するインターフェース.
 	class IProtocol
 	{
 	public:

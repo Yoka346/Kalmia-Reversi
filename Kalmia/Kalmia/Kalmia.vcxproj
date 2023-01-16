@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="book\edax_book.cpp" />
     <ClCompile Include="engine\engine.cpp" />
     <ClCompile Include="engine\engine_option.cpp" />
     <ClCompile Include="engine\kalmia.cpp" />
@@ -168,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
+    <ClInclude Include="book\edax_book.h" />
     <ClInclude Include="engine\engine.h" />
     <ClInclude Include="engine\engine_option.h" />
     <ClInclude Include="engine\kalmia.h" />

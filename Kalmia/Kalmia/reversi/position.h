@@ -72,7 +72,7 @@ namespace reversi
 		**/
 		Player square_owner_at(BoardCoordinate coord) const
 		{
-			return static_cast<Player>(2 - 2 * ((this->_bitboard.player() >> coord) & 1) - ((this->_bitboard.opponent() >> coord) & 1));
+			return static_cast<Player>(2 - 2 * ((this->_bitboard.player >> coord) & 1) - ((this->_bitboard.opponent >> coord) & 1));
 		}
 
 		bool is_legal(const BoardCoordinate& coord) const { return (coord == BoardCoordinate::PASS) ? can_pass() : this->_bitboard.calc_player_mobility() & COORD_TO_BIT[coord]; }
