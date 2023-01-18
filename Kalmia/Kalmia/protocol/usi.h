@@ -23,6 +23,9 @@ namespace protocol
 		using CommandMap = std::map<std::string, CommandHandler>;
 
 		USI(std::istream* usi_in = &std::cin, std::ostream* usi_out = &std::cout) : usi_in(usi_in), usi_out(usi_out) { init(); }
+
+		static std::string position_to_sfen(reversi::Position& pos);
+
 		void mainloop(engine::Engine* engine, const std::string& log_file_path);
 		void mainloop(engine::Engine* engine) { std::string null_path = ""; mainloop(engine, null_path); }
 		

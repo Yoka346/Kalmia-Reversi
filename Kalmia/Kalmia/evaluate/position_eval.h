@@ -1,9 +1,13 @@
 #pragma once
 
+#include <fstream>
+#include <random>
+
 #include "../config.h"
 #include "feature.h"
 #include "../utils/array.h"
 #include "../utils/math_functions.h"
+#include "../utils/bitmanip.h"
 
 namespace evaluation
 {
@@ -18,26 +22,61 @@ namespace evaluation
 	**/
 	struct ValueFuncParam
 	{
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::CORNER3x3]> corner3x3;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::CORNER_EDGE_X]> corner_edge_x;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::EDGE_2X]> edge_2x;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::CORNER2x5]> corner2x5;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::LINE0]> line0;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::LINE1]> line1;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::LINE2]> line2;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE8]> diag_line8;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE7]> diag_line7;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
-		Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::CORNER3x3]> corner3x3;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::CORNER_EDGE_X]> corner_edge_x;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::EDGE_2X]> edge_2x;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::CORNER2x5]> corner2x5;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::LINE0]> line0;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::LINE1]> line1;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::LINE2]> line2;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE8]> diag_line8;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE7]> diag_line7;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
+		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
 		float bias;
 
 		void pack(PackedValueFuncParam& packed_param);
+		void to_opponent(ValueFuncParam& out);
+		void clear();
+		void init_with_rand(std::normal_distribution<float>& dist, std::default_random_engine& eng);
+
+		private:
+			template<PatternKind KIND>
+			void pack(utils::Array<float, PATTERN_FEATURE_NUM[KIND]>& param, utils::Array<float, PACKED_PATTERN_FEATURE_NUM[KIND]>& packed)
+			{
+				auto offset = PATTERN_FEATURE_OFFSET[KIND];
+				int32_t i = 0;
+				for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
+				{
+					auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
+					if (f <= symmetric_f)
+						packed[i++] = param[f];
+				}
+			}
+
+			template<PatternKind KIND>
+			void to_opponent(utils::Array<float, PATTERN_FEATURE_NUM[KIND]>& param, utils::Array<float, PATTERN_FEATURE_NUM[KIND]>& out)
+			{
+				auto offset = PATTERN_FEATURE_OFFSET[KIND];
+				for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
+				{
+					auto opponent_f = TO_OPPONENT_FEATURE[offset + f];
+					out[opponent_f] = param[f];
+				}
+			}
+
+			template<PatternKind KIND>
+			void init_with_rand(utils::Array<float, PATTERN_FEATURE_NUM[KIND]>& param, std::normal_distribution<float>& dist, std::default_random_engine& eng)
+			{
+				auto offset = PATTERN_FEATURE_OFFSET[KIND];
+				for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
+				{
+					auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
+					param[f] = (symmetric_f < f) ? param[symmetric_f] : dist(eng);
+				}
+			}
 	};
-
-	using ValueFuncParamArray = Array<float, sizeof(ValueFuncParam) / sizeof(float)>;
-
-	inline void value_func_param_as_array(ValueFuncParam& param, ValueFuncParamArray*& out) { out = reinterpret_cast<ValueFuncParamArray*>(&param); }	
 
 	/**
 	* @struct
@@ -49,27 +88,35 @@ namespace evaluation
 	struct PackedValueFuncParam
 	{
 	public:
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::CORNER3x3]> corner3x3;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::CORNER_EDGE_X]> corner_edge_x;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::EDGE_2X]> edge_2x;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::CORNER2x5]> corner2x5;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::LINE0]> line0;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::LINE1]> line1;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::LINE2]> line2;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE8]> diag_line8;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE7]> diag_line7;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
-		Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::CORNER3x3]> corner3x3;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::CORNER_EDGE_X]> corner_edge_x;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::EDGE_2X]> edge_2x;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::CORNER2x5]> corner2x5;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::LINE0]> line0;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::LINE1]> line1;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::LINE2]> line2;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE8]> diag_line8;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE7]> diag_line7;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
+		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
 		float bias;
 
 		void expand(ValueFuncParam& param);
+
+	private:
+		template<PatternKind KIND>
+		void expand(utils::Array<float, PACKED_PATTERN_FEATURE_NUM[KIND]>& param, utils::Array<float, PATTERN_FEATURE_NUM[KIND]>& expanded)
+		{
+			auto offset = PATTERN_FEATURE_OFFSET[KIND];
+			int32_t i = 0;
+			for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
+			{
+				auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
+				expanded[f] = (symmetric_f < f) ? expanded[symmetric_f] : param[i++];
+			}
+		}
 	};
-
-	using PackedValueFuncParamArray = Array<float, sizeof(PackedValueFuncParam) / sizeof(float)>;
-
-	inline void packed_value_func_param_as_array(PackedValueFuncParam& param, PackedValueFuncParamArray*& out) { out = reinterpret_cast<PackedValueFuncParamArray*>(&param); }
-
 
 	enum ValueRepresentation
 	{
@@ -102,12 +149,6 @@ namespace evaluation
 		void init_weight_with_rand_num() { init_weight_with_rand_num(1.0f, 0.0f); }
 		void init_weight_with_rand_num(float mean, float variance);
 		void save_to_file(const std::string& path);
-
-		/**
-		* @fn
-		* @brief プレイヤーの各重みを, 対象変換して一致するパターンの特徴の重みにコピーする.
-		**/
-		void copy_player_weight_to_symmetric_pattern_feature();
 
 		/**
 		* @fn
@@ -168,7 +209,26 @@ namespace evaluation
 		Weight weight;
 
 		void init_empty_count_to_phase_table();
+		void load_weight(std::ifstream& ifs, bool swap_byte);
 		void expand_packed_weight(PackedWeight& packed_weight);
+
+		template<PatternKind KIND>
+		void read_param(std::ifstream& ifs, utils::Array<float, PACKED_PATTERN_FEATURE_NUM[KIND]>& param, bool swap_byte)
+		{
+			ifs.read(reinterpret_cast<char*>(param.as_raw_array()), sizeof(float) * param.length());
+			if (swap_byte)
+				for (int32_t i = 0; i < param.length(); i++)
+				{
+					auto swapped = BYTE_SWAP_32(*reinterpret_cast<uint32_t*>(&param[i]));
+					param[i] = *reinterpret_cast<float*>(&swapped);
+				}
+		}
+
+		template<PatternKind KIND>
+		void write_param(std::ofstream& ofs, utils::Array<float, PACKED_PATTERN_FEATURE_NUM[KIND]>& param)
+		{
+			ofs.write(reinterpret_cast<char*>(param.as_raw_array()), sizeof(float) * param.length());
+		}
 	};
 
 	template class ValueFunction<ValueRepresentation::DISC_DIFF>;

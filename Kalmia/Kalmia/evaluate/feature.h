@@ -173,7 +173,8 @@ namespace evaluation
 
     constexpr uint16_t to_symmetric_feature(PatternKind kind, uint16_t feature)
     {
-        constexpr utils::Array<int32_t, PATTERN_SIZE[PatternKind::CORNER3x3]> TABLE_FOR_CORNER_3X3 = { 0, 2, 1, 4, 3, 5, 7, 6, 8 };
+        constexpr int32_t pattern_size = PATTERN_SIZE[PatternKind::CORNER3x3];
+        constexpr utils::Array<int32_t, pattern_size> TABLE_FOR_CORNER_3X3 = {0, 2, 1, 4, 3, 5, 7, 6, 8};
         constexpr utils::Array<int32_t, PATTERN_SIZE[PatternKind::CORNER_EDGE_X]> TABLE_FOR_CORNER_EDGE_X = { 9, 8, 7, 6, 4, 5, 3, 2, 1, 0 };
 
         if (kind == PatternKind::CORNER3x3)

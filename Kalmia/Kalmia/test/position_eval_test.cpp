@@ -11,6 +11,7 @@
 #include <vector>
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 
 #include "../reversi/types.h"
 #include "../evaluate/feature.h"
@@ -22,7 +23,18 @@ using namespace evaluation;
 
 namespace test
 {
+	void predict_test(ValueFunction<ValueRepresentation::WIN_RATE>&);
+
 	void predict_test()
+	{
+		stringstream weight_path;
+		weight_path << TEST_DATA_DIR << VALUE_FUNC_WEIGHT_FILE_NAME;
+		ValueFunction<ValueRepresentation::WIN_RATE> value_func(weight_path.str());
+		predict_test(value_func);
+		cout << "done.";
+	}
+
+	void predict_test(ValueFunction<ValueRepresentation::WIN_RATE>& value_func)
 	{
 		constexpr float EPSILON = 1.0e-4f;
 
@@ -41,10 +53,6 @@ namespace test
 		getline(ifs, line);
 
 		cout << "start value function prediction test.\n";
-
-		stringstream weight_path;
-		weight_path << TEST_DATA_DIR << VALUE_FUNC_WEIGHT_FILE_NAME;
-		ValueFunction<ValueRepresentation::WIN_RATE> value_func(weight_path.str());
 		int count = 0;
 		while (getline(ifs, line))
 		{
@@ -70,6 +78,29 @@ namespace test
 			pf.update(move);
 			assert(fabsf(value_func.predict(pf) - v1) < EPSILON);
 		}
+	}
+
+	void save_to_file_test()
+	{
+		ostringstream oss;
+		oss << TEST_DATA_DIR << VALUE_FUNC_WEIGHT_FILE_NAME;
+		auto weight_path = oss.str();
+		ValueFunction<ValueRepresentation::WIN_RATE> value_func(weight_path);
+
+		cout << "start value function params save to file test.\n";
+
+		oss << ".saved";
+		auto saved_path = oss.str();
+		cout << "save to \"" << saved_path << "\".\n";
+		value_func.save_to_file(saved_path);
+		cout << "done.\n\n";
+
+		cout << "check saved file validation.\n";
+
+		ValueFunction<ValueRepresentation::WIN_RATE> saved_value_func(saved_path);
+		predict_test(saved_value_func);
+
+		cout << "done.\n";
 	}
 }
 

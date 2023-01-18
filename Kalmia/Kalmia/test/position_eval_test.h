@@ -8,6 +8,7 @@
 namespace test
 {
 	void predict_test();
+	void save_to_file_test();
 }
 
 #endif

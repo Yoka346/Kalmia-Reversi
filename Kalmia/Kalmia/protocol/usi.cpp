@@ -53,6 +53,18 @@ namespace protocol
 		return true;
 	}
 
+	string USI::position_to_sfen(Position& pos)
+	{
+		constexpr char DISC_SYMBOLS[3] = { 'X', 'O', '-' };
+		constexpr char DISC_COLOR[2] = { 'b', 'w' };
+
+		ostringstream oss;
+		for (auto i = BoardCoordinate::A1; i <= BoardCoordinate::H8; i++)
+			oss << DISC_SYMBOLS[pos.square_color_at(i)];
+		oss << " " << DISC_COLOR[pos.side_to_move()];
+		return oss.str();
+	}
+
 	// コマンドのテーブルを初期化.
 	void USI::init()
 	{

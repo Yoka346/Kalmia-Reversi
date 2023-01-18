@@ -62,8 +62,8 @@ namespace book
 		char buffer[DATA_KIND_SIZE];
 		ifs.read(buffer, sizeof(buffer));
 
-		return (this->file_endian == endian::little && strcmp(buffer, LITTLE_ENDIAN_DATA_KIND))
-			|| strcmp(buffer, BIG_ENDIAN_DATA_KIND);
+		return (this->file_endian == endian::little && strcmp(buffer, LITTLE_ENDIAN_DATA_KIND) == 0)
+			|| strcmp(buffer, BIG_ENDIAN_DATA_KIND) == 0;
 	}
 
 	void EdaxBook::load_header(ifstream& ifs)
