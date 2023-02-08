@@ -19,7 +19,7 @@ namespace reversi
 	class Position
 	{
 	public:
-		static size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
+		static constexpr size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
 
 		static void init_hash_rank(uint64_t* hash_rank, size_t len)
 		{
@@ -37,6 +37,7 @@ namespace reversi
 
 		const Bitboard& bitboard() const { return this->_bitboard; }
 		DiscColor side_to_move() const { return this->_side_to_move; }
+		void set_side_to_move(DiscColor color) { if (this->_side_to_move != color) pass(); }
 		DiscColor opponent_color() const { return to_opponent_color(this->_side_to_move); }
 		int empty_square_count() const { return this->_bitboard.empty_count(); }
 		int player_disc_count() const { return this->_bitboard.player_disc_count(); }
@@ -80,6 +81,20 @@ namespace reversi
 
 		void put_player_disc_at(BoardCoordinate coord) { this->_bitboard.put_player_disc_at(coord); }
 		void put_opponent_disc_at(BoardCoordinate coord) { this->_bitboard.put_opponent_disc_at(coord); }
+
+		template<DiscColor COLOR>
+		void put_disc_at(BoardCoordinate coord) 
+		{ 
+			if constexpr (COLOR == DiscColor::EMPTY) 
+				return;
+
+			if (this->_side_to_move == COLOR)
+				put_player_disc_at(coord);
+			else
+				put_opponent_disc_at(coord);
+		}
+
+		void erase_disc_at(BoardCoordinate coord) { this->_bitboard.erase_disc_at(coord); }
 
 		template<bool CHECK_LEGALITY>
 		bool update(const Move& move) 

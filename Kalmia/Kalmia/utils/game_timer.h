@@ -3,13 +3,27 @@
 
 namespace utils
 {
+	struct GameTimerOptions
+	{
+		std::chrono::milliseconds main_time_ms;
+		std::chrono::milliseconds byoyomi_ms;
+		std::chrono::milliseconds increment_ms;
+		int32_t byoyomi_stones;
+	};
+
 	class GameTimer
 	{
 	public:
 		GameTimer() : GameTimer(std::chrono::milliseconds::zero(), std::chrono::milliseconds::zero(), 1, std::chrono::milliseconds::zero()) { ; }
+
 		GameTimer(std::chrono::milliseconds main_time_ms, std::chrono::milliseconds byoyomi_ms, int32_t byoyomi_stones, std::chrono::milliseconds inc_ms)
 			: _main_time(main_time_ms), _byoyomi(byoyomi_ms), _byoyomi_stones(byoyomi_stones), _increment(inc_ms),
 			  _time_left(main_time_ms + byoyomi_ms), _byoyomi_stones_left(byoyomi_stones), _is_ticking(false), _timeout(false) { ; }
+
+		GameTimer(GameTimerOptions& options)
+			: _main_time(options.main_time_ms), _byoyomi(options.byoyomi_ms), _byoyomi_stones(options.byoyomi_stones), 
+			_increment(options.increment_ms), _time_left(options.main_time_ms + options.byoyomi_ms), 
+			_byoyomi_stones_left(options.byoyomi_stones), _is_ticking(false), _timeout(false) { ; }
 
 		std::chrono::milliseconds main_time() const { return this->_main_time; }
 		std::chrono::milliseconds byoyomi() const { return this->_byoyomi; }

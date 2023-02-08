@@ -30,7 +30,7 @@ namespace reversi
 			this->player |= bit;
 
 			if (this->opponent & bit)
-				this->opponent ^= COORD_TO_BIT[coord];
+				this->opponent ^= bit;
 		}
 
 		void put_opponent_disc_at(BoardCoordinate coord)
@@ -39,7 +39,17 @@ namespace reversi
 			this->opponent |= bit;
 
 			if (this->player & bit)
-				this->player ^= COORD_TO_BIT[coord];
+				this->player ^= bit;
+		}
+
+		void erase_disc_at(BoardCoordinate coord)
+		{
+			auto bit = COORD_TO_BIT[coord];
+			if (this->player & bit)
+				this->player ^= bit;
+
+			if (this->opponent & bit)
+				this->opponent ^= bit;
 		}
 
 		void update(const BoardCoordinate& coord, const uint64_t& flipped)

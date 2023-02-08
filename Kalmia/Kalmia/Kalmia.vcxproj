@@ -203,6 +203,7 @@
     <ClCompile Include="engine\random_mover.cpp" />
     <ClCompile Include="evaluate\feature.cpp" />
     <ClCompile Include="evaluate\position_eval.cpp" />
+    <ClCompile Include="game_format\ggf.cpp" />
     <ClCompile Include="io\sync_stream.cpp" />
     <ClCompile Include="io\sync_stream.h" />
     <ClCompile Include="main.cpp" />
@@ -234,6 +235,7 @@
     <ClInclude Include="engine\random_mover.h" />
     <ClInclude Include="evaluate\feature.h" />
     <ClInclude Include="evaluate\position_eval.h" />
+    <ClInclude Include="game_format\ggf.h" />
     <ClInclude Include="io\logger.h" />
     <ClInclude Include="protocol\gtp.h" />
     <ClInclude Include="protocol\protocol.h" />
