@@ -9,6 +9,8 @@ namespace utils
 		std::chrono::milliseconds byoyomi_ms;
 		std::chrono::milliseconds increment_ms;
 		int32_t byoyomi_stones;
+
+		GameTimerOptions() : main_time_ms(0), byoyomi_ms(0), increment_ms(0) { ; }
 	};
 
 	class GameTimer

@@ -94,7 +94,7 @@ namespace reversi
 				put_opponent_disc_at(coord);
 		}
 
-		void erase_disc_at(BoardCoordinate coord) { this->_bitboard.erase_disc_at(coord); }
+		void remove_disc_at(BoardCoordinate coord) { this->_bitboard.remove_disc_at(coord); }
 
 		template<bool CHECK_LEGALITY>
 		bool update(const Move& move) 

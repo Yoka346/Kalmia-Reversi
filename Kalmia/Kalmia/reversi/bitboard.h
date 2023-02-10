@@ -42,7 +42,7 @@ namespace reversi
 				this->player ^= bit;
 		}
 
-		void erase_disc_at(BoardCoordinate coord)
+		void remove_disc_at(BoardCoordinate coord)
 		{
 			auto bit = COORD_TO_BIT[coord];
 			if (this->player & bit)
