@@ -103,6 +103,17 @@ namespace engine
 		return move;
 	}
 
+	bool Engine::analyze(int32_t move_num)
+	{
+		if (this->_is_thinking)
+			return false;
+
+		this->_is_thinking = true;
+		auto ret = exec_analysis(move_num);
+		this->_is_thinking = false;
+		return ret;
+	}
+
 	bool Engine::stop_thinking(std::chrono::milliseconds timeout)
 	{
 		if (on_stop_thinking(timeout))

@@ -35,12 +35,25 @@ namespace reversi
 	BoardCoordinate coordinate_2d_to_1d(int32_t x, int32_t y);
 	BoardCoordinate parse_coordinate(const std::string& str);
 
-	enum DiscColor
+	enum DiscColor : uint8_t
 	{
-		BLACK,
-		WHITE,
-		EMPTY
+		BLACK = 0,
+		WHITE = 1,
+		EMPTY = 2
 	};
+
+	constexpr DiscColor& operator++(DiscColor& color)
+	{
+		color = static_cast<DiscColor>(color + 1);
+		return color;
+	}
+
+	constexpr DiscColor operator++(DiscColor& coord, int)
+	{
+		auto prev = coord;
+		++coord;
+		return prev;
+	}
 
 	/**
 	* @fn

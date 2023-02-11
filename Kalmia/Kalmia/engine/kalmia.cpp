@@ -157,6 +157,11 @@ namespace engine
 		timer.set_increment(inc);
 	}
 
+	void Kalmia::set_level(int32_t level)
+	{
+		// ToDo:
+	}
+
 	double Kalmia::get_eval_score_min()
 	{
 		return (this->position().empty_square_count() > this->options["endgame_move_num"])

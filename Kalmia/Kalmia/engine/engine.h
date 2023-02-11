@@ -107,6 +107,13 @@ namespace engine
 
 		/**
 		* @fn
+		* @brief 思考エンジンの強さを設定する.
+		* @param (level) 思考エンジンの強さレベル. レベルの値が意味するものは, 思考エンジンによって異なる.
+		**/
+		virtual void set_level(int32_t level);
+
+		/**
+		* @fn
 		* @brief 思考エンジンが保有している盤面の情報を着手moveによって更新する.
 		* @param (color) ディスクの色.
 		* @param (move) 着手(ディスクを配置する座標).

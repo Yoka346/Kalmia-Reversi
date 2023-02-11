@@ -30,6 +30,7 @@ namespace engine
 		void set_byoyomi(reversi::DiscColor color, std::chrono::milliseconds byoyomi) override;
 		void set_byoyomi_stones(reversi::DiscColor color, int32_t byoyomi_stones) override;
 		void set_time_inc(reversi::DiscColor color, std::chrono::milliseconds inc) override;
+		void set_level(int32_t level) override;
 		double get_eval_score_min() override;
 		double get_eval_score_max() override;
 

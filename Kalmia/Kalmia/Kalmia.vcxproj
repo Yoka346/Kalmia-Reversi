@@ -238,6 +238,7 @@
     <ClInclude Include="game_format\ggf.h" />
     <ClInclude Include="io\logger.h" />
     <ClInclude Include="protocol\gtp.h" />
+    <ClInclude Include="protocol\nboard.h" />
     <ClInclude Include="protocol\protocol.h" />
     <ClInclude Include="protocol\usi.h" />
     <ClInclude Include="reversi\bitboard.h" />

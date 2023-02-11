@@ -197,7 +197,7 @@ namespace protocol
 		return bind(exec_cmd, this, placeholders::_1);
 	}
 
-	void USI::usi_failure(const string msg)
+	void USI::usi_failure(const string& msg)
 	{
 		this->usi_out << IOLock::LOCK << "info string Error!: " << msg << "\n";
 		this->usi_out.flush();

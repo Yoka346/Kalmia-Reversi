@@ -27,7 +27,7 @@ namespace protocol
 		static std::string position_to_sfen(reversi::Position& pos);
 
 		void mainloop(engine::Engine* engine, const std::string& log_file_path);
-		void mainloop(engine::Engine* engine) { std::string null_path = ""; mainloop(engine, null_path); }
+		void mainloop(engine::Engine* engine) { mainloop(engine, ""); }
 		
 	private:
 		engine::Engine* engine;
@@ -44,7 +44,7 @@ namespace protocol
 		void on_think_info_is_sent(const engine::ThinkInfo&);
 		void on_multi_pv_is_sent(const engine::MultiPV&);
 		CommandHandler to_handler(void (USI::* exec_cmd)(std::istringstream&));
-		void usi_failure(const std::string msg);
+		void usi_failure(const std::string& msg);
 
 		bool go_command_has_done()
 		{ 
