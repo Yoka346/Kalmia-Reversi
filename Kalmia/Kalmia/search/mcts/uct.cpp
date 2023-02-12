@@ -579,7 +579,7 @@ namespace search::mcts
 			return true;
 		}
 
-		if (this->early_stopping_is_enabled && can_do_early_stopping(time_limit_ms))
+		if (this->_early_stopping_is_enabled && can_do_early_stopping(time_limit_ms))
 		{
 			end_status = SearchEndStatus::EARLY_STOPPING;
 			return true;

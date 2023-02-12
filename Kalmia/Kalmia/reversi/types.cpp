@@ -32,15 +32,21 @@ namespace reversi
 		return static_cast<BoardCoordinate>(x + y * BOARD_SIZE);
 	}
 
-	BoardCoordinate parse_coordinate(const std::string& str)
+	BoardCoordinate parse_coordinate(const string& str)
 	{
+		constexpr const char* WHITESPACE = " \n\r\t\f\v";
+
 		auto lstr = str;
-		transform(lstr.begin(), lstr.end(), lstr.begin(), tolower);
+		transform(lstr.begin(), lstr.end(), lstr.begin(), [](char ch) { return tolower(ch); });
+
+		auto loc = lstr.find_first_not_of(WHITESPACE);
+		if (loc != string::npos)
+			lstr = lstr.substr(loc);
 
 		if (lstr == "pass")
 			return BoardCoordinate::PASS;
 
-		if (lstr.size() != 2 || lstr[0] < 'a' || lstr[0] > 'h' || lstr[1] < '1' || lstr[1] > '8')
+		if (lstr.size() < 2 || lstr[0] < 'a' || lstr[0] > 'h' || lstr[1] < '1' || lstr[1] > '8')
 			return BoardCoordinate::NULL_COORD;
 
 		return static_cast<BoardCoordinate>((lstr[0] - 'a') + (lstr[1] - '1') * BOARD_SIZE);

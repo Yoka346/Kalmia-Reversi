@@ -81,7 +81,7 @@ namespace protocol
 		commands["score_scale_and_type"] = to_handler(&USI::exec_score_scale_and_type_command);
 	}
 
-	void USI::mainloop(Engine* engine, const std::string& log_file_path)
+	void USI::mainloop(Engine* engine, const string& log_file_path)
 	{
 		if (!engine)
 			throw invalid_operation("Specified engine was null.");
@@ -366,12 +366,8 @@ namespace protocol
 	{
 		if (!go_command_has_done())
 		{
-			future<BoardCoordinate>& go_future = this->go_command_future;
-			if (go_future.valid() && !go_command_has_done())
-			{
-				usi_failure("Cannnot execute multiple go commands");
-				return;
-			}
+			usi_failure("Cannnot execute multiple go commands");
+			return;
 		}
 
 		string token;
@@ -390,15 +386,15 @@ namespace protocol
 		}
 
 		this->go_command_future = std::async(
-			[=, this]() 
-			{ 
-				BoardCoordinate move = this->engine->go(ponder);
-				if (!ponder && !stop_go_flag)
-				{
-					usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(move) << "\n";
-					usi_out.flush();
-				}
-				return move;
+			[=, this]()
+			{
+				auto move = this->engine->go(ponder).coord;
+		if (!ponder && !stop_go_flag)
+		{
+			usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(move) << "\n";
+			usi_out.flush();
+		}
+		return move;
 			});
 	}
 
@@ -440,7 +436,7 @@ namespace protocol
 		this->go_command_future = std::async(
 			[=, this]()
 			{
-				BoardCoordinate move = this->engine->go(false);
+				auto move = this->engine->go(false).coord;
 				usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(move) << "\n";
 				usi_out.flush();
 				return move;

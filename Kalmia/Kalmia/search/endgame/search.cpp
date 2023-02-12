@@ -190,7 +190,7 @@ namespace search::endgame
 		this->_internal_node_count++;
 		Bitboard bitboard = pos.bitboard();
 		int32_t move;
-		FOREACH_BIT(move, mobility)	// move ordering‚µ‚È‚¢‚Ì‚Å, ¶‚Ìbit‚Ì‚Ü‚Ü’…è‚ğ—ñ‹“.
+		FOREACH_BIT(move, mobility)	// move ordering‚ğ‚µ‚È‚¢‚Ì‚Å, ¶‚Ìbit‚Ì‚Ü‚Ü’…è‚ğ—ñ‹“.
 		{
 			pos.update<false>(static_cast<BoardCoordinate>(move));
 			int8_t score = -search_without_tt<false>(pos, -beta, -alpha);

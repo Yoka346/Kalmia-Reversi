@@ -19,9 +19,10 @@ namespace engine
 		void set_byoyomi_stones(reversi::DiscColor color, int32_t byoyomi_stones) override {}
 		void set_time_inc(reversi::DiscColor color, std::chrono::milliseconds inc) override {}
 		void set_level(int32_t level) override {}
+		void set_book_contempt(int32_t contempt) override {}
 
 	protected:
-		reversi::BoardCoordinate generate_move(bool ponder) override;
+		void generate_move(bool ponder, EngineMove& move) override;
 
 	private:
 		inline static const std::string NAME = "Random Mover";

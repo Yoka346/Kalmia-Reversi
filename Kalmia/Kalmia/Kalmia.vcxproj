@@ -208,6 +208,7 @@
     <ClCompile Include="io\sync_stream.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="protocol\gtp.cpp" />
+    <ClCompile Include="protocol\nboard.cpp" />
     <ClCompile Include="protocol\usi.cpp" />
     <ClCompile Include="reversi\flip.cpp" />
     <ClCompile Include="reversi\mobility.cpp" />

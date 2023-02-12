@@ -29,6 +29,8 @@ namespace engine
 	{
 		WIN_RATE,
 		DISC_DIFF,
+		EXACT_WLD,
+		EXACT_DISC_DIFF,
 		OTHER
 	};
 
@@ -55,10 +57,25 @@ namespace engine
 	{
 		std::optional<uint64_t> node_count = std::nullopt;
 		std::optional<double> eval_score = std::nullopt;	
+		EvalScoreType eval_score_type = EvalScoreType::OTHER;
+		bool eval_score_is_exact = false;
+		reversi::GameResult exact_wld = reversi::NOT_OVER;
+		std::optional<int32_t> exact_disc_diff = std::nullopt;
 		std::vector<reversi::BoardCoordinate> pv;
 	};
 
 	using MultiPV = std::vector<MultiPVItem>;
+
+	/**
+	* @struct
+	* @brief エンジンの着手.
+	**/
+	struct EngineMove
+	{
+		reversi::BoardCoordinate coord = reversi::NULL_COORD;
+		std::optional<float> eval_score = std::nullopt;
+		std::optional<std::chrono::milliseconds> ellapsed_ms = std::nullopt;
+	};
 
 	/**
 	* @class
@@ -110,7 +127,20 @@ namespace engine
 		* @brief 思考エンジンの強さを設定する.
 		* @param (level) 思考エンジンの強さレベル. レベルの値が意味するものは, 思考エンジンによって異なる.
 		**/
-		virtual void set_level(int32_t level);
+		virtual void set_level(int32_t level) = 0;
+
+		/**
+		* @fn
+		* @brief 序盤における手加減度を設定する.
+		* @param (contempt) Bookに登録されている先手からみた石差で引き分けとみなす値. 例えば, contempt = 2 であれば, 先手からみて2石分勝っている局面を引き分けとみなす.
+		**/
+		virtual void set_book_contempt(int32_t contempt) = 0;
+
+		/**
+		* @fn
+		* @brief 現在の対局をBookに登録する.
+		**/
+		virtual void add_current_game_to_book() {};
 
 		/**
 		* @fn
@@ -164,7 +194,15 @@ namespace engine
 		* @param (ponder)
 		* @return 最善手
 		**/
-		reversi::BoardCoordinate go(bool ponder);
+		EngineMove go(bool ponder);
+
+		/**
+		* @fn
+		* @brief 現在の局面の候補手を解析する.
+		* @param (move_num) 上位何手までの解析を行うか.
+		* @return 解析が正常に終了したらtrue.
+		**/
+		bool analyze(int32_t move_num);
 
 		/**
 		* @fn
@@ -204,7 +242,8 @@ namespace engine
 		virtual void on_undid_position() { ; }
 		virtual void on_updated_position(reversi::BoardCoordinate move) { ; }
 		virtual bool on_stop_thinking(std::chrono::milliseconds timeout) { return true; }
-		virtual reversi::BoardCoordinate generate_move(bool ponder) = 0;
+		virtual void generate_move(bool ponder, EngineMove& move) = 0;
+		virtual void exec_analysis(int32_t move_num) {};
 
 		/**
 		* @fn

@@ -92,13 +92,17 @@ namespace engine
 			options.emplace_back(option);
 	}
 
-	reversi::BoardCoordinate Engine::go(bool ponder)
+	EngineMove Engine::go(bool ponder)
 	{
+		EngineMove move;
 		if (this->_is_thinking)
-			return BoardCoordinate::NULL_COORD;
+		{
+			move.coord = BoardCoordinate::NULL_COORD;
+			return move;
+		}
 
 		this->_is_thinking = true;
-		auto move = generate_move(ponder);
+		generate_move(ponder, move);
 		this->_is_thinking = false;
 		return move;
 	}
@@ -109,9 +113,9 @@ namespace engine
 			return false;
 
 		this->_is_thinking = true;
-		auto ret = exec_analysis(move_num);
+		exec_analysis(move_num);
 		this->_is_thinking = false;
-		return ret;
+		return true;
 	}
 
 	bool Engine::stop_thinking(std::chrono::milliseconds timeout)

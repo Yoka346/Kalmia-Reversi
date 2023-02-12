@@ -256,7 +256,7 @@ namespace protocol
 			return;
 		}
 
-		auto move = this->engine->go(color);
+		auto move = this->engine->go(color).coord;
 		this->engine->update_position(color, move);
 		gtp_success(id, coordinate_to_string(move));
 	}
@@ -402,7 +402,7 @@ namespace protocol
 			gtp_failure(id, "invalid color.");
 			return;
 		}
-		gtp_success(id, coordinate_to_string(this->engine->go(color)));
+		gtp_success(id, coordinate_to_string(this->engine->go(color).coord));
 	}
 
 	void GTP::exec_showboard_command(int id, istringstream& args)

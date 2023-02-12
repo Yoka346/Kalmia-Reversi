@@ -99,7 +99,7 @@ namespace engine
 		this->options["endgame_tt_size_mib"] = EngineOption(DEFAULT_ENDGAME_SOLVER_TT_SIZE_MIB, 128, INT32_MAX, this->options.size(), bind(&Kalmia::on_endgame_tt_size_mib_changed, this, _1, _2));
 
 		// 探索情報を何cs間隔で表示するか.
-		this->options["show_search_info_interval_cs"] = EngineOption(500, 10, INT32_MAX, this->options.size());
+		this->options["show_search_info_interval_cs"] = EngineOption(10, 10, INT32_MAX, this->options.size());
 
 		// 思考ログの保存先
 		this->options["thought_log_path"] = EngineOption("", this->options.size(), bind(&Kalmia::on_thought_log_path_changed, this, _1, _2));
@@ -159,7 +159,21 @@ namespace engine
 
 	void Kalmia::set_level(int32_t level)
 	{
-		// ToDo:
+		// KalmiaにおけるLevelの意味は以下の通り.
+		// (1 <= level <= 60) min(4 * 2^level, 20000000) [playouts] かつ 終盤 level 手完全読み
+
+		this->options["playout"] = to_string(min(4 << level, 20000000));
+		this->options["endgame_move_num"] = to_string(level);
+	}
+
+	void Kalmia::set_book_contempt(int32_t contempt)
+	{
+		// ToDo: まだBookが未実装なので, Bookを実装したら中身を書く.
+	}
+
+	void Kalmia::add_current_game_to_book()
+	{
+		// ToDo: まだBookが未実装なので, Bookを実装したら中身を書く.
 	}
 
 	double Kalmia::get_eval_score_min()
@@ -182,7 +196,7 @@ namespace engine
 			if (!exists(value_func_weight_path))
 			{
 				ostringstream oss;
-				oss << "Cannot find value func weight file: \"" << value_func_weight_path << "\"";
+				oss << "Cannot find value func weight file: \"" << value_func_weight_path << "\".";
 				send_err_message(oss.str());
 				return false;
 			}
@@ -260,17 +274,30 @@ namespace engine
 		return !this->endgame_solve_task.valid() || this->endgame_solve_task.wait_for(timeout) == future_status::ready;
 	}
 
-	BoardCoordinate Kalmia::generate_move(bool ponder)
+	void Kalmia::generate_move(bool ponder, EngineMove& move)
 	{
 		// ToDo: 時間制御の実装
 		stop_if_pondering();
 
 		if (position().can_pass())
-			return BoardCoordinate::PASS;
+		{
+			move.coord = BoardCoordinate::PASS;
+			return;
+		}
 
 		return (this->position().empty_square_count() > this->options["endgame_move_num"])
-			? generate_mid_game_move(ponder)
-			: generate_end_game_move(ponder);
+			? generate_mid_game_move(ponder, move)
+			: generate_end_game_move(ponder, move);
+	}
+
+	void Kalmia::exec_analysis(int32_t move_num)
+	{
+		stop_if_pondering();
+
+		if (position().can_pass())
+			return;
+
+		analyze_mid_game();	// ToDo: 終盤解析の実装.
 	}
 
 	bool Kalmia::search_task_is_completed()
@@ -370,12 +397,13 @@ namespace engine
 			// 厳密にはnode_count != playout_countだが, ここではplayout_countを使う.
 			item.node_count = child_eval.playout_count;
 			item.eval_score = child_eval.expected_reward * 100.0;
+			item.eval_score_type = EvalScoreType::WIN_RATE;
 			item.pv = child_eval.pv;
 			multi_pv.emplace_back(item);
 		}
 	}
 
-	BoardCoordinate Kalmia::generate_mid_game_move(bool ponder)
+	void Kalmia::generate_mid_game_move(bool ponder, EngineMove& move)
 	{
 		write_log("Start search.\n");
 
@@ -396,9 +424,9 @@ namespace engine
 			(move_num <= this->options["stochastic_move_num"])
 			? &Kalmia::select_move<MoveSelection::STOCHASTICALLY>
 			: &Kalmia::select_move<MoveSelection::BEST>;
-		auto select_move = bind(move_selector, this, _1, _2);
+		auto select_move = bind(move_selector, this, _1, _2, _3);
 		bool extra_search_is_needed;
-		auto move = select_move(search_info, extra_search_is_needed);
+		select_move(search_info, extra_search_is_needed, move);
 
 		if (search_end_status != SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL && extra_search_is_needed && this->options["enable_extra_search"])
 		{
@@ -413,21 +441,20 @@ namespace engine
 			write_log("End extra search.\n");
 
 			auto& new_search_info = this->tree->get_search_info();
-			move = select_move(new_search_info, extra_search_is_needed);
+			select_move(new_search_info, extra_search_is_needed, move);
 
 			write_log(search_info_to_string(new_search_info));
 		}
 
 		send_all_mid_search_info();
 		this->logger->flush();
-		return move;
 	}
 
-	BoardCoordinate Kalmia::generate_end_game_move(bool ponder)
+	void Kalmia::generate_end_game_move(bool ponder, EngineMove& move)
 	{
 		milliseconds show_search_info_interval_ms(this->options["show_search_info_interval_cs"] * 10);
 		
-		bool timeout;
+		bool timeout = false;
 		int8_t disc_diff;
 		auto found_win = false;
 
@@ -444,7 +471,29 @@ namespace engine
 		think_info.eval_score = disc_diff;
 		send_think_info(think_info);
 
-		return this->endgame_solve_task.get();
+		move.coord = this->endgame_solve_task.get();
+		move.eval_score = disc_diff;
+		return;
+	}
+
+	void Kalmia::analyze_mid_game()
+	{
+		write_log("Start search.\n");
+
+		this->tree->disable_early_stopping();
+		this->search_task = this->tree->search_async(this->options["playout"]);
+		wait_for_mid_search();
+		auto search_end_status = this->search_task.get();
+
+		write_log(search_end_status_to_string(search_end_status));
+		write_log("\n");
+		write_log("End search.\n");
+
+		auto& search_info = this->tree->get_search_info();
+		write_log(search_info_to_string(search_info));
+
+		send_all_mid_search_info();
+		this->logger->flush();
 	}
 
 	void Kalmia::wait_for_mid_search()
@@ -482,14 +531,17 @@ namespace engine
 	}
 
 	template<MoveSelection MOVE_SELECT>
-	BoardCoordinate Kalmia::select_move(const SearchInfo& search_info, bool& extra_search_is_needed)
+	void Kalmia::select_move(const SearchInfo& search_info, bool& extra_search_is_needed, EngineMove& move)
 	{
 		constexpr double ENOUGH_SEARCH_THRESHOLD = 1.5;
 
 		if (search_info.child_evals.length() == 1)
 		{
 			extra_search_is_needed = false;
-			return search_info.child_evals[0].move;
+			auto& child_eval = search_info.child_evals[0];
+			move.coord = child_eval.move;
+			move.eval_score = child_eval.expected_reward;
+			return;
 		}
 
 		auto& child_evals = search_info.child_evals;
@@ -521,7 +573,9 @@ namespace engine
 		extra_search_is_needed =
 			second_child.expected_reward > best_child.expected_reward	// 最善手と次善手で価値が逆転している場合は, 探索が不十分.
 			|| second_child.playout_count * ENOUGH_SEARCH_THRESHOLD > best_child.playout_count;		// 最善手と次善手のプレイアウト回数に大きな開きがない場合は探索延長.
-		return child_evals[selected_idx].move;
+
+		move.coord = child_evals[selected_idx].move;
+		move.eval_score = child_evals[selected_idx].expected_reward * 100.0f;
 	}
 
 	void Kalmia::update_score_type() 

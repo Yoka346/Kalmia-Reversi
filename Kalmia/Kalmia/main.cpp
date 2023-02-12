@@ -23,7 +23,10 @@ int main(int argc, char* argv[])
 #include "reversi/position.h"
 #include "book/edax_book.h"
 #include "protocol/usi.h"
+#include "protocol/nboard.h"
+#include "protocol/protocol.h"
 #include "game_format/ggf.h"
+#include "engine/kalmia.h"
 
 #include "test/position_eval_test.h"
 
@@ -32,16 +35,14 @@ using namespace std;
 using namespace book;
 using namespace reversi;
 using namespace protocol;
+using namespace engine;
 
 // 開発時のテストコードなどをここに書く.
 void dev_test()
 {
-	string line;
-	getline(cin, line);
-	game_format::GGFReversiGame game(line);
-
-	cout << "Place: " << game.place << endl;
-	cout << "Date: " << game.date << endl;
+	NBoard nb;
+	Kalmia kalmia;
+	nb.mainloop(&kalmia);
 }
 
 #endif

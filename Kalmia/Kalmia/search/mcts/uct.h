@@ -129,8 +129,9 @@ namespace search::mcts
 		double nps() { return this->_node_count / (this->search_ellapsed_ms().count() * 1.0e-3); }
 		const SearchInfo& get_search_info();
 
-		void enable_early_stopping() { this->early_stopping_is_enabled = true; }
-		void disable_early_stopping() { this->early_stopping_is_enabled = false; }
+		bool early_stopping_is_enabled() const { return this->_early_stopping_is_enabled; }
+		void enable_early_stopping() { this->_early_stopping_is_enabled = true; }
+		void disable_early_stopping() { this->_early_stopping_is_enabled = false; }
 		void set_root_state(const reversi::Position& pos);
 
 		/**
@@ -197,7 +198,7 @@ namespace search::mcts
 		SearchInfo _search_info;
 		std::chrono::steady_clock::time_point search_start_time;
 		std::chrono::steady_clock::time_point search_end_time;
-		bool early_stopping_is_enabled = true;
+		bool _early_stopping_is_enabled = true;
 		std::atomic<bool> stop_search_signal_was_sent = true;
 		std::atomic<bool> _is_searching = false;
 

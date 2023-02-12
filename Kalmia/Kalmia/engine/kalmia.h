@@ -31,6 +31,8 @@ namespace engine
 		void set_byoyomi_stones(reversi::DiscColor color, int32_t byoyomi_stones) override;
 		void set_time_inc(reversi::DiscColor color, std::chrono::milliseconds inc) override;
 		void set_level(int32_t level) override;
+		void set_book_contempt(int32_t contempt) override;
+		void add_current_game_to_book() override;
 		double get_eval_score_min() override;
 		double get_eval_score_max() override;
 
@@ -41,7 +43,8 @@ namespace engine
 		void on_undid_position() override;
 		void on_updated_position(reversi::BoardCoordinate move) override;
 		bool on_stop_thinking(std::chrono::milliseconds timeout) override;
-		reversi::BoardCoordinate generate_move(bool ponder) override;
+		void generate_move(bool ponder, EngineMove& move) override;
+		void exec_analysis(int32_t move_num) override;
 
 	private:
 		inline static const std::string NAME = "Kalmia";
@@ -69,12 +72,13 @@ namespace engine
 		void collect_think_info(const search::mcts::SearchInfo& search_info, ThinkInfo& think_info);
 		void collect_multi_pv(const search::mcts::SearchInfo& search_info, MultiPV& multi_pv);
 
-		reversi::BoardCoordinate generate_mid_game_move(bool ponder);
-		reversi::BoardCoordinate generate_end_game_move(bool ponder);
+		void generate_mid_game_move(bool ponder, EngineMove& move);
+		void generate_end_game_move(bool ponder, EngineMove& move);
+		void analyze_mid_game();
 		void wait_for_mid_search();
 		void wait_for_endgame_search();
 		template <MoveSelection MOVE_SELECT>
-		reversi::BoardCoordinate select_move(const search::mcts::SearchInfo& search_info, bool& extra_search_is_need);
+		void select_move(const search::mcts::SearchInfo& search_info, bool& extra_search_is_need, EngineMove& move);
 		void update_score_type();
 
 		// event handlers
@@ -87,6 +91,6 @@ namespace engine
 		void on_thought_log_path_changed(EngineOption& sender, std::string& err_message);
 	};
 
-	template reversi::BoardCoordinate Kalmia::select_move<MoveSelection::STOCHASTICALLY>(const search::mcts::SearchInfo&, bool&);
-	template reversi::BoardCoordinate Kalmia::select_move<MoveSelection::BEST>(const search::mcts::SearchInfo&, bool&);
+	template void Kalmia::select_move<MoveSelection::STOCHASTICALLY>(const search::mcts::SearchInfo&, bool&, EngineMove&);
+	template void Kalmia::select_move<MoveSelection::BEST>(const search::mcts::SearchInfo&, bool&, EngineMove&);
 }
