@@ -6,6 +6,8 @@
 #include <string>
 #include <algorithm>
 
+#include "../utils/text.h"
+
 using namespace std;
 
 namespace reversi
@@ -34,14 +36,10 @@ namespace reversi
 
 	BoardCoordinate parse_coordinate(const string& str)
 	{
-		constexpr const char* WHITESPACE = " \n\r\t\f\v";
-
 		auto lstr = str;
 		transform(lstr.begin(), lstr.end(), lstr.begin(), [](char ch) { return tolower(ch); });
 
-		auto loc = lstr.find_first_not_of(WHITESPACE);
-		if (loc != string::npos)
-			lstr = lstr.substr(loc);
+		utils::remove_head_whitespace(lstr);
 
 		if (lstr == "pass")
 			return BoardCoordinate::PASS;

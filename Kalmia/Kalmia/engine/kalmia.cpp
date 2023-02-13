@@ -1,5 +1,6 @@
 #include "kalmia.h"
 
+#include <cmath>
 #include <algorithm>
 #include <filesystem>
 
@@ -393,6 +394,9 @@ namespace engine
 	{
 		for (auto& child_eval : search_info.child_evals)
 		{
+			if (isnan(child_eval.expected_reward))
+				continue;
+
 			MultiPVItem item;
 			// Œµ–§‚É‚Ínode_count != playout_count‚¾‚ª, ‚±‚±‚Å‚Íplayout_count‚ðŽg‚¤.
 			item.node_count = child_eval.playout_count;

@@ -269,6 +269,7 @@
     <ClInclude Include="utils\static_initializer.h" />
     <ClInclude Include="utils\game_timer.h" />
     <ClInclude Include="utils\string_to_type.h" />
+    <ClInclude Include="utils\text.h" />
     <ClInclude Include="utils\unroller.h" />
   </ItemGroup>
   <ItemGroup>

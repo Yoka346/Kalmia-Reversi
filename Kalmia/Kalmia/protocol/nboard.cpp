@@ -2,12 +2,12 @@
 
 #include <iomanip>
 #include <chrono>
+#include <cmath>
 
+#include "../utils/text.h"
 #include "../utils/string_to_type.h"
 #include "../utils/exception.h"
 #include "../game_format/ggf.h"
-
-#include<Windows.h>
 
 
 using namespace std;
@@ -31,6 +31,7 @@ namespace protocol
 		commands["ping"] = to_handler(&NBoard::exec_ping_command);
 		commands["learn"] = to_handler(&NBoard::exec_learn_command);
 		commands["analyze"] = to_handler(&NBoard::exec_analyze_command);
+		commands["quit"] = to_handler(&NBoard::exec_quit_command);
 	}
 
 	void NBoard::mainloop(Engine* engine, const string& log_file_path)
@@ -47,9 +48,11 @@ namespace protocol
 		this->engine->on_think_info_is_sent = [this](const ThinkInfo& think_info) { show_node_stats(think_info); };
 		this->engine->on_multi_pv_is_sent = [this](auto& multi_pv) { show_hints(multi_pv); };
 
+		this->quit_flag = false;
+
 		string cmd_name;
 		string line;
-		while (getline(*this->nb_in, line))
+		while (!this->quit_flag && getline(*this->nb_in, line))
 		{
 			istringstream iss(line);
 			iss >> cmd_name;
@@ -104,6 +107,7 @@ namespace protocol
 		for (size_t i = 0; i < hint_num && i < multi_pv.size(); i++)
 		{
 			auto& item = multi_pv[i];
+
 			oss << "search ";
 			for (auto& move : item.pv)
 				if (move != BoardCoordinate::PASS)
@@ -246,9 +250,8 @@ namespace protocol
 			return;
 		}
 
-		OutputDebugStringA(move_str.c_str());
-
-		auto move = (move_str == " PA") ? BoardCoordinate::PASS : parse_coordinate(move_str);
+		remove_head_whitespace(move_str);
+		auto move = (move_str == "PA") ? BoardCoordinate::PASS : parse_coordinate(move_str);
 		if (!this->engine->update_position(this->engine->position().side_to_move(), parse_coordinate(move_str)))
 		{
 			ostringstream oss;
@@ -360,5 +363,12 @@ namespace protocol
 	void NBoard::exec_analyze_command(istringstream& iss)
 	{
 		nboard_failure("Not supported.");
+	}
+
+	void NBoard::exec_quit_command(istringstream& iss)
+	{
+		istringstream dummy;
+		exec_ping_command(dummy);
+		this->quit_flag = true;
 	}
 }

@@ -42,6 +42,7 @@ namespace protocol
 		std::future<void> go_command_future;
 		std::future<void> hint_command_future;
 		int32_t hint_num = 1;
+		bool quit_flag = false;
 
 		void init();
 		CommandHandler to_handler(void (NBoard::* exec_cmd)(std::istringstream&));
@@ -71,5 +72,6 @@ namespace protocol
 		void exec_ping_command(std::istringstream&);
 		void exec_learn_command(std::istringstream&);
 		void exec_analyze_command(std::istringstream&);
+		void exec_quit_command(std::istringstream&);
 	};
 }

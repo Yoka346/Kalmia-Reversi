@@ -5,6 +5,7 @@
 
 #include "protocol/gtp.h"
 #include "protocol/usi.h"
+#include "protocol/nboard.h"
 #include "engine/kalmia.h"
 #include "engine/random_mover.h"
 
@@ -95,8 +96,11 @@ bool Application::set_protocol(const string& protocol_name)
 		this->protocol = make_unique<GTP>();
 	else if (name == "usi")
 		this->protocol = make_unique<USI>();
+	else if (name == "nboard")
+		this->protocol = make_unique<NBoard>();
 	else
 		return false;
+
 	return true;
 }
 
