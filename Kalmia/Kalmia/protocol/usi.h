@@ -49,7 +49,6 @@ namespace protocol
 		void init_engine(engine::Engine* engine);
 		CommandHandler to_handler(void (USI::* exec_cmd)(std::istringstream&));
 
-
 		bool go_command_has_done()
 		{ 
 			return !this->go_command_future.valid()

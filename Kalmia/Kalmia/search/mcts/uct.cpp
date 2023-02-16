@@ -32,7 +32,6 @@ namespace search::mcts
 		this->root.reset(new Node());
 		init_root_child_nodes();
 		this->_node_count_per_thread.clear();
-		this->playout_count_per_thread.clear();
 		update_search_info();
 	}
 
@@ -51,7 +50,6 @@ namespace search::mcts
 				init_root_child_nodes();
 				this->node_gc.add(std::move(prev_root));
 				this->_node_count_per_thread.clear();
-				this->playout_count_per_thread.clear();
 				update_search_info();
 				return true;
 			}
@@ -73,8 +71,17 @@ namespace search::mcts
 		vector<thread> search_threads;
 
 		auto thread_num = this->options.thread_num;
+		this->_node_count_per_thread.clear();
 		this->_node_count_per_thread.resize(thread_num, 0);
-		this->playout_count_per_thread.resize(thread_num, 0);
+
+		// 各スレッドのプレイアウトの配分を決める. 基本的にプレイアウト数をスレッド数で割って均等に分ける. 余りは若いスレッドから順に1つずつ割り当てる.
+		// この配分はあくまでも目安で, 実際は暇になったスレッドは他のスレッドの仕事を代わりにやる(Work stealing).
+		int64_t p = playout_num / thread_num;
+		this->work_num_per_thread.clear();
+		for (auto i = 0; i < thread_num; i++)
+			this->work_num_per_thread.emplace_back(make_unique<atomic<int64_t>>(p));
+		for (auto i = 0; i < playout_num % thread_num; i++)
+			(*this->work_num_per_thread[i])++;
 
 		milliseconds time_limit_ms(time_limit_cs * 10);
 		milliseconds extra_time_ms(extra_time_cs * 10);
@@ -193,10 +200,30 @@ namespace search::mcts
 	{
 		while(!this->stop_search_flag)
 		{
+			auto work_left = --(*this->work_num_per_thread[thread_id]);
+			if (work_left < 0)	// 自分の仕事がない.
+			{
+				auto done = true;
+				for (size_t i = 0; i < this->work_num_per_thread.size(); i++)
+				{
+					if (i == thread_id)
+						continue;
+
+					work_left = --(*this->work_num_per_thread[i]);
+					if (work_left >= 0)	// 他のスレッドの仕事が余っている.
+					{
+						done = false;
+						break;
+					}
+				}
+
+				if (done)	// ほかのスレッドも仕事を終えた.
+					continue;	// 探索延長があるかもしれないのでreturnはしない.
+			}
+
 			// ルートのゲームの情報をコピー. MCTSでは, 末端ノードに達したら一気にルートに戻るので, undoするよりもコピーのほうが速い.
 			auto gi = game_info;	
 			visit_root_node(thread_id, gi);
-			this->playout_count_per_thread[thread_id]++;
 		}
 	}
 
@@ -519,7 +546,7 @@ namespace search::mcts
 			return true;
 		}
 
-		if (playout_count() >= playout_num)
+		if (all_threads_complete_work())
 		{
 			end_status = SearchEndStatus::COMPLETE;
 			return true;
@@ -532,6 +559,14 @@ namespace search::mcts
 		}
 
 		return false;
+	}
+
+	bool UCT::all_threads_complete_work()
+	{
+		for (auto& w : this->work_num_per_thread)
+			if (*w > 0)
+				return false;
+		return true;
 	}
 
 	bool UCT::can_do_early_stopping(milliseconds time_limit_ms)
