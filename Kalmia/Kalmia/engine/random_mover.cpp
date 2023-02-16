@@ -20,11 +20,13 @@ namespace engine
 		this->options["rand_seed"] = EngineOption(12345678, 0, INT32_MAX, this->options.size(), func);
 	};
 
-	void RandomMover::generate_move(bool ponder, EngineMove& move) 
+	void RandomMover::go(bool ponder) 
 	{
 		Array<Move, MAX_MOVE_NUM> moves;
 		auto num = position().get_next_moves(moves);
 		auto idx = this->rand.next(num);
+		EngineMove move;
 		move.coord = num ? moves[idx].coord : BoardCoordinate::PASS;
+		send_move(move);
 	}
 }

@@ -21,7 +21,7 @@ using namespace engine;
 
 namespace protocol
 {
-	void NBoard::init()
+	void NBoard::init_handlers()
 	{
 		commands["nboard"] = to_handler(&NBoard::exec_nboard_command);
 		commands["set"] = to_handler(&NBoard::exec_set_command);
@@ -42,18 +42,21 @@ namespace protocol
 		if (!this->mainloop_mutex.try_lock())
 			throw invalid_operation("Cannnot execute mainloop before another mainloop has been quit.");
 
-		this->engine = engine;
-		
-		this->engine->on_err_message_is_sent = [this](const auto& msg) { nboard_failure(msg); };
-		this->engine->on_think_info_is_sent = [this](const ThinkInfo& think_info) { show_node_stats(think_info); };
-		this->engine->on_multi_pv_is_sent = [this](auto& multi_pv) { show_hints(multi_pv); };
+		init_engine(engine);
 
 		this->quit_flag = false;
+
+		ofstream ofs(log_file_path);
+		SyncOutStream logger(&ofs);
+		this->logger = &logger;
 
 		string cmd_name;
 		string line;
 		while (!this->quit_flag && getline(*this->nb_in, line))
 		{
+			*this->logger << IOLock::LOCK << "< " << line << "\n";
+			this->logger->flush();
+
 			istringstream iss(line);
 			iss >> cmd_name;
 
@@ -71,6 +74,16 @@ namespace protocol
 		this->mainloop_mutex.unlock();
 	}
 
+	void NBoard::init_engine(engine::Engine* engine)
+	{
+		this->engine = engine;
+		this->engine->on_err_message_was_sent = [this](const auto& msg) { nboard_failure(msg); };
+		this->engine->on_think_info_was_sent = [this](const auto& think_info) { send_node_stats(think_info); };
+		this->engine->on_multi_pv_was_sent = [this](const auto& multi_pv) { send_hints(multi_pv); };
+		this->engine->on_move_was_sent = [this](const auto& move) { send_move(move); };
+		this->engine->on_analysis_ended = [this]() { nboard_success("status"); };
+	}
+
 	NBoard::CommandHandler NBoard::to_handler(void (NBoard::* exec_cmd)(istringstream&))
 	{
 		return bind(exec_cmd, this, placeholders::_1);
@@ -80,15 +93,21 @@ namespace protocol
 	{
 		this->nb_out << IOLock::LOCK << responce << "\n";
 		this->nb_out.flush();
+
+		*this->logger << IOLock::LOCK << "> " << responce << "\n";
+		this->logger->flush();
 	}
 
 	void NBoard::nboard_failure(const string& msg)
 	{
 		this->nb_err << IOLock::LOCK << "Error: " << msg << "\n";
 		this->nb_err.flush();
+
+		*this->logger << IOLock::LOCK << ">! " << msg << "\n";
+		this->logger->flush();
 	}
 
-	void NBoard::show_node_stats(const ThinkInfo& think_info)
+	void NBoard::send_node_stats(const ThinkInfo& think_info)
 	{
 		if (!think_info.node_count.has_value())
 			return;
@@ -100,7 +119,7 @@ namespace protocol
 		nboard_success(oss.str());
 	}
 
-	void NBoard::show_hints(const engine::MultiPV multi_pv)
+	void NBoard::send_hints(const MultiPV& multi_pv)
 	{
 		ostringstream oss;
 		oss << fixed;
@@ -132,6 +151,25 @@ namespace protocol
 			oss << "\n";
 		}
 		nboard_success(oss.str());
+	}
+
+	void NBoard::send_move(const EngineMove& move)
+	{
+		ostringstream oss;
+		oss << "=== ";
+		if (move.coord == BoardCoordinate::PASS)
+			oss << "PA";
+		else
+			oss << coordinate_to_string(move.coord);
+
+		if (move.eval_score.has_value())
+			oss << '/' << move.eval_score.value();
+
+		if (move.ellapsed_ms.has_value())
+			oss << '/' << move.ellapsed_ms.value();
+
+		nboard_success(oss.str());
+		nboard_success("status");
 	}
 
 	void NBoard::exec_nboard_command(istringstream& iss)
@@ -243,6 +281,9 @@ namespace protocol
 
 	void NBoard::exec_move_command(istringstream& iss)
 	{
+		if(this->engine_is_thinking)	// エンジンの思考中にmoveコマンドが飛んでくることがあるので, 思考中であれば止める.
+			this->engine->stop_thinking(milliseconds(TIMEOUT_MS));
+
 		string move_str;
 		if (!getline(iss, move_str, '/'))
 		{
@@ -252,7 +293,7 @@ namespace protocol
 
 		remove_head_whitespace(move_str);
 		auto move = (move_str == "PA") ? BoardCoordinate::PASS : parse_coordinate(move_str);
-		if (!this->engine->update_position(this->engine->position().side_to_move(), parse_coordinate(move_str)))
+		if (!this->engine->update_position(this->engine->position().side_to_move(), move))
 		{
 			ostringstream oss;
 			oss << "move " << move_str << " is invalid.";
@@ -280,70 +321,18 @@ namespace protocol
 		}
 
 		nboard_success("status Analyzing");
-
-		this->hint_command_future = std::async(
-			[=, this]()
-			{
-				if (!engine->analyze(hint_num))
-				{
-					nboard_failure("Cannnot execute analysis.");
-					return;
-				}
-		nboard_success("status");
-			});
+		this->engine->analyze(this->hint_num);
 	}
 
 	void NBoard::exec_go_command(istringstream& iss)
 	{
-		if (!go_command_has_done())
-		{
-			nboard_failure("Cannnot execute multiple go commands");
-			return;
-		}
-
-		this->go_command_future = std::async(
-			[=, this]()
-			{
-				nboard_success("status Thinking");
-		auto move = engine->go(false);
-		ostringstream oss;
-		oss << "=== ";
-		if (move.coord == BoardCoordinate::PASS)
-			oss << "PA";
-		else
-			oss << coordinate_to_string(move.coord);
-
-		if (move.eval_score.has_value())
-			oss << '/' << move.eval_score.value();
-
-		if (move.ellapsed_ms.has_value())
-			oss << '/' << move.ellapsed_ms.value();
-
-		nboard_success(oss.str());
-			}
-		);
+		nboard_success("status Thinking");
+		engine->go(false);
 	}
 
 	void NBoard::exec_ping_command(istringstream& iss)
 	{
-		static const milliseconds TIMEOUT(10000);
-
-		auto status = future_status::ready;
-		if (!go_command_has_done() || !hint_command_has_done())
-		{
-			this->engine->stop_thinking(TIMEOUT);
-			if (!go_command_has_done())
-				status = this->go_command_future.wait_for(TIMEOUT);
-			else
-				this->hint_command_future.wait_for(TIMEOUT);
-		}
-
-		if (status == future_status::timeout)
-		{
-			nboard_failure("Timeout!! Cannot suspend current thinking task.");
-			return;
-		}
-
+		this->engine->stop_thinking(milliseconds(TIMEOUT_MS));
 		int32_t n = 0;
 		string str;
 		iss >> str;

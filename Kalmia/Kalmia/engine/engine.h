@@ -84,20 +84,26 @@ namespace engine
 	class Engine
 	{
 	public:
-		// エンジンが文字列を送信するときに呼び出されるハンドラ.
-		std::function<void(const std::string&)> on_message_is_sent = [](const std::string&) { ; };
+		// エンジンが文字列を送信するしたに呼び出されるハンドラ.
+		std::function<void(const std::string&)> on_message_was_sent = [](const auto&) { ; };
 
-		// エンジンがエラー文字列を送信するときに呼び出されるハンドラ.
-		std::function<void(const std::string&)> on_err_message_is_sent = [](const std::string&) { ; };
+		// エンジンがエラー文字列を送信したときに呼び出されるハンドラ.
+		std::function<void(const std::string&)> on_err_message_was_sent = [](const auto&) { ; };
 
-		// エンジンが思考情報を送信するときに呼び出されるハンドラ.
-		std::function<void(const ThinkInfo&)> on_think_info_is_sent = [](const ThinkInfo&) { ; };
+		// エンジンが思考情報を送信したときに呼び出されるハンドラ.
+		std::function<void(const ThinkInfo&)> on_think_info_was_sent = [](const auto&) { ; };
 
-		// エンジンがmulti PVを送信するときに呼び出されるハンドラ.
-		std::function<void(const MultiPV&)> on_multi_pv_is_sent = [](const MultiPV&) { ; };
+		// エンジンがmulti PVを送信したときに呼び出されるハンドラ.
+		std::function<void(const MultiPV&)> on_multi_pv_was_sent = [](const auto&) { ; };
+
+		// エンジンがgo関数の結果を送信したときに呼び出されるハンドラ.
+		std::function<void(const EngineMove& move)> on_move_was_sent = [](const auto& move) { ; };
+
+		// エンジンがanalyze関数の実行を終えたときに呼び出されるハンドラ.
+		std::function<void()> on_analysis_ended = []() {};
 
 		Engine(const std::string& name, const std::string& version, const std::string& author)
-			: _name(name), _version(version), _author(author), _score_type(EvalScoreType::OTHER), _position(), position_history(), _is_thinking(false)
+			: _name(name), _version(version), _author(author), _score_type(EvalScoreType::OTHER), _position(), position_history()
 		{
 			
 		}
@@ -114,7 +120,6 @@ namespace engine
 		void end_game();
 		void set_position(reversi::Position& pos);
 		void clear_position();
-		bool is_thinking() { return this->_is_thinking; }
 
 		virtual void quit() { ; };
 		virtual void set_main_time(reversi::DiscColor color, std::chrono::milliseconds main_time_ms) = 0;
@@ -192,17 +197,16 @@ namespace engine
 		* @fn
 		* @brief 最善手を生成する.
 		* @param (ponder)
-		* @return 最善手
+		* @detail この関数の結果は, on_move_is_sentハンドラによって通知される.
 		**/
-		EngineMove go(bool ponder);
+		virtual void go(bool ponder) = 0;
 
 		/**
 		* @fn
 		* @brief 現在の局面の候補手を解析する.
 		* @param (move_num) 上位何手までの解析を行うか.
-		* @return 解析が正常に終了したらtrue.
 		**/
-		bool analyze(int32_t move_num);
+		virtual void analyze(int32_t move_num) = 0;
 
 		/**
 		* @fn
@@ -211,7 +215,7 @@ namespace engine
 		* @return 思考が正常に終了したらtrue.
 		* @note この関数は別スレッドで実行中のgo関数を終了させる際に用いる.
 		**/
-		bool stop_thinking(std::chrono::milliseconds timeout);
+		virtual bool stop_thinking(std::chrono::milliseconds timeout) = 0;
 
 		/**
 		* @fn
@@ -241,9 +245,6 @@ namespace engine
 		virtual void on_position_was_set() { ; }
 		virtual void on_undid_position() { ; }
 		virtual void on_updated_position(reversi::BoardCoordinate move) { ; }
-		virtual bool on_stop_thinking(std::chrono::milliseconds timeout) { return true; }
-		virtual void generate_move(bool ponder, EngineMove& move) = 0;
-		virtual void exec_analysis(int32_t move_num) {};
 
 		/**
 		* @fn
@@ -261,15 +262,21 @@ namespace engine
 
 		/**
 		* @fn
-		* @brief エンジンの思考情報を呼び出し元に送る.
+		* @brief エンジンの思考情報をエンジンの呼び出し元に送る.
 		**/
 		void send_think_info(ThinkInfo& think_info);
 
 		/**
 		* @fn
-		* @brief Multi PVをエンジンの呼び出し元に送る.
+		* @brief Multi PVをエンジンのエンジンの呼び出し元に送る.
 		**/
 		void send_multi_pv(MultiPV& multi_pv);
+
+		/**
+		* @fn
+		* @brief エンジンの着手をエンジンの呼び出し元に送る.
+		**/
+		void send_move(EngineMove& move);
 
 	private:
 		EngineState _state = EngineState::NOT_READY;
@@ -279,6 +286,6 @@ namespace engine
 		reversi::Position _position;
 		std::vector<reversi::Position> position_history;
 		std::atomic<bool> _stop_flag;
-		std::atomic<bool> _is_thinking;
+		std::mutex start_thinking_mutex;
 	};
 }

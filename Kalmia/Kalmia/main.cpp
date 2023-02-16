@@ -1,6 +1,6 @@
 #include "app.h"
 
-#define DEVELOP
+//#define DEVELOP
 
 void dev_test();
 

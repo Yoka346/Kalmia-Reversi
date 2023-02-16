@@ -19,6 +19,7 @@
 
 #define EVAL_DIR "eval/"	// 評価関数のパラメータファイルを格納するディレクトリ.
 #define LOG_DIR "log/"		// ログファイルを格納するディレクトリ.
+#define PROTOCOL_LOG_FILE_NAME "protocol.log"	// 通信ログのファイル名.
 
 
 /*

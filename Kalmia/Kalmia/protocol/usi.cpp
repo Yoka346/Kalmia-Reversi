@@ -19,7 +19,7 @@ namespace protocol
 {
 	bool parse_sfen(const std::string sfen, Position& pos)
 	{
-		if (sfen.size() < SQUARE_NUM + 1)	// 少なくとも 盤面 + 手番 の長さは必要.
+		if (sfen.size() < static_cast<size_t>(SQUARE_NUM + 1))	// 少なくとも 盤面 + 手番 の長さは必要.
 			return false;
 
 		auto* sfen_array = sfen.c_str();
@@ -89,14 +89,10 @@ namespace protocol
 		if (!this->mainloop_mutex.try_lock())
 			throw invalid_operation("Cannnot execute mainloop before another mainloop has been quit.");
 
-		this->engine = engine;
+		init_engine(engine);
+
 		this->quit_flag = false;
 		this->logger = ofstream(log_file_path);
-
-		using namespace placeholders;
-		this->engine->on_err_message_is_sent = [this](string msg) { usi_failure(msg); };
-		this->engine->on_think_info_is_sent = bind(&USI::on_think_info_is_sent, this, _1);
-		this->engine->on_multi_pv_is_sent = bind(&USI::on_multi_pv_is_sent, this, _1);
 
 		string cmd_name;
 		string line;
@@ -123,7 +119,19 @@ namespace protocol
 		this->mainloop_mutex.unlock();
 	}
 
-	void USI::on_think_info_is_sent(const ThinkInfo& info)
+	void USI::usi_success(const string& responce)
+	{
+		this->usi_out << IOLock::LOCK << responce << "\n";
+		this->usi_out.flush();
+	}
+
+	void USI::usi_failure(const string& msg)
+	{
+		this->usi_out << IOLock::LOCK << "info string Error!: " << msg << "\n";
+		this->usi_out.flush();
+	}
+
+	void USI::send_search_info(const ThinkInfo& info)
 	{
 		ostringstream oss;
 		oss << "info ";
@@ -163,7 +171,7 @@ namespace protocol
 		this->usi_out.flush();
 	}
 
-	void USI::on_multi_pv_is_sent(const MultiPV& multi_pv)
+	void USI::send_multi_pv(const MultiPV& multi_pv)
 	{
 		ostringstream oss;
 
@@ -192,15 +200,17 @@ namespace protocol
 		this->usi_out.flush();
 	}
 
+	void USI::init_engine(Engine* engine)
+	{
+		this->engine = engine;
+		this->engine->on_err_message_was_sent = [this](const string& msg) { usi_failure(msg); };
+		this->engine->on_think_info_was_sent = [this](const ThinkInfo& ti) { send_search_info(ti); };
+		this->engine->on_multi_pv_was_sent = [this](const MultiPV& mpv) { send_multi_pv(mpv); };
+	}
+
 	USI::CommandHandler USI::to_handler(void (USI::* exec_cmd)(istringstream&))
 	{
 		return bind(exec_cmd, this, placeholders::_1);
-	}
-
-	void USI::usi_failure(const string& msg)
-	{
-		this->usi_out << IOLock::LOCK << "info string Error!: " << msg << "\n";
-		this->usi_out.flush();
 	}
 
 	void USI::set_time(const string time_kind, const string time)
@@ -223,28 +233,27 @@ namespace protocol
 
 	void USI::exec_usi_command(istringstream& iss) 
 	{
-		auto& u_out = this->usi_out << IOLock::LOCK;
-		u_out << "id name " << this->engine->name() <<"\n";
-		u_out << "id author " << this->engine->author() << "\n";
+		ostringstream oss;
+		oss << "id name " << this->engine->name() <<"\n";
+		oss << "id author " << this->engine->author() << "\n";
 
 		EngineOptions options;
 		this->engine->get_options(options);
 		for (auto& option : options)
-			u_out << "option name " << option.first 
+			oss << "option name " << option.first 
 			<< " type " << option.second.type()
 			<< " default " << option.second.default_value() 
 			<< "\n";
-		u_out << "usiok\n";
-		u_out.flush();
+		oss << "usiok\n";
+		usi_success(oss.str());
 	}
 
 	void USI::exec_isready_command(istringstream& iss) 
 	{
 		if (this->engine->ready())
-		{
-			this->usi_out << IOLock::LOCK << "readyok\n";
-			this->usi_out.flush();
-		}
+			usi_success("readyok");
+		else
+			usi_failure("Engine initialization was failed.");
 	}
 
 	void USI::exec_setoption_command(istringstream& iss) 
@@ -291,11 +300,7 @@ namespace protocol
 		string err_msg;
 		this->engine->set_option(option_name, token, err_msg);
 		if (!err_msg.empty())
-		{
-			ostringstream oss;
-			oss << "" << err_msg;
-			usi_failure(oss.str());
-		}
+			usi_failure(err_msg);
 	}
 
 	void USI::exec_usinewgame_command(istringstream& iss) { this->engine->start_game(); }
@@ -364,7 +369,7 @@ namespace protocol
 
 	void USI::exec_go_command(istringstream& iss)
 	{
-		if (!go_command_has_done())
+		if (this->go_is_running)
 		{
 			usi_failure("Cannnot execute multiple go commands");
 			return;
@@ -385,40 +390,31 @@ namespace protocol
 			}
 		}
 
-		this->go_command_future = std::async(
-			[=, this]()
-			{
-				auto move = this->engine->go(ponder).coord;
-		if (!ponder && !stop_go_flag)
+		this->stop_go_flag = false;
+		this->engine->go(ponder);
+		this->go_is_running = true;
+		this->engine->on_move_was_sent = [=, this](const EngineMove& move)
 		{
-			usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(move) << "\n";
-			usi_out.flush();
-		}
-		return move;
-			});
+			while (ponder && !stop_go_flag)	// ponderが有効のときは, stopコマンドが呼ばれるまでbestmoveを返してはいけない.
+				this_thread::yield();
+			stop_go_flag = false;
+			go_is_running = false;
+
+			ostringstream oss;
+			oss << "bestmove " << coordinate_to_string(move.coord);
+			usi_success(oss.str());
+		};
 	}
 
-	void USI::exec_stop_command(istringstream& iss) 
+	void USI::exec_stop_command(istringstream& iss)
 	{
 		static const milliseconds TIMEOUT(10000);
 
 		if (!this->go_command_future.valid())
 			return;
 
-		if (!this->go_command_has_done())
-		{
-			this->stop_go_flag = true;
-			this->engine->stop_thinking(TIMEOUT);
-			auto status = this->go_command_future.wait_for(TIMEOUT);
-			this->stop_go_flag = false;
-			if (status == future_status::timeout)
-			{
-				usi_failure("Timeout!!");
-				return;
-			}
-		}
-		usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(this->go_command_future.get()) << "\n";
-		usi_out.flush();
+		this->stop_go_flag = true;
+		this->engine->stop_thinking(TIMEOUT);
 	}
 
 	void USI::exec_ponderhit_command(istringstream& iss) 
@@ -433,14 +429,8 @@ namespace protocol
 			set_time(time_kind, time);
 		}
 
-		this->go_command_future = std::async(
-			[=, this]()
-			{
-				auto move = this->engine->go(false).coord;
-				usi_out << IOLock::LOCK << "bestmove " << coordinate_to_string(move) << "\n";
-				usi_out.flush();
-				return move;
-			});
+		istringstream dummy;
+		exec_go_command(dummy);
 	}
 
 	void USI::exec_quit_command(istringstream& iss) 

@@ -22,29 +22,45 @@ namespace engine
 {
 	string search_end_status_to_string(SearchEndStatus status)
 	{
+		ostringstream oss;
+		if ((status & SearchEndStatus::EXTENDED) == SearchEndStatus::EXTENDED)
+		{
+			oss << "extended + ";
+			status ^= SearchEndStatus::EXTENDED;
+		}
+
 		switch (status)
 		{
+		case SearchEndStatus::COMPLETE:
+			oss << "completed.";
+			break;
+
 		case SearchEndStatus::PROVED:
-			return "proved.";
+			oss << "proved.";
+			break;
 
 		case SearchEndStatus::TIMEOUT:
-			return "timeout.";
+			oss << "timeout.";
+			break;
 
 		case SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL:
-			return "suspended.";
+			oss << "suspended.";
+			break;
 
 		case SearchEndStatus::OVER_NODES:
-			return "over nodes.";
+			oss << "over nodes.";
+			break;
+
+		case SearchEndStatus::EARLY_STOPPING:
+			oss << "early stopping.";
+			break;
 		}
-		return "early stopping.";
+		return oss.str();
 	}
 
 	Kalmia::Kalmia()
-		: Engine(NAME, VERSION, AUTHOR), endgame_solver(0), logger(new Logger("")), logger_mutex()
+		: Engine(NAME, VERSION, AUTHOR), logger(new Logger("")), logger_mutex()
 	{
-		ostringstream oss;
-		oss << EVAL_DIR << "value_func_weight.bin";
-		this->value_func_weight_path = oss.str();
 		this->_score_type = EvalScoreType::WIN_RATE;
 		init_options();
 	}
@@ -58,8 +74,10 @@ namespace engine
 		this->options["latency_ms"] = EngineOption(50, 0, INT32_MAX, this->options.size());
 
 		// 価値関数のパラメータファイルの場所.
+		ostringstream vf_weight_path;
+		vf_weight_path << EVAL_DIR << "value_func_weight.bin";
 		this->options["value_func_weight_path"] =
-			EngineOption(this->value_func_weight_path.c_str(), this->options.size(),
+			EngineOption(vf_weight_path.str(), this->options.size(),
 						 bind(&Kalmia::on_value_func_weight_path_changed, this, _1, _2));
 
 		// 探索スレッド数
@@ -85,7 +103,7 @@ namespace engine
 		this->options["reuse_subtree"] = EngineOption(true, this->options.size());
 
 		// 相手の手番中も思考を続行するかどうか.
-		this->options["enable_pondering"] = EngineOption(false, this->options.size());
+		this->options["enable_pondering"] = EngineOption(false, this->options.size());	// ToDo: ponderingの実装.
 
 		// これ以上探索しても最善手が変わらない場合, 探索を打ち切るかどうか.
 		this->options["enable_early_stopping"] = EngineOption(true, this->options.size());
@@ -100,10 +118,12 @@ namespace engine
 		this->options["endgame_tt_size_mib"] = EngineOption(DEFAULT_ENDGAME_SOLVER_TT_SIZE_MIB, 128, INT32_MAX, this->options.size(), bind(&Kalmia::on_endgame_tt_size_mib_changed, this, _1, _2));
 
 		// 探索情報を何cs間隔で表示するか.
-		this->options["show_search_info_interval_cs"] = EngineOption(10, 10, INT32_MAX, this->options.size());
+		this->options["show_search_info_interval_cs"] = EngineOption(10, 10, INT32_MAX, this->options.size(), bind(&Kalmia::on_show_search_info_interval_changed, this, _1, _2));
 
 		// 思考ログの保存先
-		this->options["thought_log_path"] = EngineOption("", this->options.size(), bind(&Kalmia::on_thought_log_path_changed, this, _1, _2));
+		ostringstream log_path;
+		log_path << LOG_DIR << "kalmia.log";
+		this->options["thought_log_path"] = EngineOption(log_path.str(), this->options.size(), bind(&Kalmia::on_thought_log_path_changed, this, _1, _2));
 	}
 
 	void Kalmia::quit()
@@ -193,7 +213,7 @@ namespace engine
 	{
 		try
 		{
-			string& value_func_weight_path = this->value_func_weight_path;
+			string value_func_weight_path = this->options["value_func_weight_path"];
 			if (!exists(value_func_weight_path))
 			{
 				ostringstream oss;
@@ -201,6 +221,10 @@ namespace engine
 				send_err_message(oss.str());
 				return false;
 			}
+
+			if (this->logger)
+				this->logger.reset();
+			this->logger = make_unique<Logger>(this->options["thought_log_path"]);
 
 			if (this->tree.get())
 			{
@@ -210,8 +234,7 @@ namespace engine
 			else
 				this->tree = make_unique<UCT>(UCTOptions(), value_func_weight_path);
 
-			int32_t size = this->options["endgame_tt_size_mib"];
-			this->endgame_solver = EndgameSolver(size * 1024 * 1024);
+			this->tree->options.search_info_update_interval_cs = this->options["show_search_info_interval_cs"];
 		}
 		catch (invalid_argument ex)
 		{
@@ -255,50 +278,50 @@ namespace engine
 
 	void Kalmia::on_undid_position()
 	{
-		if (this->search_task.valid() && !search_task_is_completed())
-			stop_pondering();
+		stop_if_pondering();
 
 		this->tree->set_root_state(position());
 		write_log("Undo.\n");
 		write_log("Tree was cleared.\n");
 	}
 
-	bool Kalmia::on_stop_thinking(milliseconds timeout)
-	{
-		if (this->position().empty_square_count() > this->options["endgame_move_num"])
-		{
-			this->tree->send_stop_search_signal();
-			return !this->search_task.valid() || this->search_task.wait_for(timeout) == future_status::ready;
-		}
-
-		this->endgame_solver.send_stop_search_signal();
-		return !this->endgame_solve_task.valid() || this->endgame_solve_task.wait_for(timeout) == future_status::ready;
-	}
-
-	void Kalmia::generate_move(bool ponder, EngineMove& move)
+	void Kalmia::go(bool ponder)
 	{
 		// ToDo: 時間制御の実装
-		stop_if_pondering();
+
+		stop_if_pondering();	
+
+		this->suspend_search_flag = false;
 
 		if (position().can_pass())
 		{
+			EngineMove move;
 			move.coord = BoardCoordinate::PASS;
-			return;
+			send_move(move);
 		}
 
-		return (this->position().empty_square_count() > this->options["endgame_move_num"])
-			? generate_mid_game_move(ponder, move)
-			: generate_end_game_move(ponder, move);
+		generate_mid_game_move(ponder);
 	}
 
-	void Kalmia::exec_analysis(int32_t move_num)
+	void Kalmia::analyze(int32_t move_num)
 	{
 		stop_if_pondering();
 
 		if (position().can_pass())
+		{
+			this->on_analysis_ended();
 			return;
+		}
 
-		analyze_mid_game();	// ToDo: 終盤解析の実装.
+		analyze_mid_game();
+	}
+
+	bool Kalmia::stop_thinking(milliseconds timeout)
+	{
+		write_log("Recieved stop search signal.\n");
+
+		this->tree->send_stop_search_signal();
+		return !this->search_task.valid() || this->search_task.wait_for(timeout) == future_status::ready;
 	}
 
 	bool Kalmia::search_task_is_completed()
@@ -306,27 +329,24 @@ namespace engine
 		return this->search_task.wait_for(milliseconds::zero()) == future_status::ready;
 	}
 
-	void Kalmia::stop_pondering()
-	{
-		this->tree->send_stop_search_signal();
-		this->search_task.wait();
-	}
-
 	void Kalmia::stop_if_pondering()
 	{
 		if (this->search_task.valid() && !search_task_is_completed())
 		{
-			stop_pondering();
+			this->tree->send_stop_search_signal();
 			write_log("Stop pondering.\n\n");
-			write_log(search_info_to_string(this->tree->get_search_info()));
+			write_log(search_info_to_string(this->tree->search_info()));
 		}
 	}
 
 	void Kalmia::write_log(const std::string& str)
 	{
 		lock_guard<mutex> lock(this->logger_mutex);
-		if(this->logger)
+		if (this->logger)
+		{
 			*this->logger << str;
+			this->logger->flush();
+		}
 #ifdef SHOW_LOG
 		send_text_message(str);
 #endif
@@ -357,9 +377,8 @@ namespace engine
 		return oss.str();
 	}
 
-	void Kalmia::send_all_mid_search_info()
+	void Kalmia::send_mid_search_info(const SearchInfo& search_info)
 	{
-		auto& search_info = this->tree->get_search_info();
 		ThinkInfo think_info;
 		collect_think_info(search_info, think_info);
 		send_think_info(think_info);
@@ -369,20 +388,14 @@ namespace engine
 		send_multi_pv(multi_pv);
 
 		write_log(search_info_to_string(search_info));
-	}
-
-	void Kalmia::send_all_endgame_search_info()
-	{
-		ThinkInfo think_info;
-		think_info.ellapsed_ms = this->endgame_solver.search_ellapsed();
-		think_info.node_count = this->endgame_solver.total_node_count();
-		think_info.nps = this->endgame_solver.nps();
-		think_info.depth = this->position().empty_square_count();
-		send_think_info(think_info);
+		write_log("\n");
 	}
 
 	void Kalmia::collect_think_info(const search::mcts::SearchInfo& search_info, ThinkInfo& think_info)
 	{
+		if (search_info.child_evals.size() == 0)
+			return;
+
 		think_info.ellapsed_ms = this->tree->search_ellapsed_ms();
 		think_info.node_count = this->tree->node_count();
 		think_info.nps = this->tree->nps();
@@ -407,141 +420,56 @@ namespace engine
 		}
 	}
 
-	void Kalmia::generate_mid_game_move(bool ponder, EngineMove& move)
+	void Kalmia::generate_mid_game_move(bool ponder)
 	{
 		write_log("Start search.\n");
 
-		this->search_task = this->tree->search_async(this->options["playout"]);
-		wait_for_mid_search();
-		auto search_end_status = this->search_task.get();
-
-		write_log(search_end_status_to_string(search_end_status));
-		write_log("\n");
-		write_log("End search.\n");
-
-		auto& search_info = this->tree->get_search_info();
-		write_log(search_info_to_string(search_info));
-
-		using namespace std::placeholders;
-		auto move_num = (SQUARE_NUM - 4) - position().empty_square_count() + 1;
-		auto move_selector = 
-			(move_num <= this->options["stochastic_move_num"])
-			? &Kalmia::select_move<MoveSelection::STOCHASTICALLY>
-			: &Kalmia::select_move<MoveSelection::BEST>;
-		auto select_move = bind(move_selector, this, _1, _2, _3);
-		bool extra_search_is_needed;
-		select_move(search_info, extra_search_is_needed, move);
-
-		if (search_end_status != SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL && extra_search_is_needed && this->options["enable_extra_search"])
+		auto search_end_callback = [=, this](SearchEndStatus status)
 		{
-			write_log("\nStart extra search.\n");
-			this->logger->flush();
-
-			this->search_task = this->tree->search_async(this->options["playout"]);
-			wait_for_mid_search();
-
-			write_log(search_end_status_to_string(this->search_task.get()));
+			write_log(search_end_status_to_string(status));
 			write_log("\n");
-			write_log("End extra search.\n");
+			write_log("End search.\n");
 
-			auto& new_search_info = this->tree->get_search_info();
-			select_move(new_search_info, extra_search_is_needed, move);
+			auto search_info = this->tree->search_info();
+			write_log(search_info_to_string(search_info)); 
+			EngineMove move;
+			select_move(search_info, move);
+			send_move(move);
+		};
 
-			write_log(search_info_to_string(new_search_info));
-		}
-
-		send_all_mid_search_info();
-		this->logger->flush();
-	}
-
-	void Kalmia::generate_end_game_move(bool ponder, EngineMove& move)
-	{
-		milliseconds show_search_info_interval_ms(this->options["show_search_info_interval_cs"] * 10);
-		
-		bool timeout = false;
-		int8_t disc_diff;
-		auto found_win = false;
-
-		auto& solver = this->endgame_solver;
-		this->endgame_solve_task = std::async([&, this]() { return solver.solve_best_move(this->position(), milliseconds(INT32_MAX), disc_diff, timeout); });
-
-		wait_for_endgame_search();
-
-		ThinkInfo think_info;
-		think_info.ellapsed_ms = solver.search_ellapsed();
-		think_info.depth = this->position().empty_square_count();
-		think_info.node_count = solver.total_node_count();
-		think_info.nps = solver.nps();
-		think_info.eval_score = disc_diff;
-		send_think_info(think_info);
-
-		move.coord = this->endgame_solve_task.get();
-		move.eval_score = disc_diff;
-		return;
+		this->tree->on_search_info_was_updated = [this](const auto& search_info) { send_mid_search_info(search_info); };
+		this->search_task = this->tree->search_async(this->options["playout"], search_end_callback);
 	}
 
 	void Kalmia::analyze_mid_game()
 	{
 		write_log("Start search.\n");
 
+		auto search_end_callback = [=, this](SearchEndStatus status)
+		{
+			write_log(search_end_status_to_string(status));
+			write_log("\n");
+			write_log("End search.\n");
+
+			auto search_info = this->tree->search_info();
+			write_log(search_info_to_string(search_info));
+
+			send_mid_search_info(search_info);
+			this->logger->flush();
+
+			if (this->options["enable_early_stopping"])
+				this->tree->enable_early_stopping();
+		};
+
+		this->tree->on_search_info_was_updated = [this](const auto& search_info) { send_mid_search_info(search_info); };
 		this->tree->disable_early_stopping();
-		this->search_task = this->tree->search_async(this->options["playout"]);
-		wait_for_mid_search();
-		auto search_end_status = this->search_task.get();
-
-		write_log(search_end_status_to_string(search_end_status));
-		write_log("\n");
-		write_log("End search.\n");
-
-		auto& search_info = this->tree->get_search_info();
-		write_log(search_info_to_string(search_info));
-
-		send_all_mid_search_info();
-		this->logger->flush();
+		this->search_task = this->tree->search_async(this->options["playout"], INT32_MAX / 10, 0, search_end_callback);
 	}
 
-	void Kalmia::wait_for_mid_search()
+	void Kalmia::select_move(const SearchInfo& search_info, EngineMove& move)
 	{
-		milliseconds show_search_info_interval_ms(this->options["show_search_info_interval_cs"] * 10);
-		auto start_time = high_resolution_clock::now();
-		while (this->search_task.wait_for(milliseconds::zero()) != future_status::ready)
+		if (search_info.child_evals.size() == 1)
 		{
-			this_thread::sleep_for(milliseconds(10));
-			
-			auto time_now = high_resolution_clock::now();
-			if (duration_cast<milliseconds>(time_now - start_time) >= show_search_info_interval_ms)
-			{
-				send_all_mid_search_info();
-				start_time = time_now;
-			}
-		}
-	}
-
-	void Kalmia::wait_for_endgame_search()
-	{
-		milliseconds show_search_info_interval_ms(this->options["show_search_info_interval_cs"] * 10);
-		auto start_time = high_resolution_clock::now();
-		while (this->endgame_solve_task.wait_for(milliseconds::zero()) != future_status::ready)
-		{
-			this_thread::sleep_for(milliseconds(10));
-
-			auto time_now = high_resolution_clock::now();
-			if (duration_cast<milliseconds>(time_now - start_time) >= show_search_info_interval_ms)
-			{
-				send_all_endgame_search_info();
-				start_time = time_now;
-			}
-		}
-	}
-
-	template<MoveSelection MOVE_SELECT>
-	void Kalmia::select_move(const SearchInfo& search_info, bool& extra_search_is_needed, EngineMove& move)
-	{
-		constexpr double ENOUGH_SEARCH_THRESHOLD = 1.5;
-
-		if (search_info.child_evals.length() == 1)
-		{
-			extra_search_is_needed = false;
 			auto& child_eval = search_info.child_evals[0];
 			move.coord = child_eval.move;
 			move.eval_score = child_eval.expected_reward;
@@ -550,12 +478,12 @@ namespace engine
 
 		auto& child_evals = search_info.child_evals;
 		auto selected_idx = 0;
-
-		if constexpr (MOVE_SELECT == MoveSelection::STOCHASTICALLY)
+		auto move_num = (SQUARE_NUM - 4) - position().empty_square_count() + 1;
+		if (move_num <= this->options["stochastic_move_num"])	// プレイアウト数に応じた確率的着手
 		{
 			auto t_inv = 1.0 / (this->options["softmax_temperature"] * 1.0e-3);
-			DynamicArray<int32_t> indices(child_evals.length());
-			DynamicArray<double> exp_po_counts(child_evals.length());
+			DynamicArray<int32_t> indices(child_evals.size());
+			DynamicArray<double> exp_po_counts(child_evals.size());
 			auto exp_po_count_sum = 0.0;
 
 			for (auto i = 0; i < indices.length(); i++)
@@ -566,28 +494,23 @@ namespace engine
 
 			auto arrow = this->rand.next_double() * exp_po_count_sum;
 			auto sum = 0.0;
-			shuffle(indices.begin(), indices.end(), this->rand.generator());
-			for (auto i : indices)	// (訪問回数)^(温度)の大きさに応じて確率的に選択.
+			// child_evalsはプレイアウト数に応じた降順に並んでいるので, 着手が偏らないようにシャッフル.
+			shuffle(indices.begin(), indices.end(), this->rand.generator());	
+			for (auto i : indices)	// (プレイアウト数)^(温度)の大きさに応じて確率的に選択.
 				if ((sum += exp_po_counts[selected_idx = i]) >= arrow)
 					break;
 		}
-
-		auto& best_child = child_evals[0];
-		auto& second_child = child_evals[1];
-		extra_search_is_needed =
-			second_child.expected_reward > best_child.expected_reward	// 最善手と次善手で価値が逆転している場合は, 探索が不十分.
-			|| second_child.playout_count * ENOUGH_SEARCH_THRESHOLD > best_child.playout_count;		// 最善手と次善手のプレイアウト回数に大きな開きがない場合は探索延長.
-
 		move.coord = child_evals[selected_idx].move;
 		move.eval_score = child_evals[selected_idx].expected_reward * 100.0f;
 	}
 
 	void Kalmia::update_score_type() 
 	{
-		if (position().empty_square_count() > this->options["endgame_move_num"])
+		this->_score_type = EvalScoreType::WIN_RATE;
+		/*if (position().empty_square_count() > this->options["endgame_move_num"])	// 終盤探索が完成したらコメントアウト
 			this->_score_type = EvalScoreType::WIN_RATE;
 		else
-			this->_score_type = EvalScoreType::DISC_DIFF;
+			this->_score_type = EvalScoreType::DISC_DIFF;*/
 	}
 
 	void Kalmia::on_value_func_weight_path_changed(EngineOption& sender, std::string& err_message)
@@ -597,12 +520,11 @@ namespace engine
 			err_message = "Cannnot set value_func_weight_path while searching.";
 			return;
 		}
-		this->value_func_weight_path = sender;
 
 		if (state() != EngineState::NOT_READY)
 		{
 			auto prev_tree = move(this->tree);
-			this->tree = make_unique<UCT>(prev_tree->options, this->value_func_weight_path);
+			this->tree = make_unique<UCT>(prev_tree->options, sender);
 		}
 	}
 
@@ -631,14 +553,7 @@ namespace engine
 
 	void Kalmia::on_endgame_tt_size_mib_changed(EngineOption& sender, string& err_message)
 	{
-		if (this->endgame_solver.is_searching())
-		{
-			err_message = "Cannnot change transposition table size while searching.";
-			return;
-		}
-
-		if (state() != EngineState::NOT_READY)
-			this->endgame_solver = EndgameSolver(sender * 1024ULL * 1024ULL);
+		// ToDo: 終盤探索の実装.
 	}
 
 	void Kalmia::on_enable_early_stopping_changed(EngineOption& sender, string& err_message)
@@ -652,6 +567,11 @@ namespace engine
 		}
 		else
 			err_message = "Tree was not initialized.";
+	}
+
+	void Kalmia::on_show_search_info_interval_changed(EngineOption& sender, std::string& err_message)
+	{
+		this->tree->options.search_info_update_interval_cs = sender;
 	}
 
 	void Kalmia::on_thought_log_path_changed(EngineOption& sender, std::string& err_message)

@@ -1,5 +1,6 @@
 #pragma once
 #include "../utils/bitmanip.h"
+#include "constant.h"
 #include "types.h"
 #include "mobility.h"
 #include "flip.h"

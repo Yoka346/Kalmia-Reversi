@@ -21,8 +21,9 @@ namespace engine
 		void set_level(int32_t level) override {}
 		void set_book_contempt(int32_t contempt) override {}
 
-	protected:
-		void generate_move(bool ponder, EngineMove& move) override;
+		void go(bool ponder) override;
+		void analyze(int32_t move_num) override {};
+		bool stop_thinking(std::chrono::milliseconds timeout) override { return true; };
 
 	private:
 		inline static const std::string NAME = "Random Mover";

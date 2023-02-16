@@ -4,6 +4,7 @@
 #include <thread>
 #include <future>
 #include <chrono>
+#include <numeric>
 
 #include "../common.h"
 #include "node.h"
@@ -19,6 +20,12 @@ namespace search::mcts
 
 		// メモリ上のNodeオブジェクトの数(Node::object_count())の上限.
 		uint64_t node_num_limit = static_cast<uint64_t>(2e+7);
+
+		// UCT::_search_info の内容を更新する間隔.
+		int32_t search_info_update_interval_cs = 0;
+
+		// 探索が十分かどうかを判定する際の閾値(>= 1.0). この値を大きくすればするほど探索延長が発生しやすくなる. 
+		double enough_search_threshold = 1.5;
 	};
 
 	/**
@@ -54,7 +61,7 @@ namespace search::mcts
 	struct SearchInfo
 	{
 		MoveEvaluation root_eval;
-		utils::DynamicArray<MoveEvaluation> child_evals;
+		std::vector<MoveEvaluation> child_evals;
 
 		SearchInfo() : child_evals(0) { ; }
 	};
@@ -63,15 +70,41 @@ namespace search::mcts
 	* @enum
 	* @brief 探索終了時のステータス.
 	**/
-	enum class SearchEndStatus
+	enum class SearchEndStatus : uint16_t
 	{
-		COMPLETE,	// 指定されたプレイアウト回数だけ探索を行った.
-		PROVED,		// 勝敗が確定した.
-		TIMEOUT,	// 制限時間を迎えたため探索を終了した.
-		SUSPENDED_BY_STOP_SIGNAL,	// UCT::send_stop_search_signal関数によって探索が中断された.
-		OVER_NODES,	// ノード数が規定値をオーバーしたため探索が中断された.
-		EARLY_STOPPING		// 探索が早期終了の条件を満たしたため終了した.
+		COMPLETE = 0x0001,	// 指定されたプレイアウト回数だけ探索を行った.
+		PROVED = 0x0002,		// 勝敗が確定した.
+		TIMEOUT = 0x0004,	// 制限時間を迎えたため探索を終了した.
+		SUSPENDED_BY_STOP_SIGNAL = 0x0008,	// UCT::send_stop_search_signal関数によって探索が中断された.
+		OVER_NODES = 0x0010,	// ノード数が規定値をオーバーしたため探索が中断された.
+		EARLY_STOPPING = 0x0020,		// 探索が早期終了の条件を満たしたため終了した.
+		EXTENDED = 0x0f00	// 探索が延長された.
 	};
+
+	inline SearchEndStatus operator&(const SearchEndStatus& left,  const SearchEndStatus& right) 
+	{
+		return static_cast<SearchEndStatus>(static_cast<uint16_t>(left) & static_cast<uint16_t>(right));
+	}
+
+	inline SearchEndStatus operator|(SearchEndStatus& left, const SearchEndStatus& right)
+	{
+		return static_cast<SearchEndStatus>(static_cast<uint16_t>(left) | static_cast<uint16_t>(right));
+	}
+
+	inline SearchEndStatus operator^(SearchEndStatus& left, const SearchEndStatus& right)
+	{
+		return static_cast<SearchEndStatus>(static_cast<uint16_t>(left) ^ static_cast<uint16_t>(right));
+	}
+
+	inline SearchEndStatus& operator|=(SearchEndStatus& left, const SearchEndStatus& right)
+	{
+		return left = left | right;
+	}
+
+	inline SearchEndStatus& operator^=(SearchEndStatus& left, const SearchEndStatus& right)
+	{
+		return left = left ^ right;
+	}
 
 	/**
 	* @class
@@ -106,11 +139,12 @@ namespace search::mcts
 	{
 	public:
 		UCTOptions options;
+		std::function<void(const SearchInfo&)> on_search_info_was_updated = [](const auto&) {};
 
 		UCT(const std::string& value_func_param_file_path) : UCT(UCTOptions(), value_func_param_file_path) { ; }
 		UCT(const UCTOptions& options, const std::string& value_func_param_file_path)
 			: options(options), value_func(value_func_param_file_path), mutex_pool(), node_gc(),
-			_node_count(0), root_edge_label(EdgeLabel::NOT_PROVED)
+			_node_count_per_thread(0), root_edge_label(EdgeLabel::NOT_PROVED), _search_info()
 		{
 			;
 		}
@@ -125,9 +159,10 @@ namespace search::mcts
 			return duration_cast<milliseconds>(this->search_end_time - this->search_start_time);
 		}
 
-		uint32_t node_count() { return this->_node_count.load(); }
-		double nps() { return this->_node_count / (this->search_ellapsed_ms().count() * 1.0e-3); }
-		const SearchInfo& get_search_info();
+		uint32_t node_count() { return std::accumulate(this->_node_count_per_thread.begin(), this->_node_count_per_thread.end(), 0); }
+		uint32_t playout_count() { return std::accumulate(this->playout_count_per_thread.begin(), this->playout_count_per_thread.end(), 0); }
+		double nps() { return node_count() / (this->search_ellapsed_ms().count() * 1.0e-3); }
+		SearchInfo search_info() { this->search_info_mutex.lock(); auto tmp = this->_search_info; this->search_info_mutex.unlock(); return tmp; }
 
 		bool early_stopping_is_enabled() const { return this->_early_stopping_is_enabled; }
 		void enable_early_stopping() { this->_early_stopping_is_enabled = true; }
@@ -147,23 +182,48 @@ namespace search::mcts
 		* @brief 探索を行う. 制限時間は(INT32_MAX / 10)[cs](約24.8日)
 		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
 		**/
-		SearchEndStatus search(uint32_t playout_num) { search(playout_num, INT32_MAX / 10); }
+		SearchEndStatus search(uint32_t playout_num) { search(playout_num, INT32_MAX / 10, 0); }
 
 		/**
 		* @fn
 		* @brief 探索を行う.
 		* @param (playout_num) プレイアウト回数(ここでは選択->展開->評価->バックアップの流れを実行する回数).
-		* @param (time_limit_cs) 制限時間. 単位はcs(centi second).
+		* @param (time_limit_cs) 制限時間[cs]. 
+		* @param (extra_time_cs) 探索延長が必要な場合に消費される予備時間[cs].
+		* @return 探索終了ステータス.
 		**/
-		SearchEndStatus search(uint32_t playout_num, int32_t time_limit_cs);
+		SearchEndStatus search(uint32_t playout_num, int32_t time_limit_cs, int32_t extra_time_cs);
 
 		/**
 		* @fn
 		* @brief 呼び出し側とは別スレッドで探索を行う.
 		**/
-		std::future<SearchEndStatus> search_async(uint32_t playout_num) { return search_async(playout_num, INT32_MAX / 10); }
-		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs) { return std::async([=]() { return search(playout_num, time_limit_cs); }); }
-		void send_stop_search_signal() { if (this->_is_searching) this->stop_search_signal_was_sent = true; }
+		std::future<SearchEndStatus> search_async(uint32_t playout_num, std::function<void (SearchEndStatus)> search_end_callback) { return search_async(playout_num, INT32_MAX / 10, 0, search_end_callback); }
+
+		/**
+		* @fn
+		* @brief 呼び出し側とは別スレッドで探索を行う.
+		* @param (playout_num) プレイアウト数.
+		* @param (time_time_cs) 時間制限[cs].
+		* @param (extra_time_cs) 探索延長が必要な場合に消費される予備時間[cs].
+		* @param (search_end_callback) 探索が終了した際にSearchEndStatusを渡されて呼び出されるコールバック.
+		* @return SearchEndStatusのfuture.
+		**/
+		std::future<SearchEndStatus> search_async(uint32_t playout_num, int32_t time_limit_cs, int32_t extra_time_cs, std::function<void(SearchEndStatus)> search_end_callback)
+		{
+			this->recieved_stop_search_signal = false;
+			this->_is_searching = true;
+			auto worker = [=, this]()
+			{
+				auto status = search(playout_num, time_limit_cs, extra_time_cs);
+				recieved_stop_search_signal = false;
+				search_end_callback(status);
+				return status;
+			};
+			return std::async(worker);
+		}
+
+		void send_stop_search_signal() { if (this->_is_searching) this->recieved_stop_search_signal = true; }
 
 	private:
 		// ルートノード直下の子ノードのFPU(First Play Urgency).
@@ -192,14 +252,19 @@ namespace search::mcts
 		std::unique_ptr<Node> root;
 		EdgeLabel root_edge_label;
 
-		// ノード数. 未訪問ノードに初めて訪問したときに加算される. ただし, 前回の探索から引き継いだノードは計算に入れていない.
-		std::atomic<uint32_t> _node_count;
+		// スレッドごとのノード数. 未訪問ノードに初めて訪問したときに加算される. ただし, 前回の探索から引き継いだノードは計算に入れていない.
+		std::vector<uint32_t> _node_count_per_thread;
+
+		// スレッドごとのプレイアウト回数. (ここでは選択->展開->評価->バックアップの流れを実行する回数). 
+		std::vector<uint32_t> playout_count_per_thread;
 
 		SearchInfo _search_info;
+		std::mutex search_info_mutex;
 		std::chrono::steady_clock::time_point search_start_time;
 		std::chrono::steady_clock::time_point search_end_time;
 		bool _early_stopping_is_enabled = true;
-		std::atomic<bool> stop_search_signal_was_sent = true;
+		bool stop_search_flag = false;
+		std::atomic<bool> recieved_stop_search_signal = false;
 		std::atomic<bool> _is_searching = false;
 
 		void init_root_child_nodes();
@@ -208,12 +273,13 @@ namespace search::mcts
 		* @fn
 		* @detail 探索ワーカー. 探索スレッド数だけ並列にこの関数が実行される.
 		**/
-		void search_kernel(GameInfo& game_info, uint32_t playout_num, bool& stop_flag);
+		void search_worker(int32_t thread_id, GameInfo& game_info);
+		SearchEndStatus wait_for_search(std::vector<std::thread>& search_threads, int32_t playout_num, std::chrono::milliseconds time_limit_ms, std::chrono::milliseconds extra_time_ms);
 
-		void visit_root_node(GameInfo& game_info);
+		void visit_root_node(int32_t thread_id, GameInfo& game_info);
 
 		template<bool AFTER_PASS>
-		double visit_node(GameInfo& game_info, Node* current_node, Edge& edge_to_current_node);
+		double visit_node(int32_t thread_id, GameInfo& game_info, Node* current_node, Edge& edge_to_current_node);
 
 		int32_t select_root_child_node();
 		int32_t select_child_node(Node* parent, Edge& edge_to_parent);
@@ -251,9 +317,15 @@ namespace search::mcts
 			edge.visit_count += VIRTUAL_LOSS;
 		}
 
-		bool can_stop_search(std::chrono::milliseconds time_limit_ms, SearchEndStatus& end_status);
+		void get_top2_edges(Edge*& best, Edge*& second_best);
+
+		bool can_stop_search(int32_t playout_num, std::chrono::milliseconds time_limit_ms, SearchEndStatus& end_status);
 
 		bool can_do_early_stopping(std::chrono::milliseconds time_limit_ms);
+
+		bool extra_search_is_needed();
+
+		void update_search_info();
 
 		/**
 		* @fn
@@ -268,6 +340,6 @@ namespace search::mcts
 		void get_pv(Node* root, std::vector<reversi::BoardCoordinate>& pv);
 	};
 
-	template double UCT::visit_node<true>(GameInfo&, Node*, Edge&);
-	template double UCT::visit_node<false>(GameInfo&, Node*, Edge&);
+	template double UCT::visit_node<true>(int32_t, GameInfo&, Node*, Edge&);
+	template double UCT::visit_node<false>(int32_t, GameInfo&, Node*, Edge&);
 }

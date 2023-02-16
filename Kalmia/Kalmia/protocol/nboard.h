@@ -26,43 +26,35 @@ namespace protocol
 		NBoard(std::istream* nb_in = &std::cin, std::ostream* nb_out = &std::cout, std::ostream* nb_err = &std::cerr) 
 			: nb_in(nb_in), nb_out(nb_out), nb_err(nb_err)
 		{
-			init();
+			init_handlers();
 		}
 
 		void mainloop(engine::Engine* engine, const std::string& log_file_path) override;
 		void mainloop(engine::Engine* engine) { mainloop(engine, ""); }
 
 	private:
+		static constexpr int32_t TIMEOUT_MS = 10000;
+
 		engine::Engine* engine = nullptr;
 		CommandMap commands;
 		std::istream* nb_in;
 		io::SyncOutStream nb_out;
 		io::SyncOutStream nb_err;
+		io::SyncOutStream* logger;
 		std::mutex mainloop_mutex;
-		std::future<void> go_command_future;
-		std::future<void> hint_command_future;
 		int32_t hint_num = 1;
+		std::atomic<bool> engine_is_thinking = false;	// goやhint, analyzeコマンドが実行中かどうか.
 		bool quit_flag = false;
 
-		void init();
+		void init_handlers();
+		void init_engine(engine::Engine* engine);
 		CommandHandler to_handler(void (NBoard::* exec_cmd)(std::istringstream&));
 		void nboard_success(const std::string& responce);
 		void nboard_failure(const std::string& msg);
 
-		bool go_command_has_done()
-		{
-			return !this->go_command_future.valid()
-				|| this->go_command_future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready;
-		}
-
-		bool hint_command_has_done()
-		{
-			return !this->hint_command_future.valid()
-				|| this->hint_command_future.wait_for(std::chrono::microseconds::zero()) == std::future_status::ready;
-		}
-
-		void show_node_stats(const engine::ThinkInfo& think_info);
-		void show_hints(const engine::MultiPV multi_pv);
+		void send_node_stats(const engine::ThinkInfo& think_info);
+		void send_hints(const engine::MultiPV& multi_pv);
+		void send_move(const engine::EngineMove& move);
 
 		void exec_nboard_command(std::istringstream&);
 		void exec_set_command(std::istringstream&);

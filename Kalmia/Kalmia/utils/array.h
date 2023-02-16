@@ -129,7 +129,7 @@ namespace utils
 			std::memcpy(this->data.get(), src.data.get(), sizeof(T) * this->_length);
 		}
 
-		DynamicArray(DynamicArray<T>&& src) : _length(src._length), data(std::move(src.data)) { ; }
+		//DynamicArray(DynamicArray<T>&& src) noexcept : _length(src._length), data(std::move(src.data)) { ; }
 
 		const T* begin() const { return this->data.get(); }
 		const T* end() const { return this->data.get() + this->_length; }
@@ -157,7 +157,7 @@ namespace utils
 			return *this;
 		}
 
-		DynamicArray<T>& operator=(DynamicArray<T>&& right)
+		DynamicArray<T>& operator=(DynamicArray<T>&& right) noexcept
 		{
 			this->_length = right._length;
 			this->data.reset();

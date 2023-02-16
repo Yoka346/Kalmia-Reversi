@@ -16,6 +16,26 @@ namespace search::endgame
 	**/
 	class EndgameSolver
 	{
+	public:
+		EndgameSolver(size_t transposition_table_size) :tt(transposition_table_size) { ; }
+
+		uint64_t internal_node_count() { return this->_internal_node_count; }
+		uint64_t leaf_node_count() { return this->_leaf_node_count; }
+		uint64_t total_node_count() { return this->_internal_node_count + this->_leaf_node_count; }
+		uint64_t is_searching() { return this->_is_searching; }
+
+		std::chrono::milliseconds search_ellapsed()
+		{
+			using namespace std::chrono;
+			return this->_is_searching
+				? duration_cast<milliseconds>(steady_clock::now() - this->search_start_time)
+				: duration_cast<milliseconds>(this->search_end_time - this->search_start_time);
+		}
+
+		double nps() { return (this->_internal_node_count + this->_leaf_node_count) / (this->search_ellapsed().count() * 1.0e-3); }
+		reversi::BoardCoordinate solve_best_move(reversi::Position root_pos, std::chrono::milliseconds time_limit, int8_t& final_disc_diff, bool& timeout);
+		void send_stop_search_signal() { this->stop_flag = true; }
+
 	private:
 		static constexpr int32_t SEARCH_WITHOUT_TT_THRESHOLD = 6;
 		static constexpr int8_t MAX_SCORE = reversi::SQUARE_NUM;
@@ -39,26 +59,6 @@ namespace search::endgame
 		int8_t search_without_tt(reversi::Position& pos, int8_t alpha, int8_t beta);
 
 		void sort_moves(reversi::Position& pos, utils::Array<reversi::Move, reversi::MAX_MOVE_NUM>& moves, int32_t move_num);
-
-	public:
-		EndgameSolver(size_t transposition_table_size) :tt(transposition_table_size) { ; }
-
-		uint64_t internal_node_count() { return this->_internal_node_count; }
-		uint64_t leaf_node_count() { return this->_leaf_node_count; }
-		uint64_t total_node_count() { return this->_internal_node_count + this->_leaf_node_count; }
-		uint64_t is_searching() { return this->_is_searching; }
-
-		std::chrono::milliseconds search_ellapsed()
-		{
-			using namespace std::chrono;
-			return this->_is_searching
-				? duration_cast<milliseconds>(steady_clock::now() - this->search_start_time)
-				: duration_cast<milliseconds>(this->search_end_time - this->search_start_time);
-		}
-
-		double nps() { return (this->_internal_node_count + this->_leaf_node_count) / (this->search_ellapsed().count() * 1.0e-3); }
-		reversi::BoardCoordinate solve_best_move(reversi::Position root_pos, std::chrono::milliseconds time_limit, int8_t& final_disc_diff, bool& timeout);
-		void send_stop_search_signal() { this->stop_flag = true; }
 	}; 
 	
 	template int8_t EndgameSolver::search_with_tt<true>(reversi::Position& pos, int8_t alpha, int8_t beta);

@@ -31,7 +31,7 @@ void Application::run(char* args[], size_t args_len)
 	if (!this->engine)
 		this->engine = make_unique<Kalmia>();
 
-	this->protocol->mainloop(this->engine.get());
+	this->protocol->mainloop(this->engine.get(), PROTOCOL_LOG_FILE_NAME);
 }
 
 bool Application::apply_options(char* args[], size_t args_len)

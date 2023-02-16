@@ -6,10 +6,11 @@ using namespace reversi;
 
 namespace engine
 {
-	void Engine::send_text_message(const std::string& msg) { this->on_message_is_sent(msg); }
-	void Engine::send_err_message(const std::string& msg) { this->on_err_message_is_sent(msg); }
-	void Engine::send_think_info(ThinkInfo& think_info) { this->on_think_info_is_sent(think_info); }
-	void Engine::send_multi_pv(MultiPV& multi_pv) { this->on_multi_pv_is_sent(multi_pv); }
+	void Engine::send_text_message(const std::string& msg) { this->on_message_was_sent(msg); }
+	void Engine::send_err_message(const std::string& msg) { this->on_err_message_was_sent(msg); }
+	void Engine::send_think_info(ThinkInfo& think_info) { this->on_think_info_was_sent(think_info); }
+	void Engine::send_multi_pv(MultiPV& multi_pv) { this->on_multi_pv_was_sent(multi_pv); }
+	void Engine::send_move(EngineMove& move) { this->on_move_was_sent(move); }
 
 	bool Engine::ready() 
 	{ 
@@ -90,41 +91,5 @@ namespace engine
 	{
 		for (auto& option : this->options)
 			options.emplace_back(option);
-	}
-
-	EngineMove Engine::go(bool ponder)
-	{
-		EngineMove move;
-		if (this->_is_thinking)
-		{
-			move.coord = BoardCoordinate::NULL_COORD;
-			return move;
-		}
-
-		this->_is_thinking = true;
-		generate_move(ponder, move);
-		this->_is_thinking = false;
-		return move;
-	}
-
-	bool Engine::analyze(int32_t move_num)
-	{
-		if (this->_is_thinking)
-			return false;
-
-		this->_is_thinking = true;
-		exec_analysis(move_num);
-		this->_is_thinking = false;
-		return true;
-	}
-
-	bool Engine::stop_thinking(std::chrono::milliseconds timeout)
-	{
-		if (on_stop_thinking(timeout))
-		{
-			this->_is_thinking = false;
-			return true;
-		}
-		return false;
 	}
 }

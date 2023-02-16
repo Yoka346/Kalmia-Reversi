@@ -87,11 +87,10 @@ namespace protocol
 		if (engine == nullptr)
 			throw invalid_argument("specified engine was null.");
 
-		this->engine = engine;
+		init_engine(engine);
+
 		this->quit_flag = false;
 		this->logger = ofstream(log_file_path);
-
-		this->engine->on_message_is_sent = [](const string& msg) { cerr << msg; };	// ログなどのテキスト情報はGTPではエラー出力に出力するのが一般的.
 
 		this->engine->ready();
 
@@ -140,6 +139,13 @@ namespace protocol
 		this->logger << "Status: fail\n";
 		this->logger << "Output: " << output << "\n" << endl;
 		*this->gtp_out << "? " << output << "\n" << endl;
+	}
+
+	void GTP::init_engine(Engine* engine)
+	{
+		this->engine = engine;
+		// ログなどのテキスト情報はエラー出力. 標準出力に出すとGoGuiはエラーダイアログを出してくる.
+		this->engine->on_err_message_was_sent = [](const auto& msg) { cerr << msg; };	
 	}
 
 	GTP::CommandHandler GTP::to_handler(void (GTP::* exec_cmd)(int, std::istringstream&))
@@ -256,9 +262,12 @@ namespace protocol
 			return;
 		}
 
-		auto move = this->engine->go(color).coord;
-		this->engine->update_position(color, move);
-		gtp_success(id, coordinate_to_string(move));
+		this->engine->go(color);
+		this->engine->on_move_was_sent = [=, this](const EngineMove& move)
+		{
+			this->engine->update_position(color, move.coord);
+			gtp_success(id, coordinate_to_string(move.coord));
+		};
 	}
 
 	void GTP::exec_undo_command(int id, istringstream& args)
@@ -306,9 +315,8 @@ namespace protocol
 		milliseconds main_time_ms(main_time * 1000);
 		milliseconds byoyomi_ms(byoyomi * 1000);
 
-		for (auto c = 0; c <= 1; c++)
+		for (auto color = DiscColor::BLACK; color <= DiscColor::WHITE; color++)
 		{
-			auto color = static_cast<DiscColor>(c);
 			this->engine->set_main_time(color, main_time_ms);
 			this->engine->set_byoyomi(color, byoyomi_ms);
 			this->engine->set_byoyomi_stones(color, byoyomi_stones);
@@ -402,7 +410,9 @@ namespace protocol
 			gtp_failure(id, "invalid color.");
 			return;
 		}
-		gtp_success(id, coordinate_to_string(this->engine->go(color).coord));
+
+		this->engine->go(color);
+		this->engine->on_move_was_sent = [=, this](const EngineMove& move) { gtp_success(id, coordinate_to_string(move.coord)); };
 	}
 
 	void GTP::exec_showboard_command(int id, istringstream& args)

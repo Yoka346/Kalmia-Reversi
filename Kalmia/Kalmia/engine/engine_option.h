@@ -22,7 +22,7 @@ namespace engine
 	public:
 		EngineOption() { ; }
 		EngineOption(bool value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
-		EngineOption(const char* value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
+		EngineOption(const std::string& value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 
 		const std::string& default_value() const { return this->_default_value; }
@@ -37,6 +37,7 @@ namespace engine
 		EngineOption& operator=(const std::string& value);
 
 		operator int32_t() const;
+		operator std::string() const { return this->_current_value; }
 
 	private:
 		inline static const EventHandler NULL_HANDLER = [](EngineOption& sender, std::string& err_msg) {};
@@ -60,6 +61,5 @@ namespace engine
 		// 新しいオプション値が設定されるときに呼び出されるハンドラ.
 		EventHandler on_value_change;
 		std::string _last_err_msg;
-		const std::string& to_string() const { return this->_current_value; }
 	};
 }

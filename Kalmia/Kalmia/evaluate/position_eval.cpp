@@ -169,7 +169,7 @@ namespace evaluation
 			if (swap_byte)
 			{
 				auto swapped = BYTE_SWAP_32(*reinterpret_cast<uint32_t*>(&pw.bias));
-				pw.bias = *reinterpret_cast<float*>(&pw.bias);
+				pw.bias = *reinterpret_cast<float*>(&swapped);
 			}
 		}
 		expand_packed_weight(packed_weight);

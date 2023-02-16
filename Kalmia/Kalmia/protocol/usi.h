@@ -38,13 +38,17 @@ namespace protocol
 		std::ofstream logger;
 		std::mutex mainloop_mutex;
 		std::future<reversi::BoardCoordinate> go_command_future;
+		std::atomic<bool> go_is_running = false;
 		std::atomic<bool> stop_go_flag;
 
 		void init();
-		void on_think_info_is_sent(const engine::ThinkInfo&);
-		void on_multi_pv_is_sent(const engine::MultiPV&);
-		CommandHandler to_handler(void (USI::* exec_cmd)(std::istringstream&));
+		void usi_success(const std::string& msg);
 		void usi_failure(const std::string& msg);
+		void send_search_info(const engine::ThinkInfo&);
+		void send_multi_pv(const engine::MultiPV&);
+		void init_engine(engine::Engine* engine);
+		CommandHandler to_handler(void (USI::* exec_cmd)(std::istringstream&));
+
 
 		bool go_command_has_done()
 		{ 

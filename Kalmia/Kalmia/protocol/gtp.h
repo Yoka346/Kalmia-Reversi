@@ -36,6 +36,7 @@ namespace protocol
 		void gtp_success(int id, const std::string& msg);
 		void gtp_success(int id) { std::string empty = "";  gtp_success(id, empty); }
 		void gtp_failure(int id, const std::string& msg);
+		void init_engine(engine::Engine* engine);
 		CommandHandler to_handler(void (GTP::*exec_cmd)(int, std::istringstream&));
 
 		// version 2.0 commands

@@ -206,6 +206,7 @@
     <ClCompile Include="game_format\ggf.cpp" />
     <ClCompile Include="io\sync_stream.cpp" />
     <ClCompile Include="io\sync_stream.h" />
+    <ClCompile Include="learn\train_data.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="protocol\gtp.cpp" />
     <ClCompile Include="protocol\nboard.cpp" />
@@ -238,6 +239,8 @@
     <ClInclude Include="evaluate\position_eval.h" />
     <ClInclude Include="game_format\ggf.h" />
     <ClInclude Include="io\logger.h" />
+    <ClInclude Include="learn\optimizer.h" />
+    <ClInclude Include="learn\train_data.h" />
     <ClInclude Include="protocol\gtp.h" />
     <ClInclude Include="protocol\nboard.h" />
     <ClInclude Include="protocol\protocol.h" />
