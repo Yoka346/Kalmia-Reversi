@@ -410,7 +410,7 @@ namespace protocol
 	{
 		static const milliseconds TIMEOUT(10000);
 
-		if (!this->go_command_future.valid())
+		if (!this->go_is_running)
 			return;
 
 		this->stop_go_flag = true;

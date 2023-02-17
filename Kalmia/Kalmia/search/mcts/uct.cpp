@@ -68,25 +68,19 @@ namespace search::mcts
 
 		this->_is_searching = true;
 		this->stop_search_flag = false;
-		vector<thread> search_threads;
+		this->max_playout_count = playout_num;
+		this->playout_count = 0;
 
+		vector<thread> search_threads;
 		auto thread_num = this->options.thread_num;
 		this->_node_count_per_thread.clear();
 		this->_node_count_per_thread.resize(thread_num, 0);
-
-		// 各スレッドのプレイアウトの配分を決める. 基本的にプレイアウト数をスレッド数で割って均等に分ける. 余りは若いスレッドから順に1つずつ割り当てる.
-		// この配分はあくまでも目安で, 実際は暇になったスレッドは他のスレッドの仕事を代わりにやる(Work stealing).
-		int64_t p = playout_num / thread_num;
-		this->work_num_per_thread.clear();
-		for (auto i = 0; i < thread_num; i++)
-			this->work_num_per_thread.emplace_back(make_unique<atomic<int64_t>>(p));
-		for (auto i = 0; i < playout_num % thread_num; i++)
-			(*this->work_num_per_thread[i])++;
 
 		milliseconds time_limit_ms(time_limit_cs * 10);
 		milliseconds extra_time_ms(extra_time_cs * 10);
 		this->search_start_time = high_resolution_clock::now();
 
+		// 指定されたスレッド数だけsearch_workerを立ち上げて並列探索開始.
 		for (int32_t i = 0; i < thread_num; i++)
 		{
 			auto worker = [=, this]()
@@ -97,7 +91,7 @@ namespace search::mcts
 			search_threads.emplace_back(thread(worker));
 		}
 
-		auto end_status = wait_for_search(search_threads, playout_num, time_limit_ms, extra_time_ms);
+		auto end_status = wait_for_search(search_threads, time_limit_ms, extra_time_ms);
 
 		update_search_info();
 
@@ -108,7 +102,7 @@ namespace search::mcts
 		return end_status;
 	}
 
-	SearchEndStatus UCT::wait_for_search(vector<thread>& search_threads, int32_t playout_num, milliseconds time_limit_ms, milliseconds extra_time_ms)
+	SearchEndStatus UCT::wait_for_search(vector<thread>& search_threads, milliseconds time_limit_ms, milliseconds extra_time_ms)
 	{
 		milliseconds search_info_update_interval_ms{ this->options.search_info_update_interval_cs * 10 };
 		auto end_status = SearchEndStatus::COMPLETE;
@@ -116,12 +110,12 @@ namespace search::mcts
 		auto extra_search_phase = false;
 		while (true)
 		{
-			if (can_stop_search(playout_num, time_limit_ms, end_status))
+			if (can_stop_search(time_limit_ms, end_status))
 			{
 				auto suspended = static_cast<bool>(end_status & SearchEndStatus::SUSPENDED_BY_STOP_SIGNAL);
-				if (!suspended && !extra_search_phase && extra_time_ms != milliseconds::zero() && extra_search_is_needed())
+				if (!suspended && !extra_search_phase && extra_time_ms != milliseconds::zero() && extra_search_is_needed())	// 必要ならば探索延長.
 				{
-					playout_num *= 2;
+					this->max_playout_count *= 2;
 					time_limit_ms += extra_time_ms;
 					extra_search_phase = true;
 				}
@@ -200,25 +194,10 @@ namespace search::mcts
 	{
 		while(!this->stop_search_flag)
 		{
-			auto work_left = --(*this->work_num_per_thread[thread_id]);
-			if (work_left < 0)	// 自分の仕事がない.
+			if (++this->playout_count > this->max_playout_count)								
 			{
-				auto done = true;
-				for (size_t i = 0; i < this->work_num_per_thread.size(); i++)
-				{
-					if (i == thread_id)
-						continue;
-
-					work_left = --(*this->work_num_per_thread[i]);
-					if (work_left >= 0)	// 他のスレッドの仕事が余っている.
-					{
-						done = false;
-						break;
-					}
-				}
-
-				if (done)	// ほかのスレッドも仕事を終えた.
-					continue;	// 探索延長があるかもしれないのでreturnはしない.
+				this->playout_count--;
+				continue;	// プレイアウト数が上限に達しても, 探索延長の可能性があるのでreturnはしない.
 			}
 
 			// ルートのゲームの情報をコピー. MCTSでは, 末端ノードに達したら一気にルートに戻るので, undoするよりもコピーのほうが速い.
@@ -520,7 +499,7 @@ namespace search::mcts
 		}
 	}
 
-	bool UCT::can_stop_search(int32_t playout_num, milliseconds time_limit_ms, SearchEndStatus& end_status)
+	bool UCT::can_stop_search(milliseconds time_limit_ms, SearchEndStatus& end_status)
 	{
 		if (this->recieved_stop_search_signal) 
 		{
@@ -546,7 +525,7 @@ namespace search::mcts
 			return true;
 		}
 
-		if (all_threads_complete_work())
+		if (this->playout_count >= this->max_playout_count)
 		{
 			end_status = SearchEndStatus::COMPLETE;
 			return true;
@@ -559,14 +538,6 @@ namespace search::mcts
 		}
 
 		return false;
-	}
-
-	bool UCT::all_threads_complete_work()
-	{
-		for (auto& w : this->work_num_per_thread)
-			if (*w > 0)
-				return false;
-		return true;
 	}
 
 	bool UCT::can_do_early_stopping(milliseconds time_limit_ms)

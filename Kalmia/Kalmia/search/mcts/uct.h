@@ -251,10 +251,14 @@ namespace search::mcts
 		std::unique_ptr<Node> root;
 		EdgeLabel root_edge_label;
 
-		std::vector<std::unique_ptr<std::atomic<int64_t>>> work_num_per_thread;	// スレッドごとに実行されるプレイアウト数. Work stealingの際に必要. atomicはコピーできないのでポインタのvectorにする.
-
 		// スレッドごとのノード数. 未訪問ノードに初めて訪問したときに加算される. ただし, 前回の探索から引き継いだノードは計算に入れていない.
 		std::vector<uint32_t> _node_count_per_thread;
+
+		// 探索を開始してから実行されたプレイアウト数. この値は　選択->展開->評価->バックアップ の流れを1回終えたら加算される.
+		std::atomic<uint32_t> playout_count;
+
+		// プレイアウト数の最大値.
+		uint32_t max_playout_count;
 
 		SearchInfo _search_info;
 		std::mutex search_info_mutex;
@@ -272,7 +276,7 @@ namespace search::mcts
 		* @detail 探索ワーカー. 探索スレッド数だけ並列にこの関数が実行される.
 		**/
 		void search_worker(int32_t thread_id, GameInfo& game_info);
-		SearchEndStatus wait_for_search(std::vector<std::thread>& search_threads, int32_t playout_num, std::chrono::milliseconds time_limit_ms, std::chrono::milliseconds extra_time_ms);
+		SearchEndStatus wait_for_search(std::vector<std::thread>& search_threads, std::chrono::milliseconds time_limit_ms, std::chrono::milliseconds extra_time_ms);
 
 		void visit_root_node(int32_t thread_id, GameInfo& game_info);
 
@@ -317,9 +321,7 @@ namespace search::mcts
 
 		void get_top2_edges(Edge*& best, Edge*& second_best);
 
-		bool can_stop_search(int32_t playout_num, std::chrono::milliseconds time_limit_ms, SearchEndStatus& end_status);
-
-		bool all_threads_complete_work();
+		bool can_stop_search(std::chrono::milliseconds time_limit_ms, SearchEndStatus& end_status);
 
 		bool can_do_early_stopping(std::chrono::milliseconds time_limit_ms);
 
