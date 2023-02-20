@@ -34,7 +34,7 @@ namespace evaluation
 		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
 		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
 		utils::Array<float, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
-		float bias;
+		float bias = 0.0f;
 
 		void pack(PackedValueFuncParam& packed_param);
 		void to_opponent(ValueFuncParam& out);
@@ -100,7 +100,7 @@ namespace evaluation
 		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
 		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
 		utils::Array<float, PACKED_PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
-		float bias;
+		float bias = 0.0f;
 
 		void expand(ValueFuncParam& param);
 

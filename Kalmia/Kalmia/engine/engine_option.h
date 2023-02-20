@@ -20,7 +20,7 @@ namespace engine
 	class EngineOption
 	{
 	public:
-		EngineOption() { ; }
+		EngineOption() :_idx(0), _min(0), _max(0) { ; }
 		EngineOption(bool value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(const std::string& value, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);
 		EngineOption(int32_t value, int32_t min, int32_t max, size_t idx, const EventHandler& on_value_change = NULL_HANDLER);

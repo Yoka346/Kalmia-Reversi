@@ -19,7 +19,7 @@ namespace learn
 		int8_t final_disc_diff;
 		float eval_score;
 
-		TrainDataItem() : position(0ULL, 0ULL) {}
+		TrainDataItem() : position(0ULL, 0ULL), final_disc_diff(0), eval_score(0.0f) {}
 		TrainDataItem(char* buffer, size_t len,  bool swap_byte = false); 
 	};
 

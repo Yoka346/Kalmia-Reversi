@@ -3,6 +3,8 @@
 #include <iomanip>
 #include <chrono>
 #include <cmath>
+#include <algorithm>
+#include <locale>
 
 #include "../utils/text.h"
 #include "../utils/string_to_type.h"
@@ -32,6 +34,13 @@ namespace protocol
 		commands["learn"] = to_handler(&NBoard::exec_learn_command);
 		commands["analyze"] = to_handler(&NBoard::exec_analyze_command);
 		commands["quit"] = to_handler(&NBoard::exec_quit_command);
+
+		// set command items
+		commands["depth"] = to_handler(&NBoard::exec_set_depth_command);
+		commands["game"] = to_handler(&NBoard::exec_set_game_command);
+		commands["contempt"] = to_handler(&NBoard::exec_set_contempt_command);
+		commands["time"] = to_handler(&NBoard::exec_set_time_command);	// setコマンドから持ち時間を指定できるように拡張.
+		commands["option"] = to_handler(&NBoard::exec_set_option_command);	// setコマンドからEngineOptionを指定できるように拡張.
 	}
 
 	void NBoard::mainloop(Engine* engine, const string& log_file_path)
@@ -80,8 +89,8 @@ namespace protocol
 		this->engine->on_err_message_was_sent = [this](const auto& msg) { nboard_failure(msg); };
 		this->engine->on_think_info_was_sent = [this](const auto& think_info) { send_node_stats(think_info); };
 		this->engine->on_multi_pv_was_sent = [this](const auto& multi_pv) { send_hints(multi_pv); };
-		this->engine->on_move_was_sent = [this](const auto& move) { send_move(move); };
-		this->engine->on_analysis_ended = [this]() { nboard_success("status"); };
+		this->engine->on_move_was_sent = [this](const auto& move) { send_move(move); nboard_success("status"); engine_is_thinking = false; };
+		this->engine->on_analysis_ended = [this]() { nboard_success("status"); engine_is_thinking = false; };
 	}
 
 	NBoard::CommandHandler NBoard::to_handler(void (NBoard::* exec_cmd)(istringstream&))
@@ -203,86 +212,222 @@ namespace protocol
 		string property_name;
 		iss >> property_name;
 
-		string str;
-		if (property_name == "depth")
+		auto handler = this->commands.find(property_name);
+		if (handler != this->commands.end())
+			handler->second(iss);
+		else
 		{
-			int32_t depth = 0;
-			iss >> str;
+			ostringstream oss;
+			oss << "Unknown property: " << property_name;
+			nboard_failure(oss.str());
+		}
+	}
 
-			if (!try_stoi(str, depth))
-			{
-				nboard_failure("Depth must be an integer.");
-				return;
-			}
+	void NBoard::exec_set_depth_command(istringstream& iss)
+	{
+		int32_t depth = 0;
+		string str;
+		iss >> str;
 
-			if (depth < 1 || depth > 60)
-			{
-				nboard_failure("Depth must be within [1, 60].");
-				return;
-			}
-
-			this->engine->set_level(depth);
+		if (!try_stoi(str, depth))
+		{
+			nboard_failure("Depth must be an integer.");
 			return;
 		}
 
-		if (property_name == "game")
+		if (depth < 1 || depth > 60)
 		{
-			try
-			{
-				GGFReversiGame game(iss.str().substr(static_cast<size_t>(iss.tellg()) + 1));
-				for (auto& move : game.moves)
+			nboard_failure("Depth must be within [1, 60].");
+			return;
+		}
+
+		this->engine->set_level(depth);
+		return;
+	}
+
+	void NBoard::exec_set_game_command(istringstream& iss)
+	{
+		try
+		{
+			if (this->engine_is_thinking)	// エンジンの思考中にset gameコマンドが飛んでくることがあるので, 思考中であれば止める.
+				if (!this->engine->stop_thinking(milliseconds(TIMEOUT_MS)))
 				{
-					if (!game.position.update<true>(move.coord))
-					{
-						ostringstream oss;
-						oss << "Specified moves contains an invalid move " << coordinate_to_string(move.coord) << '.';
-						nboard_failure(oss.str());
-						return;
-					}
+					nboard_failure("Cannot suspend current thinking task.");
+					return;
 				}
+
+			GGFReversiGame game(iss.str().substr(static_cast<size_t>(iss.tellg()) + 1));
+			for (auto& move : game.moves)
+			{
+				if (!game.position.update(move.coord))
+				{
+					ostringstream oss;
+					oss << "Specified moves contains an invalid move " << coordinate_to_string(move.coord) << '.';
+					nboard_failure(oss.str());
+					return;
+				}
+			}
+
+			auto updated = false;
+			Array<Move, MAX_MOVE_NUM> moves;
+			Position current_pos = this->engine->position();
+			auto move_num = current_pos.get_next_moves(moves);
+			for (auto i = 0; i < move_num; i++)
+			{
+				auto& move = moves[i];
+				current_pos.calc_flipped_discs(move);
+				current_pos.update(move);
+
+				if (current_pos == game.position)	// 指定された局面が, 現在の局面を1手進めたものであれば, 着手して更新.
+				{
+					this->engine->update_position(current_pos.opponent_color(), move.coord);
+					updated = true;
+				}
+
+				current_pos.undo(move);
+			}
+
+			if(!updated)
 				this->engine->set_position(game.position);
 
-				GameTimerOptions* times[2] = { &game.black_thinking_time, &game.white_thinking_time };
-				for (auto color = DiscColor::BLACK; color <= DiscColor::WHITE; color++)
+			GameTimerOptions* times[2] = { &game.black_thinking_time, &game.white_thinking_time };
+			for (auto color = DiscColor::BLACK; color <= DiscColor::WHITE; color++)
+			{
+				auto& time = *times[color];
+				if (time.main_time_ms != milliseconds::zero() && time.increment_ms != milliseconds::zero())
 				{
-					auto& time = *times[color];
-					if (time.main_time_ms != milliseconds::zero() && time.increment_ms != milliseconds::zero())
-					{
-						this->engine->set_main_time(color, time.main_time_ms);
-						this->engine->set_time_inc(color, time.increment_ms);
-					}
+					this->engine->set_main_time(color, time.main_time_ms);
+					this->engine->set_time_inc(color, time.increment_ms);
 				}
 			}
-			catch (GGFParserException ex)
+		}
+		catch (GGFParserException ex)
+		{
+			ostringstream oss;
+			oss << "Cannnot parse GGF string. Detail: " << ex.what();
+			nboard_failure(oss.str());
+		}
+	}
+
+	void NBoard::exec_set_contempt_command(istringstream& iss)
+	{
+		int32_t contempt = 0;
+		string str;
+		iss >> str;
+
+		if (!try_stoi(str, contempt))
+		{
+			nboard_failure("Contempt must be an integer.");
+			return;
+		}
+
+		this->engine->set_book_contempt(contempt);
+	}
+
+	void NBoard::exec_set_time_command(istringstream& iss)
+	{
+		string str;
+		iss >> str;
+		transform(str.begin(), str.end(), str.begin(), [](char c) { return tolower(c); });
+
+		DiscColor color;
+		if (str == "b" || str == "black")
+			color = DiscColor::BLACK;
+		else if (str == "w" || str == "white")
+			color = DiscColor::WHITE;
+		else
+		{
+			nboard_failure("Specify color.");
+			return;
+		}
+
+		auto try_stot = [this](string& str, milliseconds& ms)
+		{
+			int32_t time = 0;
+			if (!try_stoi(str, time))
+			{
+				nboard_failure("Time must be an integer.");
+				return false;
+			}
+			ms = milliseconds(time);
+			return true;
+		};
+
+		milliseconds time;
+		while (!iss.eof())
+		{
+			iss >> str;
+			transform(str.begin(), str.end(), str.begin(), [](char c) { return tolower(c); });
+
+			if (str == "main")
+			{
+				iss >> str;
+				if (!try_stot(str, time))
+					return;
+				this->engine->set_main_time(color, time);
+			}
+			else if (str == "inc")
+			{
+				iss >> str;
+				if (!try_stot(str, time))
+					return;
+				this->engine->set_time_inc(color, time);
+			}
+			else if (str == "byoyomi")
+			{
+				iss >> str;
+				if (!try_stot(str, time))
+					return;
+				this->engine->set_byoyomi(color, time);
+			}
+			else
 			{
 				ostringstream oss;
-				oss << "Cannnot parse GGF string. Detail: " << ex.what();
+				oss << "\"" << str << "\" is an invalid token.";
 				nboard_failure(oss.str());
-			}
-			return;
-		}
-
-		if (property_name == "contempt")
-		{
-			int32_t contempt = 0;
-			string str;
-			iss >> str;
-
-			if (!try_stoi(str, contempt))
-			{
-				nboard_failure("Contempt must be an integer.");
 				return;
 			}
+		}
+	}
 
-			this->engine->set_book_contempt(contempt);
+
+	void NBoard::exec_set_option_command(istringstream& iss)
+	{
+		// set option [option_name] [value] という形式.
+
+		if (iss.eof())
+		{
+			nboard_failure("Specify name and value of option.");
 			return;
 		}
+
+		string option_name;
+		string value;
+
+		iss >> option_name;
+
+		if (iss.eof())
+		{
+			nboard_failure("Specify a value.");
+			return;
+		}
+
+		iss >> value;
+
+		string err_msg;
+		this->engine->set_option(option_name, value, err_msg);
+		if (!err_msg.empty())
+			nboard_failure(err_msg);
 	}
 
 	void NBoard::exec_move_command(istringstream& iss)
 	{
 		if(this->engine_is_thinking)	// エンジンの思考中にmoveコマンドが飛んでくることがあるので, 思考中であれば止める.
-			this->engine->stop_thinking(milliseconds(TIMEOUT_MS));
+			if (!this->engine->stop_thinking(milliseconds(TIMEOUT_MS)))
+			{
+				nboard_failure("Cannot suspend current thinking task.");
+				return;
+			}
 
 		string move_str;
 		if (!getline(iss, move_str, '/'))
@@ -321,12 +466,14 @@ namespace protocol
 		}
 
 		nboard_success("status Analyzing");
+		this->engine_is_thinking = true;
 		this->engine->analyze(this->hint_num);
 	}
 
 	void NBoard::exec_go_command(istringstream& iss)
 	{
 		nboard_success("status Thinking");
+		this->engine_is_thinking = true;
 		engine->go(false);
 	}
 
@@ -346,7 +493,7 @@ namespace protocol
 	void NBoard::exec_learn_command(istringstream& iss)
 	{
 		this->engine->add_current_game_to_book();
-		nboard_success("leaned");
+		nboard_success("learned");
 	}
 
 	void NBoard::exec_analyze_command(istringstream& iss)

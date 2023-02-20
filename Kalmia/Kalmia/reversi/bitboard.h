@@ -63,8 +63,8 @@ namespace reversi
 		void undo(const BoardCoordinate& coord, const uint64_t& flipped)
 		{
 			auto player = this->player;
-			this->player = this->opponent ^ flipped;
-			this->opponent = player ^ (COORD_TO_BIT[coord] | flipped);
+			this->player = this->opponent ^ (COORD_TO_BIT[coord] | flipped);
+			this->opponent = player | flipped;
 		}
 
 		void swap()

@@ -13,7 +13,7 @@ namespace io
 	class SyncOutStream
 	{
 	public:
-		SyncOutStream(std::ostream* os) : os(os) { ; }
+		SyncOutStream(std::ostream* os) : os(os), os_mutex() { ; }
 
 		SyncOutStream& operator<<(IOLock lock);
 
@@ -31,7 +31,12 @@ namespace io
 			return *this;
 		}
 
-		void flush() { this->os->flush(); this->os_mutex.unlock(); }
+		void flush() 
+		{ 
+			this->os->flush(); 
+			this->os_mutex.try_lock();
+			this->os_mutex.unlock(); 
+		}
 
 	private:
 		std::ostream* os;

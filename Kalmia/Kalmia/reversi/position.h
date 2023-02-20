@@ -96,26 +96,33 @@ namespace reversi
 
 		void remove_disc_at(BoardCoordinate coord) { this->_bitboard.remove_disc_at(coord); }
 
-		template<bool CHECK_LEGALITY>
-		bool update(const Move& move) 
+		/**
+		* @fn
+		* @brief 合法手かどうか確認せずに与えられた着手で盤面を更新する(探索用). パスを与えた際の動作は未定義. pass関数を使うこと.
+		**/
+		void update(const Move& move)	
 		{
-			if constexpr (CHECK_LEGALITY)
-				if (!is_legal(move.coord))
-					return false;
-
 			this->_side_to_move = opponent_color();
 			this->_bitboard.update(move.coord, move.flipped); 
-			return true;
 		}
 
-		template<bool CHECK_LEGALITY>
+		/**
+		* @fn
+		* @brief 与えられた着手の座標で盤面を更新する(非探索用). update(const Move&)と違ってパスにも対応.
+		* @return 与えられた着手が合法手であればtrue. そうでなければfalse. falseが返った場合は, 盤面は更新されていない.
+		**/
 		bool update(const BoardCoordinate& coord)
 		{
-			if constexpr (CHECK_LEGALITY)
-				if (!is_legal(coord))
-					return false;
+			if (!is_legal(coord))
+				return false;
 
-			uint64_t flipped = this->_bitboard.calc_flipped_discs(coord);;
+			if (coord == BoardCoordinate::PASS)
+			{
+				pass();
+				return true;
+			}
+
+			auto flipped = this->_bitboard.calc_flipped_discs(coord);;
 			this->_side_to_move = opponent_color();
 			this->_bitboard.update(coord, flipped);
 			return true;
@@ -189,17 +196,17 @@ namespace reversi
 			utils::LoopUnroller<7>()(
 				[&](const int32_t i)
 				{
-					const auto j = i << 1;
+					const auto j = static_cast<size_t>(i) << 1;
 					h0 ^= HASH_RANK[j * HASH_RANK_LEN_0 + p[j]];
-					h1 ^= HASH_RANK[(j + 1) * HASH_RANK_LEN_0 + p[j + 1]];
+					h1 ^= HASH_RANK[j + 1 * HASH_RANK_LEN_0 + p[j + 1]];
 				});
 			return h0 ^ h1;
 		}
 
 	private:
 		// Rankというのはチェス用語で, 盤面の水平方向のラインを意味する.
-		static constexpr int32_t HASH_RANK_LEN_0 = 16;
-		static constexpr int32_t HASH_RANK_LEN_1 = 256;
+		static constexpr size_t HASH_RANK_LEN_0 = 16;
+		static constexpr size_t HASH_RANK_LEN_1 = 256;
 		static utils::Array<uint64_t, HASH_RANK_LEN_0* HASH_RANK_LEN_1> HASH_RANK;
 
 		Bitboard _bitboard;

@@ -65,5 +65,12 @@ namespace protocol
 		void exec_learn_command(std::istringstream&);
 		void exec_analyze_command(std::istringstream&);
 		void exec_quit_command(std::istringstream&);
+
+		// set commands
+		void exec_set_depth_command(std::istringstream&);
+		void exec_set_game_command(std::istringstream&);
+		void exec_set_contempt_command(std::istringstream&);
+		void exec_set_time_command(std::istringstream&);
+		void exec_set_option_command(std::istringstream&);
 	};
 }

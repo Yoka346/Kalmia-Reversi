@@ -18,7 +18,7 @@ namespace search
 		const reversi::Position& position() { return this->_position; }
 		const evaluation::PositionFeature& feature() { return this->_feature; }
 
-		void update(const reversi::Move& move) { this->_position.update<false>(move); this->_feature.update(move); }
+		void update(const reversi::Move& move) { this->_position.update(move); this->_feature.update(move); }
 		void pass() { this->_position.pass(); this->_feature.pass(); }
 
 	private:

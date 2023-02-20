@@ -41,7 +41,7 @@ namespace search::endgame
 		this->search_start_time = steady_clock::now();
 		for (int i = 0; i < move_num; i++)
 		{
-			root_pos.update<false>(moves[i].coord);
+			root_pos.update(moves[i].coord);
 
 			int8_t score;
 			if(moves[i].coord == BoardCoordinate::PASS)
@@ -128,7 +128,7 @@ namespace search::endgame
 		for (int32_t i = 0; i < move_num; i++)
 		{
 			Move& move = moves[i];
-			pos.update<false>(move);
+			pos.update(move);
 
 			int8_t score;
 			if (use_tt)
@@ -192,7 +192,10 @@ namespace search::endgame
 		int32_t move;
 		FOREACH_BIT(move, mobility)	// move ordering‚ğ‚µ‚È‚¢‚Ì‚Å, ¶‚Ìbit‚Ì‚Ü‚Ü’…è‚ğ—ñ‹“.
 		{
-			pos.update<false>(static_cast<BoardCoordinate>(move));
+			Move m;
+			m.coord = static_cast<BoardCoordinate>(move);
+			pos.calc_flipped_discs(m);
+			pos.update(m);
 			int8_t score = -search_without_tt<false>(pos, -beta, -alpha);
 			pos.set_bitboard(bitboard);
 

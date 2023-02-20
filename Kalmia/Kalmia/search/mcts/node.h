@@ -80,8 +80,8 @@ namespace search::mcts
 		std::unique_ptr<std::unique_ptr<Node>[]> child_nodes;
 		uint8_t child_node_num;
 
-		Node() : visit_count(0), edges(nullptr), child_nodes(nullptr), child_node_num(0) { _object_count++; }
-		~Node() { _object_count--; }
+		Node() : visit_count(0), edges(nullptr), child_nodes(nullptr), child_node_num(0) { _object_count.fetch_add(1, std::memory_order_relaxed); }
+		~Node() { _object_count.fetch_sub(1, std::memory_order_relaxed); }
 
 		static uint64_t object_count() { return _object_count; }
 

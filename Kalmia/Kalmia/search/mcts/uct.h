@@ -144,7 +144,7 @@ namespace search::mcts
 		UCT(const std::string& value_func_param_file_path) : UCT(UCTOptions(), value_func_param_file_path) { ; }
 		UCT(const UCTOptions& options, const std::string& value_func_param_file_path)
 			: options(options), value_func(value_func_param_file_path), mutex_pool(), node_gc(),
-			_node_count_per_thread(0), root_edge_label(EdgeLabel::NOT_PROVED), _search_info()
+			_node_count_per_thread(0), root_edge_label(EdgeLabel::NOT_PROVED), _search_info(), max_playout_count(0)
 		{
 			;
 		}
@@ -296,10 +296,10 @@ namespace search::mcts
 		{
 			if constexpr (VIRTUAL_LOSS != 1)
 			{
-				node->visit_count -= VIRTUAL_LOSS - 1;
-				edge.visit_count -= VIRTUAL_LOSS - 1;
+				node->visit_count.fetch_sub(VIRTUAL_LOSS - 1, std::memory_order_acq_rel);
+				edge.visit_count.fetch_sub(VIRTUAL_LOSS - 1, std::memory_order_acq_rel);
 			}
-			edge.reward_sum += reward;
+			edge.reward_sum.fetch_add(reward, std::memory_order_acq_rel);
 		}
 
 		/**
@@ -308,15 +308,15 @@ namespace search::mcts
 		**/
 		void update_pass_node_statistic(Node* node, Edge& edge, double reward)
 		{
-			node->visit_count++;
-			edge.visit_count++;
-			edge.reward_sum += reward;
+			node->visit_count.fetch_add(1, std::memory_order_acq_rel);
+			edge.visit_count.fetch_add(1, std::memory_order_acq_rel);
+			edge.reward_sum.fetch_add(reward, std::memory_order_acq_rel);
 		}
 
 		void add_virtual_loss(Node* node, Edge& edge)
 		{
-			node->visit_count += VIRTUAL_LOSS;
-			edge.visit_count += VIRTUAL_LOSS;
+			node->visit_count.fetch_add(VIRTUAL_LOSS, std::memory_order_acq_rel);
+			edge.visit_count.fetch_add(VIRTUAL_LOSS, std::memory_order_acq_rel);
 		}
 
 		void get_top2_edges(Edge*& best, Edge*& second_best);

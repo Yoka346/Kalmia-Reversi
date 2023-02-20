@@ -44,7 +44,7 @@ namespace test
 
 				auto& move = moves[rand.next(move_num)];
 				pos.calc_flipped_discs(move);
-				assert(pos.update<true>(move));
+				assert(pos.update(move.coord));
 				pf.update(move);
 
 				bool second = pos.side_to_move() != first_player_color;

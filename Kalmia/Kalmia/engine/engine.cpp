@@ -51,9 +51,7 @@ namespace engine
 			return true;
 		}
 
-		Move m(move, 0ULL);
-		this->_position.calc_flipped_discs(m);
-		if (!this->_position.update<true>(m))
+		if (!this->_position.update(move))
 		{
 			this->position_history.pop_back();
 			return false;

@@ -46,7 +46,7 @@ namespace search::mcts
 			{
 				unique_ptr<Node> prev_root = std::move(this->root);
 				this->root = std::move(prev_root->child_nodes[i]);
-				this->root_state.update<false>(move);
+				this->root_state.update(move);
 				init_root_child_nodes();
 				this->node_gc.add(std::move(prev_root));
 				this->_node_count_per_thread.clear();
@@ -163,7 +163,7 @@ namespace search::mcts
 
 			// ゲームの勝敗が確定しているかどうか調べる.
 			auto pos = this->root_state;
-			pos.update<false>(edges[i].move);
+			pos.update(edges[i].move);
 			if (pos.is_gameover())
 			{
 				auto res = to_opponent_game_result(pos.get_game_result());
@@ -194,9 +194,9 @@ namespace search::mcts
 	{
 		while(!this->stop_search_flag)
 		{
-			if (++this->playout_count > this->max_playout_count)								
+			if (this->playout_count.fetch_add(1, memory_order::relaxed) >= this->max_playout_count)
 			{
-				this->playout_count--;
+				this->playout_count.fetch_sub(1, memory_order::relaxed);
 				continue;	// プレイアウト数が上限に達しても, 探索延長の可能性があるのでreturnはしない.
 			}
 

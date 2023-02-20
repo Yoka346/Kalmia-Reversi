@@ -18,7 +18,7 @@ namespace game_format
 {
 	struct GGFGameResult
 	{
-		std::optional<float> first_player_score;
+		std::optional<float> first_player_score = std::nullopt;
 		bool is_resigned = false;
 		bool is_timeout = false;
 		bool is_mutual = false;
@@ -28,10 +28,10 @@ namespace game_format
 	
 	struct GGFMove
 	{
-		reversi::DiscColor color;
-		reversi::BoardCoordinate coord;
-		std::optional<float> eval_score;
-		std::optional<float> time;
+		reversi::DiscColor color = reversi::EMPTY;
+		reversi::BoardCoordinate coord = reversi::NULL_COORD;
+		std::optional<float> eval_score = std::nullopt;
+		std::optional<float> time = std::nullopt;
 	};
 
 	struct GGFReversiGame

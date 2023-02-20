@@ -336,7 +336,7 @@ namespace protocol
 				return;
 			}
 
-			if (!pos.update<true>(move))
+			if (!pos.update(move))
 			{
 				ostringstream oss;
 				oss << "illegal move: " << token;
@@ -352,12 +352,11 @@ namespace protocol
 		{
 			auto& move = moves[i];
 			current_pos.calc_flipped_discs(move);
-			current_pos.update<false>(move);
+			current_pos.update(move);
 
-			if (current_pos == pos)
+			if (current_pos == pos)	// 指定された局面が, 現在の局面を1手進めたものであれば, 着手して更新.
 			{
-				current_pos.undo(move);
-				this->engine->update_position(current_pos.side_to_move(), move.coord);
+				this->engine->update_position(current_pos.opponent_color(), move.coord);
 				return;
 			}
 

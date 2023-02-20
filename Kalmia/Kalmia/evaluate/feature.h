@@ -55,10 +55,10 @@ namespace evaluation
                 return sum;
             })();
 
-    constexpr utils::Array<int32_t, PATTERN_KIND_NUM> PATTERN_FEATURE_OFFSET([](int32_t* data, size_t len)
+    constexpr utils::Array<size_t, PATTERN_KIND_NUM> PATTERN_FEATURE_OFFSET([](size_t* data, size_t len)
         {
-            int32_t offset = 0;
-            for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
+            size_t offset = 0;
+            for (auto kind = 0; kind < PATTERN_KIND_NUM; kind++)
             {
                 data[kind] = offset;
                 offset += PATTERN_FEATURE_NUM[kind];
@@ -154,7 +154,7 @@ namespace evaluation
     {
         uint16_t mirrored = 0;
         for (int32_t i = 0; i < size; i++)
-            mirrored += ((feature / POW_3[size - (i + 1)]) % 3) * POW_3[i];
+            mirrored += ((feature / POW_3[size - (static_cast<size_t>(i) + 1)]) % 3) * POW_3[i];
         return mirrored;
     }
 

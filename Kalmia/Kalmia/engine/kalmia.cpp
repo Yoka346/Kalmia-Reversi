@@ -298,6 +298,7 @@ namespace engine
 			EngineMove move;
 			move.coord = BoardCoordinate::PASS;
 			send_move(move);
+			return;
 		}
 
 		generate_mid_game_move(ponder);
@@ -459,6 +460,8 @@ namespace engine
 
 			if (this->options["enable_early_stopping"])
 				this->tree->enable_early_stopping();
+
+			this->on_analysis_ended();
 		};
 
 		this->tree->on_search_info_was_updated = [this](const auto& search_info) { send_mid_search_info(search_info); };
