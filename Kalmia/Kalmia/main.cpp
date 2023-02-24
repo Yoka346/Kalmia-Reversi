@@ -40,9 +40,7 @@ using namespace engine;
 // 開発時のテストコードなどをここに書く.
 void dev_test()
 {
-	NBoard nb;
-	Kalmia kalmia;
-	nb.mainloop(&kalmia);
+	
 }
 
 #endif

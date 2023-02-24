@@ -13,7 +13,7 @@ namespace learn
 	TrainDataItem::TrainDataItem(char* buffer, size_t len, bool swap_byte) : position(0ULL, 0ULL)
 	{
 		if (len < DATA_SIZE)
-			throw invalid_argument("Specified buffer was small.");
+			throw invalid_argument("Specified buffer is small.");
 
 		this->position.player = *reinterpret_cast<uint64_t*>(buffer);
 		buffer += 8;

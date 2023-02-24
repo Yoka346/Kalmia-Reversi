@@ -100,7 +100,7 @@ namespace engine
 		this->options["softmax_temperature"] = EngineOption(1000, 0, INT32_MAX,  this->options.size());
 
 		// 前回の探索結果を次の探索で使い回すかどうか.
-		this->options["reuse_subtree"] = EngineOption(true, this->options.size());
+		this->options["reuse_subtree"] = EngineOption(true, this->options.size());	// ToDo: reuse subtreeのon/offの実装.
 
 		// 相手の手番中も思考を続行するかどうか.
 		this->options["enable_pondering"] = EngineOption(false, this->options.size());	// ToDo: ponderingの実装.
@@ -319,6 +319,9 @@ namespace engine
 
 	bool Kalmia::stop_thinking(milliseconds timeout)
 	{
+		if (!this->tree)
+			return true;
+
 		write_log("Recieved stop search signal.\n");
 
 		this->tree->send_stop_search_signal();

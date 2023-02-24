@@ -16,10 +16,10 @@ namespace learn
 
 		reversi::Bitboard position;
 		reversi::BoardCoordinate next_move;
-		int8_t final_disc_diff;
-		float eval_score;
+		int8_t final_disc_diff;		// black - white
+		float eval_score;		// from black
 
-		TrainDataItem() : position(0ULL, 0ULL), final_disc_diff(0), eval_score(0.0f) {}
+		TrainDataItem() : position(0ULL, 0ULL), next_move(reversi::BoardCoordinate::NULL_COORD), final_disc_diff(0), eval_score(0.0f) {}
 		TrainDataItem(char* buffer, size_t len,  bool swap_byte = false); 
 	};
 
