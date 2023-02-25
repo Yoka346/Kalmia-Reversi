@@ -12,7 +12,7 @@ namespace learn
 		float max_feature_occurrence_factor = 1.0e-2f;	// 特徴の出現数に応じて変化する係数の最大値.
 		float learning_rate_decay = 0.5f;	// 過学習が発生した時の学習率の減衰率. 
 		int32_t checkpoint_interval = 5;	// 何epochごとに過学習チェックと最適パラメーターの保存を行うか.
-		float tolerance = 1.0e-4f;		// この値以下のロスは許容する.
+		float tolerance = 1.0e-4f;		// この値以下のロスの変動は許容する.
 		std::string work_dir_path;
 		std::string train_data_path;
 		std::string test_data_path;

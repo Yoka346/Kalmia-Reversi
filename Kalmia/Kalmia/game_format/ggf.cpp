@@ -326,7 +326,8 @@ namespace game_format
 		if (move_info.size() == 0)
 			throw GGFParserException("Invalid move: Coordinate was empty.");
 
-		auto coord = (move_info[0] == "PA") ? BoardCoordinate::PASS : parse_coordinate(move_info[0]);
+		transform(move_info[0].begin(), move_info[0].end(), move_info[0].begin(), [](char c) { return tolower(c); });
+		auto coord = (move_info[0] == "pa") ? BoardCoordinate::PASS : parse_coordinate(move_info[0]);
 		if (coord == BoardCoordinate::NULL_COORD)
 		{
 			ostringstream oss;
