@@ -229,7 +229,7 @@ namespace evaluation
 		using PackedWeight = utils::DynamicArray<PackedValueFuncParam<float>>;
 
 	public:
-		static constexpr int32_t WEIGHT_SCALE = 1024;
+		static constexpr int32_t WEIGHT_SCALE = 1000;
 		Weight weight;
 
 		int32_t phase_num() { return this->_phase_num; }
@@ -285,7 +285,7 @@ namespace evaluation
 
 			float fv;
 			if constexpr (VALUE_REPS == ValueRepresentation::WIN_RATE)
-				fv = utils::std_sigmoid(v / WEIGHT_SCALE);
+				fv = utils::std_sigmoid(v / 1000.0f);
 			else
 				fv = static_cast<float>(v);
 
