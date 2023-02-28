@@ -9,91 +9,6 @@ using namespace reversi;
 
 namespace evaluation
 {
-	void ValueFuncParam::pack(PackedValueFuncParam& packed_param)
-	{
-		pack<PatternKind::CORNER3x3>(this->corner3x3, packed_param.corner3x3);
-		pack<PatternKind::CORNER_EDGE_X>(this->corner_edge_x, packed_param.corner_edge_x);
-		pack<PatternKind::EDGE_2X>(this->edge_2x, packed_param.edge_2x);
-		pack<PatternKind::CORNER2x5>(this->corner2x5, packed_param.corner2x5);
-		pack<PatternKind::LINE0>(this->line0, packed_param.line0);
-		pack<PatternKind::LINE1>(this->line1, packed_param.line1);
-		pack<PatternKind::LINE2>(this->line2, packed_param.line2);
-		pack<PatternKind::DIAG_LINE8>(this->diag_line8, packed_param.diag_line8);
-		pack<PatternKind::DIAG_LINE7>(this->diag_line7, packed_param.diag_line7);
-		pack<PatternKind::DIAG_LINE6>(this->diag_line6, packed_param.diag_line6);
-		pack<PatternKind::DIAG_LINE5>(this->diag_line5, packed_param.diag_line5);
-		pack<PatternKind::DIAG_LINE4>(this->diag_line4, packed_param.diag_line4);
-		packed_param.bias = this->bias;
-	}
-
-	void ValueFuncParam::to_opponent(ValueFuncParam& out)
-	{
-		to_opponent<PatternKind::CORNER3x3>(this->corner3x3, out.corner3x3);
-		to_opponent<PatternKind::CORNER_EDGE_X>(this->corner_edge_x, out.corner_edge_x);
-		to_opponent<PatternKind::EDGE_2X>(this->edge_2x, out.edge_2x);
-		to_opponent<PatternKind::CORNER2x5>(this->corner2x5, out.corner2x5);
-		to_opponent<PatternKind::LINE0>(this->line0, out.line0);
-		to_opponent<PatternKind::LINE1>(this->line1, out.line1);
-		to_opponent<PatternKind::LINE2>(this->line2, out.line2);
-		to_opponent<PatternKind::DIAG_LINE8>(this->diag_line8, out.diag_line8);
-		to_opponent<PatternKind::DIAG_LINE7>(this->diag_line7, out.diag_line7);
-		to_opponent<PatternKind::DIAG_LINE6>(this->diag_line6, out.diag_line6);
-		to_opponent<PatternKind::DIAG_LINE5>(this->diag_line5, out.diag_line5);
-		to_opponent<PatternKind::DIAG_LINE4>(this->diag_line4, out.diag_line4);
-		out.bias = this->bias;
-	}
-
-	void ValueFuncParam::clear()
-	{
-		this->corner3x3.clear();
-		this->corner_edge_x.clear();
-		this->edge_2x.clear();
-		this->corner2x5.clear();
-		this->line0.clear();
-		this->line1.clear();
-		this->line2.clear();
-		this->diag_line8.clear();
-		this->diag_line7.clear();
-		this->diag_line6.clear();
-		this->diag_line5.clear();
-		this->diag_line4.clear();
-		this->bias = 0.0f;
-	}
-
-	void ValueFuncParam::init_with_rand(normal_distribution<float>& dist, default_random_engine& eng)
-	{
-		init_with_rand<PatternKind::CORNER3x3>(this->corner3x3, dist, eng);
-		init_with_rand<PatternKind::CORNER_EDGE_X>(this->corner_edge_x, dist, eng);
-		init_with_rand<PatternKind::EDGE_2X>(this->edge_2x, dist, eng);
-		init_with_rand<PatternKind::CORNER2x5>(this->corner2x5, dist, eng);
-		init_with_rand<PatternKind::LINE0>(this->line0, dist, eng);
-		init_with_rand<PatternKind::LINE1>(this->line1, dist, eng);
-		init_with_rand<PatternKind::LINE2>(this->line2, dist, eng);
-		init_with_rand<PatternKind::DIAG_LINE8>(this->diag_line8, dist, eng);
-		init_with_rand<PatternKind::DIAG_LINE7>(this->diag_line7, dist, eng);
-		init_with_rand<PatternKind::DIAG_LINE6>(this->diag_line6, dist, eng);
-		init_with_rand<PatternKind::DIAG_LINE5>(this->diag_line5, dist, eng);
-		init_with_rand<PatternKind::DIAG_LINE4>(this->diag_line4, dist, eng);
-		this->bias = 0.0f;
-	}
-
-	void PackedValueFuncParam::expand(ValueFuncParam& param)
-	{
-		expand<PatternKind::CORNER3x3>(this->corner3x3, param.corner3x3);
-		expand<PatternKind::CORNER_EDGE_X>(this->corner_edge_x, param.corner_edge_x);
-		expand<PatternKind::EDGE_2X>(this->edge_2x, param.edge_2x);
-		expand<PatternKind::CORNER2x5>(this->corner2x5, param.corner2x5);
-		expand<PatternKind::LINE0>(this->line0, param.line0);
-		expand<PatternKind::LINE1>(this->line1, param.line1);
-		expand<PatternKind::LINE2>(this->line2, param.line2);
-		expand<PatternKind::DIAG_LINE8>(this->diag_line8, param.diag_line8);
-		expand<PatternKind::DIAG_LINE7>(this->diag_line7, param.diag_line7);
-		expand<PatternKind::DIAG_LINE6>(this->diag_line6, param.diag_line6);
-		expand<PatternKind::DIAG_LINE5>(this->diag_line5, param.diag_line5);
-		expand<PatternKind::DIAG_LINE4>(this->diag_line4, param.diag_line4);
-		param.bias = this->bias;
-	}
-
 	template<ValueRepresentation VALUE_REPS>
 	ValueFunction<VALUE_REPS>::ValueFunction(int32_t move_count_per_phase) : empty_count_to_phase(), weight(0)
 	{
@@ -113,7 +28,7 @@ namespace evaluation
 	template<ValueRepresentation VALUE_REPS>
 	ValueFunction<VALUE_REPS>::ValueFunction(const string path) : weight(0)
 	{
-		ifstream ifs(path, ios_base::in | ios_base::binary);
+		ifstream ifs(path, ios_base::binary);
 		if (!ifs)
 		{
 			ostringstream ss;
@@ -178,21 +93,14 @@ namespace evaluation
 	template<ValueRepresentation VALUE_REPS>
 	void ValueFunction<VALUE_REPS>::expand_packed_weight(PackedWeight& packed_weight)
 	{
+		ValueFuncParam<float> param;
 		for (size_t i = 0; i < packed_weight.length(); i++)
-			packed_weight[i].expand(this->weight[i][reversi::Player::FIRST]);
+		{
+			packed_weight[i].expand(param);
+			// ロードした重みは, WEIGHT_SCALEでスケーリングして整数に変換する. メモリ使用量の節約と高速化のため.
+			param.scale<int16_t>(this->weight[i][reversi::Player::FIRST], WEIGHT_SCALE);
+		}
 		copy_player_weight_to_opponent();
-	}
-
-	template<ValueRepresentation VALUE_REPS>
-	void ValueFunction<VALUE_REPS>::init_weight_with_rand_num(float mean, float variance)
-	{
-		std::random_device seed;
-		std::default_random_engine rand_eng(seed());
-		std::normal_distribution<float> dist(mean, std::sqrtf(variance));
-
-		for (int32_t phase = 0; phase < this->weight.length(); phase++)
-			for (auto player = 0; player < 2; player++)
-				this->weight[phase][player].init_with_rand(dist, rand_eng);
 	}
 
 	template<ValueRepresentation VALUE_REPS>
@@ -213,10 +121,14 @@ namespace evaluation
 		ofs.write(&b, 1);
 
 		PackedWeight packed_weight(this->_phase_num);
+		ValueFuncParam<float> param;	
 		for (int32_t phase = 0; phase < this->_phase_num; phase++)
 		{
 			auto& pw = packed_weight[phase];
-			this->weight[phase][Player::FIRST].pack(pw); 
+			// ファイルに保存するときは, 1 / WEIGHT_SCALE 倍してスケールを戻し, float型として保存する.
+			// 改修の過程でWIGHT_SCALEの値が変わっても, 過去に学習した重みを使えるようにするため.
+			this->weight[phase][Player::FIRST].scale<float>(param, 1.0f / WEIGHT_SCALE);
+			param.pack(pw);
 			write_param<PatternKind::CORNER3x3>(ofs, pw.corner3x3);
 			write_param<PatternKind::CORNER_EDGE_X>(ofs, pw.corner_edge_x);
 			write_param<PatternKind::EDGE_2X>(ofs, pw.edge_2x);

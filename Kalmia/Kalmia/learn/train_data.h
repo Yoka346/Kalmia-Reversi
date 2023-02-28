@@ -20,7 +20,7 @@ namespace learn
 		int16_t wld;	// win = 1000, loss = 0, draw = 500, 
 		float eval_score;		// from player's view
 
-		TrainDataItem() : position(0ULL, 0ULL), next_move(reversi::BoardCoordinate::NULL_COORD), final_disc_diff(0), eval_score(0.0f) {}
+		TrainDataItem() : position(0ULL, 0ULL), next_move(reversi::BoardCoordinate::NULL_COORD), final_disc_diff(0), wld(0), eval_score(0.0f) {}
 		TrainDataItem(char* buffer, size_t len,  bool swap_byte = false); 
 
 		void write_to(std::ofstream& ofs);
@@ -45,4 +45,12 @@ namespace learn
 	* @param (min_player_rating) プレイヤーのレーティングの最小値(このレーティングを下回るプレイヤーによる対局は除外).
 	**/
 	void convert_ggf_file_to_train_data_file(const std::string& ggf_path, const std::string& out_path, double min_player_rating);
+
+	/**
+	* @fn
+	* @brief 訓練データに含まれる重複局面を統合する. 石差と勝敗には平均値を用いる.
+	* @param (in_path) 入力する訓練データのパス.
+	* @param (out_path) 出力先のパス.
+	**/
+	void merge_duplicated_position_in_train_data(const std::string& in_path, const std::string& out_path);
 }

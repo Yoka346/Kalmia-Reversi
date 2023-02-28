@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <map>
+#include <algorithm>
 #include <stdexcept>
 
 #include "../game_format/ggf.h"
@@ -159,5 +161,52 @@ namespace learn
 
 		cout << count << " positions were saved." << endl;
 		cout << "The number of draw positions: " << draw_count << "(" << static_cast<double>(draw_count) * 100.0 / count << "%)";
+	}
+
+	void merge_duplicated_position_in_train_data(const string& in_path, const string& out_path)
+	{
+		//TrainData train_data;
+		//ofstream ofs(out_path, ios::binary);
+		//char endian_flag = (endian::native == endian::little) ? 1 : 0;
+		//ofs.write(&endian_flag, 1);
+		//load_train_data_from_file(in_path, train_data);
+
+		//cout << "Original train data size: " << train_data.size() << endl;
+
+		//// ToDo: ハッシュ値ごとにUnorderedMapで管理する
+		//sort(train_data.begin(), train_data.end(), [](TrainDataItem& x, TrainDataItem& y)
+		//	 {
+		//		 return x.position.calc_hash_code() < y.position.calc_hash_code();
+		//	 });
+
+		//size_t out_count = 0;
+		//uint64_t disc_diff_sum = 0;
+		//uint64_t wld_sum = 0;
+		//auto eval_score_sum = 0.0;
+		//size_t i = 0;
+		//while (i < train_data.size())
+		//{
+		//	auto& item = train_data[i];
+		//	auto hash_code = item.position.calc_hash_code();
+		//	auto j = i;
+		//	for (j = i; i < train_data.size() && item.position.calc_hash_code() == hash_code; j++)
+		//	{
+		//		auto& target = train_data[i];
+		//		assert(target.position == item.position);
+		//		disc_diff_sum += target.final_disc_diff;
+		//		wld_sum += target.wld;
+		//		eval_score_sum += target.eval_score;
+		//	}
+
+		//	auto count = j - i;
+		//	item.final_disc_diff = disc_diff_sum / count;
+		//	item.wld = wld_sum / count;
+		//	item.eval_score = eval_score_sum / count;
+		//	item.write_to(ofs);
+		//	out_count++;
+		//	i = j;
+		//}
+
+		//cout << "Merged train data size: " << out_count << endl;
 	}
 }

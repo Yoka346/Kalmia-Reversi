@@ -169,6 +169,7 @@ namespace utils
 		size_t length() const { return this->_length; }
 		T* as_raw_array() { return this->data.get(); }
 		const T* as_raw_array() const { return this->data.get(); }
+		void clear() { std::memset(this->data.get(), 0, sizeof(T) * this->_length); }
 
 		void reset(size_t len)
 		{

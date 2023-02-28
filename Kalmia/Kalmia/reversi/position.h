@@ -2,9 +2,7 @@
 
 #include <vector>
 
-#include "../utils/random.h"
 #include "../utils/array.h"
-#include "../utils/unroller.h"
 #include "constant.h"
 #include "types.h"
 #include "move.h"
@@ -19,16 +17,6 @@ namespace reversi
 	class Position
 	{
 	public:
-		static constexpr size_t to_hash_rank_idx(size_t i, size_t j) { return i + (j << 4); }
-
-		static void init_hash_rank(uint64_t* hash_rank, size_t len)
-		{
-			Random rand;
-			for (int i = 0; i < HASH_RANK_LEN_0; i++)
-				for (int j = 0; j < HASH_RANK_LEN_1; j++)
-					hash_rank[to_hash_rank_idx(i, j)] = rand.next_64();
-		}
-
 		Position() 
 			: _bitboard(COORD_TO_BIT[reversi::E4] | COORD_TO_BIT[reversi::D5], COORD_TO_BIT[reversi::D4] | COORD_TO_BIT[reversi::E5]),
 			  _side_to_move(DiscColor::BLACK) { ; }
@@ -188,31 +176,10 @@ namespace reversi
 			return (diff > 0) ? GameResult::WIN : GameResult::LOSS;
 		}
 
-		uint64_t calc_hash_code() const
-		{
-			auto p = reinterpret_cast<const uint8_t*>(&(this->_bitboard));
-			uint64_t h0 = HASH_RANK[p[0]];
-			uint64_t h1 = HASH_RANK[HASH_RANK_LEN_0 + p[1]];
-			utils::LoopUnroller<7>()(
-				[&](const int32_t i)
-				{
-					const auto j = static_cast<size_t>(i) << 1;
-					h0 ^= HASH_RANK[j * HASH_RANK_LEN_0 + p[j]];
-					h1 ^= HASH_RANK[j + 1 * HASH_RANK_LEN_0 + p[j + 1]];
-				});
-			return h0 ^ h1;
-		}
+		uint64_t calc_hash_code() const { return this->_bitboard.calc_hash_code(); }
 
 	private:
-		// Rankというのはチェス用語で, 盤面の水平方向のラインを意味する.
-		static constexpr size_t HASH_RANK_LEN_0 = 16;
-		static constexpr size_t HASH_RANK_LEN_1 = 256;
-		static utils::Array<uint64_t, HASH_RANK_LEN_0* HASH_RANK_LEN_1> HASH_RANK;
-
 		Bitboard _bitboard;
 		DiscColor _side_to_move;
-
 	};
-
-	inline Array<uint64_t, Position::HASH_RANK_LEN_0* Position::HASH_RANK_LEN_1> Position::HASH_RANK(Position::init_hash_rank);
 }

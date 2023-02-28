@@ -4,9 +4,11 @@ Kalmia/x64/
 Kalmia/Kalmia/Debug/
 Kalmia/Kalmia/DebugWorkDir/
 Kalmia/Kalmia/x64/
+Kalmia/train_data
 
 memo.txt
 
+*.bin
 *.exe
 *.hint
 *.pdb
