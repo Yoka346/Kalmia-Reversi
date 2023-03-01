@@ -12,7 +12,7 @@ namespace learn
 {
 	struct TrainDataItem
 	{
-		static constexpr int32_t DATA_SIZE = 16 + 1 + 1 + 4;
+		static constexpr int32_t DATA_SIZE = sizeof(uint64_t) * 2 + sizeof(reversi::BoardCoordinate) + sizeof(int16_t) * 2 + sizeof(float);
 
 		reversi::Bitboard position;
 		reversi::BoardCoordinate next_move;
@@ -35,7 +35,7 @@ namespace learn
 	* offset = 0: リトルエンディアンなら1, ビッグエンディアンなら0.
 	* offset >= 1: TrainDataItemの各メンバーが隙間なく敷き詰められる.
 	**/
-	void load_train_data_from_file(const std::string& path, TrainData& train_data);
+	void load_train_data_from_file(const std::string& path, TrainData& train_data, int32_t min_empty_count = 0, int32_t max_empty_count = 60);
 
 	/**
 	* @fn

@@ -28,15 +28,19 @@ namespace learn
 		buffer += 8;
 		this->next_move = static_cast<BoardCoordinate>(buffer[0]);
 		buffer++;
-		this->final_disc_diff = buffer[0];
-		buffer++;
+		this->final_disc_diff = *reinterpret_cast<int16_t*>(buffer);
+		buffer += 2;
+		this->wld = *reinterpret_cast<int16_t*>(buffer);
+		buffer += 2;
 		this->eval_score = *reinterpret_cast<float*>(buffer);
 
 		if (swap_byte)
 		{
 			this->position.player = BYTE_SWAP_64(this->position.player);
 			this->position.opponent = BYTE_SWAP_64(this->position.opponent);
-			uint32_t swapped = BYTE_SWAP_32(*reinterpret_cast<uint32_t*>(&this->eval_score));
+			this->final_disc_diff = byte_swap_16(this->final_disc_diff);
+			this->wld = byte_swap_16(this->wld);
+			auto swapped = BYTE_SWAP_32(*reinterpret_cast<uint32_t*>(&this->eval_score));
 			this->eval_score = *reinterpret_cast<float*>(swapped);
 		}
 	}
@@ -46,13 +50,14 @@ namespace learn
 		ofs.write(reinterpret_cast<char*>(&this->position.player), sizeof(uint64_t));
 		ofs.write(reinterpret_cast<char*>(&this->position.opponent), sizeof(uint64_t));
 		ofs.write(reinterpret_cast<char*>(&this->next_move), sizeof(BoardCoordinate));
-		ofs.write(reinterpret_cast<char*>(&this->final_disc_diff), sizeof(int8_t));
+		ofs.write(reinterpret_cast<char*>(&this->final_disc_diff), sizeof(int16_t));
+		ofs.write(reinterpret_cast<char*>(&this->wld), sizeof(int16_t));
 		ofs.write(reinterpret_cast<char*>(&this->eval_score), sizeof(float));
 	}
 
-	void load_train_data_from_file(const std::string& path, TrainData& train_data)
+	void load_train_data_from_file(const std::string& path, TrainData& train_data, int32_t min_empty_count, int32_t max_empty_count)
 	{
-		ifstream ifs(path, ios_base::in | ios_base::binary);
+		ifstream ifs(path, ios_base::binary);
 		if (!ifs)
 		{
 			ostringstream oss;
@@ -68,7 +73,10 @@ namespace learn
 		while (!ifs.eof())
 		{
 			ifs.read(buffer, TrainDataItem::DATA_SIZE);
-			train_data.emplace_back(TrainDataItem(buffer, TrainDataItem::DATA_SIZE));
+			TrainDataItem item(buffer, TrainDataItem::DATA_SIZE, file_endian != endian::native);
+			auto empty_count = item.position.empty_count();
+			if (empty_count >= min_empty_count && empty_count <= max_empty_count)
+				train_data.emplace_back(item);
 		}
 	}
 
@@ -131,15 +139,14 @@ namespace learn
 
 				items[loc].position = pos.bitboard();
 				items[loc].next_move = BoardCoordinate::NULL_COORD;
-				int8_t disc_diff = items[loc].final_disc_diff = pos.get_disc_diff() * 10;
+				auto disc_diff = items[loc].final_disc_diff = pos.get_disc_diff() * 10;
 				items[loc].wld = (disc_diff == 0) ? 500 : (disc_diff > 0) ? 1000 : 0;
-				if (pos.side_to_move() == game.position.side_to_move())
+				if (pos.side_to_move() != game.position.side_to_move())
 					disc_diff = -disc_diff;
 
 				auto i = 0;
 				for (auto& move : game.moves)
 				{
-					disc_diff = -disc_diff;
 					if (move.coord != BoardCoordinate::PASS)
 					{
 						auto& item = items[i++];
@@ -147,6 +154,7 @@ namespace learn
 						item.wld = (disc_diff == 0) ? 500 : (disc_diff > 0) ? 1000 : 0;
 						item.write_to(ofs);
 					}
+					disc_diff = -disc_diff;
 				}
 				items[loc].write_to(ofs);
 				count += loc + 1;
@@ -165,48 +173,56 @@ namespace learn
 
 	void merge_duplicated_position_in_train_data(const string& in_path, const string& out_path)
 	{
-		//TrainData train_data;
-		//ofstream ofs(out_path, ios::binary);
-		//char endian_flag = (endian::native == endian::little) ? 1 : 0;
-		//ofs.write(&endian_flag, 1);
-		//load_train_data_from_file(in_path, train_data);
+		size_t in_count = 0;
+		size_t out_count = 0;
+		TrainData train_data;
+		ofstream ofs(out_path, ios::binary);
+		char endian_flag = (endian::native == endian::little) ? 1 : 0;
+		ofs.write(&endian_flag, 1);
 
-		//cout << "Original train data size: " << train_data.size() << endl;
+		for (auto i = 0; i <= SQUARE_NUM; i++)
+		{
+			train_data.clear();
+			load_train_data_from_file(in_path, train_data, i, i); 
+			in_count += train_data.size();
 
-		//// ToDo: ハッシュ値ごとにUnorderedMapで管理する
-		//sort(train_data.begin(), train_data.end(), [](TrainDataItem& x, TrainDataItem& y)
-		//	 {
-		//		 return x.position.calc_hash_code() < y.position.calc_hash_code();
-		//	 });
+			// 盤面のハッシュ値で分類.
+			unordered_map<uint64_t, vector<TrainDataItem*>> train_data_set;
+			for (auto& item : train_data)
+			{
+				auto hash_code = item.position.calc_hash_code();
+				auto ptr = train_data_set.find(hash_code);
+				if (ptr != train_data_set.end())
+					ptr->second.emplace_back(&item);
+				else
+					train_data_set[hash_code].emplace_back(&item);
+			}
 
-		//size_t out_count = 0;
-		//uint64_t disc_diff_sum = 0;
-		//uint64_t wld_sum = 0;
-		//auto eval_score_sum = 0.0;
-		//size_t i = 0;
-		//while (i < train_data.size())
-		//{
-		//	auto& item = train_data[i];
-		//	auto hash_code = item.position.calc_hash_code();
-		//	auto j = i;
-		//	for (j = i; i < train_data.size() && item.position.calc_hash_code() == hash_code; j++)
-		//	{
-		//		auto& target = train_data[i];
-		//		assert(target.position == item.position);
-		//		disc_diff_sum += target.final_disc_diff;
-		//		wld_sum += target.wld;
-		//		eval_score_sum += target.eval_score;
-		//	}
+			for (auto& [_, data] : train_data_set)
+			{
+				auto head_item = data[0];
 
-		//	auto count = j - i;
-		//	item.final_disc_diff = disc_diff_sum / count;
-		//	item.wld = wld_sum / count;
-		//	item.eval_score = eval_score_sum / count;
-		//	item.write_to(ofs);
-		//	out_count++;
-		//	i = j;
-		//}
+				int64_t disc_diff_sum = 0;
+				uint64_t wld_sum = 0;
+				auto eval_score_sum = 0.0;
+				for (auto& item : data)
+				{
+					assert(item->position == head_item->position);
+					disc_diff_sum += item->final_disc_diff;
+					wld_sum += item->wld;
+					eval_score_sum += item->eval_score;
+				}
 
-		//cout << "Merged train data size: " << out_count << endl;
+				auto count = data.size();
+				head_item->final_disc_diff = static_cast<int16_t>(disc_diff_sum / count);
+				head_item->wld = static_cast<int16_t>(wld_sum / count);
+				head_item->eval_score = eval_score_sum / count;
+				head_item->write_to(ofs);
+				out_count++;
+			}
+		}
+
+		cout << "Original train data size: " << in_count << endl;
+		cout << "Merged train data size: " << out_count << endl;
 	}
 }

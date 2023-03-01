@@ -285,11 +285,9 @@ namespace evaluation
 				+ w.diag_line4[f[42]] + w.diag_line4[f[43]] + w.diag_line4[f[44]] + w.diag_line4[f[45]]
 				+ w.bias;
 
-			float fv;
+			auto fv = v / WEIGHT_SCALE;
 			if constexpr (VALUE_REPS == ValueRepresentation::WIN_RATE)
 				fv = utils::std_sigmoid(v / WEIGHT_SCALE);	
-			else
-				fv = static_cast<float>(v);
 
 			return fv;
 		}

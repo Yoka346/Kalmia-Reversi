@@ -84,3 +84,8 @@ inline uint64_t byte_swap_64(uint64_t bits)
 #define BYTE_SWAP_64(bits) byte_swap_64(bits)
 
 #endif
+
+inline uint16_t byte_swap_16(uint16_t bits)
+{
+    return (bits >> 8) | (bits << 8);
+}
