@@ -72,16 +72,16 @@ uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 	auto masked_o_2 = _mm_set_epi64x(BYTE_SWAP_64(masked_o), masked_o);
 
 	auto flip_diag_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(p_2, 7));
-	auto flip_horizontal = masked_o & (p << 1);
-	auto flip_vertical = o & (p << 8);
+	uint64_t flip_horizontal = masked_o & (p << 1);
+	uint64_t flip_vertical = o & (p << 8);
 
 	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flip_diag_2, 7)));
 	flip_horizontal |= masked_o & (flip_horizontal << 1);
 	flip_vertical |= o & (flip_vertical << 8);
 
 	auto prefix_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(masked_o_2, 7));
-	auto prefix_horizontal = masked_o & (masked_o << 1);
-	auto prefix_vertical = o & (o << 8);
+	uint64_t prefix_horizontal = masked_o & (masked_o << 1);
+	uint64_t prefix_vertical = o & (o << 8);
 
 	flip_diag_2 = _mm_or_si128(flip_diag_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flip_diag_2, 14)));
 	flip_horizontal |= prefix_horizontal & (flip_horizontal << 2);
@@ -92,7 +92,7 @@ uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 	flip_vertical |= prefix_vertical & (flip_vertical << 16);
 
 	auto mobility_2 = _mm_slli_epi64(flip_diag_2, 7);
-	auto mobility = (flip_horizontal << 1) | (flip_vertical << 8);
+	uint64_t mobility = (flip_horizontal << 1) | (flip_vertical << 8);
 
 	flip_diag_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(p_2, 9));
 	flip_horizontal = masked_o & (p >> 1);
@@ -147,20 +147,20 @@ uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
 
 	// left
-	auto flip_horizontal = masked_o & (p << 1);
-	auto flip_diag_A1H8 = masked_o & (p << 9);
-	auto flip_diag_A8H1 = masked_o & (p << 7);
-	auto flip_vertical = o & (p << 8);
+	uint64_t flip_horizontal = masked_o & (p << 1);
+	uint64_t flip_diag_A1H8 = masked_o & (p << 9);
+	uint64_t flip_diag_A8H1 = masked_o & (p << 7);
+	uint64_t flip_vertical = o & (p << 8);
 
 	flip_horizontal |= masked_o & (flip_horizontal << 1);
 	flip_diag_A1H8 |= masked_o & (flip_diag_A1H8 << 9);
 	flip_diag_A8H1 |= masked_o & (flip_diag_A8H1 << 7);
 	flip_vertical |= o & (flip_vertical << 8);
 
-	auto prefix_horizontal = masked_o & (masked_o << 1);
-	auto prefix_diag_A1H8 = masked_o & (masked_o << 9);
-	auto prefix_diag_A8H1 = masked_o & (masked_o << 7);
-	auto prefix_vertical = o & (o << 8);
+	uint64_t prefix_horizontal = masked_o & (masked_o << 1);
+	uint64_t prefix_diag_A1H8 = masked_o & (masked_o << 9);
+	uint64_t prefix_diag_A8H1 = masked_o & (masked_o << 7);
+	uint64_t prefix_vertical = o & (o << 8);
 
 	flip_horizontal |= prefix_horizontal & (flip_horizontal << 2);
 	flip_diag_A1H8 |= prefix_diag_A1H8 & (flip_diag_A1H8 << 18);
@@ -172,7 +172,7 @@ uint64_t reversi::calc_mobility(const uint64_t& p, const uint64_t& o)
 	flip_diag_A8H1 |= prefix_diag_A8H1 & (flip_diag_A8H1 << 14);
 	flip_vertical |= prefix_vertical & (flip_vertical << 16);
 
-	auto mobility = (flip_horizontal << 1) | (flip_diag_A1H8 << 9) | (flip_diag_A8H1 << 7) | (flip_vertical << 8);
+	uint64_t mobility = (flip_horizontal << 1) | (flip_diag_A1H8 << 9) | (flip_diag_A8H1 << 7) | (flip_vertical << 8);
 
 	// right
 	flip_horizontal = masked_o & (p >> 1);

@@ -27,7 +27,7 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 	static const __m256i MASK = _mm256_set_epi64x(0x7e7e7e7e7e7e7e7eULL, 0x7e7e7e7e7e7e7e7eULL, 0xffffffffffffffffULL, 0x7e7e7e7e7e7e7e7eULL);
 	static const __m256i ZERO = _mm256_setzero_si256();
 
-	auto coord_bit = COORD_TO_BIT[coord];
+	uint64_t coord_bit = COORD_TO_BIT[coord];
 	auto coord_bit_4 = _mm256_broadcastq_epi64(_mm_cvtsi64_si128(coord_bit));
 	auto p_4 = _mm256_broadcastq_epi64(_mm_cvtsi64_si128(p));
 	auto masked_o_4 = _mm256_and_si256(_mm256_broadcastq_epi64(_mm_cvtsi64_si128(o)), MASK);
@@ -77,7 +77,7 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 **/
 uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const BoardCoordinate& coord)
 {
-	auto coord_bit = COORD_TO_BIT[coord];
+	uint64_t coord_bit = COORD_TO_BIT[coord];
 	auto coord_bit_2 = _mm_set_epi64x(BYTE_SWAP_64(coord_bit), coord_bit);
 	auto p_2 = _mm_set_epi64x(BYTE_SWAP_64(p), p);
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
@@ -85,16 +85,16 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 
 	// left
 	auto flipped_diag_left_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(coord_bit_2, 7));
-	auto flipped_horizontal_left = masked_o & (coord_bit << 1);
-	auto flipped_vertical_left = o & (coord_bit << 8);
+	uint64_t flipped_horizontal_left = masked_o & (coord_bit << 1);
+	uint64_t flipped_vertical_left = o & (coord_bit << 8);
 
 	flipped_diag_left_2 = _mm_or_si128(flipped_diag_left_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flipped_diag_left_2, 7)));
 	flipped_horizontal_left |= masked_o & (flipped_horizontal_left << 1);
 	flipped_vertical_left |= o & (flipped_vertical_left << 8);
 
 	auto prefix_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(masked_o_2, 7));
-	auto prefix_horizontal = masked_o & (masked_o << 1);
-	auto prefix_vertical = o & (o << 8);
+	uint64_t prefix_horizontal = masked_o & (masked_o << 1);
+	uint64_t prefix_vertical = o & (o << 8);
 
 	flipped_diag_left_2 = _mm_or_si128(flipped_diag_left_2, _mm_and_si128(prefix_2, _mm_slli_epi64(flipped_diag_left_2, 14)));
 	flipped_horizontal_left |= prefix_horizontal & (flipped_horizontal_left << 2);
@@ -106,8 +106,8 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 
 	// right
 	auto flipped_diag_right_2 = _mm_and_si128(masked_o_2, _mm_slli_epi64(coord_bit_2, 9));
-	auto flipped_horizontal_right = masked_o & (coord_bit >> 1);
-	auto flipped_vertical_right = o & (coord_bit >> 8);
+	uint64_t flipped_horizontal_right = masked_o & (coord_bit >> 1);
+	uint64_t flipped_vertical_right = o & (coord_bit >> 8);
 
 	flipped_diag_right_2 = _mm_or_si128(flipped_diag_right_2, _mm_and_si128(masked_o_2, _mm_slli_epi64(flipped_diag_right_2, 9)));
 	flipped_horizontal_right |= masked_o & (flipped_horizontal_right >> 1);
@@ -126,12 +126,12 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 	flipped_vertical_right |= prefix_vertical & (flipped_vertical_right >> 16);
 
 	auto outflank_diag_left_2 = _mm_and_si128(p_2, _mm_slli_epi64(flipped_diag_left_2, 7));
-	auto outflank_horizontal_left = p & (flipped_horizontal_left << 1);
-	auto outflank_vertical_left = p & (flipped_vertical_left << 8);
+	uint64_t outflank_horizontal_left = p & (flipped_horizontal_left << 1);
+	uint64_t outflank_vertical_left = p & (flipped_vertical_left << 8);
 
 	auto outflank_diag_right_2 = _mm_and_si128(p_2, _mm_slli_epi64(flipped_diag_right_2, 9));
-	auto outflank_horizontal_right = p & (flipped_horizontal_right >> 1);
-	auto outflank_vertical_right = p & (flipped_vertical_right >> 8);
+	uint64_t outflank_horizontal_right = p & (flipped_horizontal_right >> 1);
+	uint64_t outflank_vertical_right = p & (flipped_vertical_right >> 8);
 
 #ifdef USE_SSE41
 	flipped_diag_left_2 = _mm_andnot_si128(_mm_cmpeq_epi64(outflank_diag_left_2, _mm_setzero_si128()), flipped_diag_left_2);
@@ -151,7 +151,7 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 	flipped_vertical_right &= -static_cast<int>(outflank_vertical_right != 0);
 #endif
 	auto flipped_2 = _mm_or_si128(flipped_diag_left_2, flipped_diag_right_2);
-	auto flipped = flipped_horizontal_left | flipped_horizontal_right | flipped_vertical_left | flipped_vertical_right;
+	uint64_t flipped = flipped_horizontal_left | flipped_horizontal_right | flipped_vertical_left | flipped_vertical_right;
 #ifdef USE_X64
 	flipped |= _mm_cvtsi128_si64(flipped_2) | BYTE_SWAP_64(_mm_cvtsi128_si64(_mm_unpackhi_epi64(flipped_2, flipped_2)));
 #else
@@ -179,24 +179,24 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 **/
 uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const BoardCoordinate& coord)
 {
-	auto coord_bit = COORD_TO_BIT[coord];
+	uint64_t coord_bit = COORD_TO_BIT[coord];
 	auto masked_o = o & 0x7e7e7e7e7e7e7e7eULL;
 
 	// left
-	auto flipped_horizontal = masked_o & (coord_bit << 1);
-	auto flipped_diag_A1H8 = masked_o & (coord_bit << 9);
-	auto flipped_diag_A8H1 = masked_o & (coord_bit << 7);
-	auto flipped_vertical = o & (coord_bit << 8);
+	uint64_t flipped_horizontal = masked_o & (coord_bit << 1);
+	uint64_t flipped_diag_A1H8 = masked_o & (coord_bit << 9);
+	uint64_t flipped_diag_A8H1 = masked_o & (coord_bit << 7);
+	uint64_t flipped_vertical = o & (coord_bit << 8);
 
 	flipped_horizontal |= masked_o & (flipped_horizontal << 1);
 	flipped_diag_A1H8 |= masked_o & (flipped_diag_A1H8 << 9);
 	flipped_diag_A8H1 |= masked_o & (flipped_diag_A8H1 << 7);
 	flipped_vertical |= o & (flipped_vertical << 8);
 
-	auto prefix_horizontal = masked_o & (masked_o << 1);
-	auto prefix_diag_A1H8 = masked_o & (masked_o << 9);
-	auto prefix_diag_A8H1 = masked_o & (masked_o << 7);
-	auto prefix_vertical = o & (o << 8);
+	uint64_t prefix_horizontal = masked_o & (masked_o << 1);
+	uint64_t prefix_diag_A1H8 = masked_o & (masked_o << 9);
+	uint64_t prefix_diag_A8H1 = masked_o & (masked_o << 7);
+	uint64_t prefix_vertical = o & (o << 8);
 
 	flipped_horizontal |= prefix_horizontal & (flipped_horizontal << 2);
 	flipped_diag_A1H8 |= prefix_diag_A1H8 & (flipped_diag_A1H8 << 18);
@@ -208,17 +208,17 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 	flipped_diag_A8H1 |= prefix_diag_A8H1 & (flipped_diag_A8H1 << 14);
 	flipped_vertical |= prefix_vertical & (flipped_vertical << 16);
 
-	auto outflank_horizontal = p & (flipped_horizontal << 1);
-	auto outflank_diag_A1H8 = p & (flipped_diag_A1H8 << 9);
-	auto outflank_diag_A8H1 = p & (flipped_diag_A8H1 << 7);
-	auto outflank_vertical = p & (flipped_vertical << 8);
+	uint64_t outflank_horizontal = p & (flipped_horizontal << 1);
+	uint64_t outflank_diag_A1H8 = p & (flipped_diag_A1H8 << 9);
+	uint64_t outflank_diag_A8H1 = p & (flipped_diag_A8H1 << 7);
+	uint64_t outflank_vertical = p & (flipped_vertical << 8);
 
 	flipped_horizontal &= -static_cast<int>(outflank_horizontal != 0);
 	flipped_diag_A1H8 &= -static_cast<int>(outflank_diag_A1H8 != 0);
 	flipped_diag_A8H1 &= -static_cast<int>(outflank_diag_A8H1 != 0);
 	flipped_vertical &= -static_cast<int>(outflank_vertical != 0);
 
-	auto flipped = flipped_horizontal | flipped_diag_A1H8 | flipped_diag_A8H1 | flipped_vertical;
+	uint64_t flipped = flipped_horizontal | flipped_diag_A1H8 | flipped_diag_A8H1 | flipped_vertical;
 
 	// right
 	flipped_horizontal = masked_o & (coord_bit >> 1);
@@ -246,10 +246,10 @@ uint64_t reversi::calc_flipped_discs(const uint64_t& p, const uint64_t& o, const
 	flipped_diag_A8H1 |= prefix_diag_A8H1 & (flipped_diag_A8H1 >> 14);
 	flipped_vertical |= prefix_vertical & (flipped_vertical >> 16);
 
-	auto outflank_horizontal_right = p & (flipped_horizontal >> 1);
-	auto outflank_diag_A1H8_right = p & (flipped_diag_A1H8 >> 9);
-	auto outflank_diag_A8H1_right = p & (flipped_diag_A8H1 >> 7);
-	auto outflank_vertical_right = p & (flipped_vertical >> 8);
+	uint64_t outflank_horizontal_right = p & (flipped_horizontal >> 1);
+	uint64_t outflank_diag_A1H8_right = p & (flipped_diag_A1H8 >> 9);
+	uint64_t outflank_diag_A8H1_right = p & (flipped_diag_A8H1 >> 7);
+	uint64_t outflank_vertical_right = p & (flipped_vertical >> 8);
 
 	flipped_horizontal &= -static_cast<int>(outflank_horizontal_right != 0);
 	flipped_diag_A1H8 &= -static_cast<int>(outflank_diag_A1H8_right != 0);

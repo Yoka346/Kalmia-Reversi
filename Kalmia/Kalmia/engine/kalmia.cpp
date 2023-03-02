@@ -138,7 +138,7 @@ namespace engine
 
 	void Kalmia::set_main_time(DiscColor color, milliseconds main_time)
 	{
-		auto& timer = this->timer[static_cast<int32_t>(color)];
+		GameTimer& timer = this->timer[static_cast<int32_t>(color)];
 		if (timer.is_ticking())
 			return;
 
@@ -150,7 +150,7 @@ namespace engine
 
 	void Kalmia::set_byoyomi(DiscColor color, milliseconds byoyomi)
 	{
-		auto& timer = this->timer[static_cast<int32_t>(color)];
+		GameTimer& timer = this->timer[static_cast<int32_t>(color)];
 		if (timer.is_ticking())
 			return;
 
@@ -159,7 +159,7 @@ namespace engine
 
 	void Kalmia::set_byoyomi_stones(DiscColor color, int32_t byoyomi_stones)
 	{
-		auto& timer = this->timer[static_cast<int32_t>(color)];
+		GameTimer& timer = this->timer[static_cast<int32_t>(color)];
 		if (timer.is_ticking())
 			return;
 
@@ -171,7 +171,7 @@ namespace engine
 
 	void Kalmia::set_time_inc(DiscColor color, milliseconds inc)
 	{
-		auto& timer = this->timer[static_cast<int32_t>(color)];
+		GameTimer& timer = this->timer[static_cast<int32_t>(color)];
 		if (timer.is_ticking())
 			return;
 
@@ -366,7 +366,7 @@ namespace engine
 		oss << "winning_rate=" << fixed << setprecision(2) << search_info.root_eval.expected_reward * 100.0 << "%\n";
 		oss << "|move|win_rate|effort|simulation|depth|pv\n";
 
-		for (auto& child_eval : search_info.child_evals)
+		for (const MoveEvaluation& child_eval : search_info.child_evals)
 		{
 			oss << "| " << coordinate_to_string(child_eval.move) << " ";
 			oss << "|" << right << setw(7) << fixed << setprecision(2) << child_eval.expected_reward * 100.0 << "%";
@@ -409,7 +409,7 @@ namespace engine
 
 	void Kalmia::collect_multi_pv(const search::mcts::SearchInfo& search_info, MultiPV& multi_pv)
 	{
-		for (auto& child_eval : search_info.child_evals)
+		for (const MoveEvaluation& child_eval : search_info.child_evals)
 		{
 			if (isnan(child_eval.expected_reward))
 				continue;
@@ -476,7 +476,7 @@ namespace engine
 	{
 		if (search_info.child_evals.size() == 1)
 		{
-			auto& child_eval = search_info.child_evals[0];
+			const MoveEvaluation& child_eval = search_info.child_evals[0];
 			move.coord = child_eval.move;
 			move.eval_score = child_eval.expected_reward;
 			return;
@@ -488,11 +488,11 @@ namespace engine
 		if (move_num <= this->options["stochastic_move_num"])	// プレイアウト数に応じた確率的着手
 		{
 			auto t_inv = 1.0 / (this->options["softmax_temperature"] * 1.0e-3);
-			DynamicArray<int32_t> indices(child_evals.size());
+			DynamicArray<size_t> indices(child_evals.size());
 			DynamicArray<double> exp_po_counts(child_evals.size());
 			auto exp_po_count_sum = 0.0;
 
-			for (auto i = 0; i < indices.length(); i++)
+			for (size_t i = 0; i < indices.length(); i++)
 			{
 				indices[i] = i;
 				exp_po_count_sum += exp_po_counts[i] = pow(child_evals[i].playout_count, t_inv);
@@ -529,7 +529,7 @@ namespace engine
 
 		if (state() != EngineState::NOT_READY)
 		{
-			auto prev_tree = move(this->tree);
+			unique_ptr<UCT> prev_tree = move(this->tree);
 			this->tree = make_unique<UCT>(prev_tree->options, sender);
 		}
 	}

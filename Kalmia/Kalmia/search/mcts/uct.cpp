@@ -40,7 +40,7 @@ namespace search::mcts
 		if (!this->root || !this->root->is_expanded())
 			return false;
 
-		auto edges = this->root->edges.get();
+		Edge* edges = this->root->edges.get();
 		for (auto i = 0; i < this->root->child_node_num; i++)
 			if (move == edges[i].move.coord && this->root->child_nodes && this->root->child_nodes[i])
 			{
@@ -91,7 +91,7 @@ namespace search::mcts
 			search_threads.emplace_back(thread(worker));
 		}
 
-		auto end_status = wait_for_search(search_threads, time_limit_ms, extra_time_ms);
+		SearchEndStatus end_status = wait_for_search(search_threads, time_limit_ms, extra_time_ms);
 
 		update_search_info();
 
@@ -136,7 +136,7 @@ namespace search::mcts
 		if (extra_search_phase)
 			end_status |= SearchEndStatus::EXTENDED;
 
-		for (auto& th : search_threads)
+		for (thread& th : search_threads)
 			th.join();
 
 		return end_status;
@@ -153,7 +153,7 @@ namespace search::mcts
 
 		this->root_edge_label = EdgeLabel::NOT_PROVED;
 
-		auto edges = this->root->edges.get();
+		Edge* edges = this->root->edges.get();
 		auto loss_count = 0;
 		auto draw_count = 0;
 		for (auto i = 0; i < this->root->child_node_num; i++)
@@ -162,11 +162,11 @@ namespace search::mcts
 				this->root_state.calc_flipped_discs(edges[i].move);
 
 			// ゲームの勝敗が確定しているかどうか調べる.
-			auto pos = this->root_state;
+			Position pos = this->root_state;
 			pos.update(edges[i].move);
 			if (pos.is_gameover())
 			{
-				auto res = to_opponent_game_result(pos.get_game_result());
+				GameResult res = to_opponent_game_result(pos.get_game_result());
 				auto label = edges[i].label = game_result_to_edge_label(res);
 				if (label == EdgeLabel::WIN)	// 勝利確定の辺が1つでもあれば, ルートは勝利確定.
 				{
@@ -201,21 +201,21 @@ namespace search::mcts
 			}
 
 			// ルートのゲームの情報をコピー. MCTSでは, 末端ノードに達したら一気にルートに戻るので, undoするよりもコピーのほうが速い.
-			auto gi = game_info;	
+			GameInfo gi = game_info;	
 			visit_root_node(thread_id, gi);
 		}
 	}
 
 	void UCT::visit_root_node(int32_t thread_id, GameInfo& game_info)
 	{
-		auto edges = this->root->edges.get();
-		auto& node_mutex = this->mutex_pool.get(game_info.position());
+		Edge* edges = this->root->edges.get();
+		mutex& node_mutex = this->mutex_pool.get(game_info.position());
 
 		node_mutex.lock();	// 他のスレッドがrootの情報を同時に書き換えないようにするためにロックする.
 
 		auto child_idx = select_root_child_node();
-		auto& edge_to_child = edges[child_idx];
-		auto first_visit = !edge_to_child.visit_count.load();	
+		Edge& edge_to_child = edges[child_idx];
+		bool first_visit = !edge_to_child.visit_count.load();	
 		add_virtual_loss(this->root.get(), edge_to_child);
 
 		node_mutex.unlock();
@@ -235,16 +235,16 @@ namespace search::mcts
 	}
 
 	template<bool AFTER_PASS>
-	double UCT::visit_node(int32_t thread_id, GameInfo& game_info, Node* current_node, Edge& edge_to_current_node)
+	float UCT::visit_node(int32_t thread_id, GameInfo& game_info, Node* current_node, Edge& edge_to_current_node)
 	{
-		auto& node_mutex = this->mutex_pool.get(game_info.position());
+		mutex& node_mutex = this->mutex_pool.get(game_info.position());
 
 		node_mutex.lock();	// 他のスレッドがcurrent_nodeの情報を同時に書き換えないようにするためにロックする.
 
 		if (!current_node->is_expanded())
 			current_node->expand(game_info.position());
 
-		auto edges = current_node->edges.get();
+		Edge* edges = current_node->edges.get();
 		float reward;
 		if (edges[0].move.coord == BoardCoordinate::PASS)
 		{
@@ -252,7 +252,7 @@ namespace search::mcts
 			{
 				if(edges[0].visit_count == 0)
 					this->_node_count_per_thread[thread_id]++;
-				auto res = game_info.position().get_game_result();
+				GameResult res = game_info.position().get_game_result();
 				edges[0].label = game_result_to_edge_label(res);
 				edge_to_current_node.label = game_result_to_edge_label(to_opponent_game_result(res));
 
@@ -283,11 +283,11 @@ namespace search::mcts
 			}
 
 			update_pass_node_statistic(current_node, edges[0], reward);
-			return 1.0 - reward;
+			return 1.0f - reward;
 		}
 
 		auto child_idx = select_child_node(current_node, edge_to_current_node);
-		auto& edge_to_child = edges[child_idx];
+		Edge& edge_to_child = edges[child_idx];
 		bool first_visit = !edge_to_child.visit_count.load();
 		add_virtual_loss(current_node, edge_to_child);
 
@@ -311,7 +311,7 @@ namespace search::mcts
 			if (!current_node->child_nodes)
 				current_node->init_child_nodes();
 
-			auto child_node = current_node->child_nodes[child_idx].get();
+			Node* child_node = current_node->child_nodes[child_idx].get();
 			if (!child_node)
 				child_node = current_node->create_child_node(child_idx);
 
@@ -322,7 +322,7 @@ namespace search::mcts
 		}
 
 		update_statistic(current_node, edge_to_child, reward);	// ノードと辺の探索情報を更新.
-		return 1.0 - reward;
+		return 1.0f - reward;
 	}
 
 	int32_t UCT::select_root_child_node()
@@ -330,19 +330,19 @@ namespace search::mcts
 		constexpr auto C_BASE = UCB_FACTOR_BASE;
 		constexpr auto C_INIT = UCB_FACTOR_INIT;
 
-		auto edges = this->root->edges.get();
+		Edge* edges = this->root->edges.get();
 		auto max_idx = 0;
-		auto max_score = -INFINITY;
-		auto sum = this->root->visit_count.load();
-		auto log_sum = utils::log(sum);
-		auto c = C_INIT + utils::log((1.0f + sum + C_BASE) / C_BASE);	// 探索の度合いに応じて, UCB式のバイアス項を調節(AlphaZeroと同様の手法).
+		float max_score = -INFINITY;
+		uint32_t sum = this->root->visit_count.load();
+		float log_sum = utils::log(static_cast<float>(sum));
+		float c = C_INIT + utils::log((1.0f + sum + C_BASE) / C_BASE);	// 探索の度合いに応じて, UCB式のバイアス項を調節(AlphaZeroと同様の手法).
 		auto default_u = (sum == 0) ? 0.0f : sqrtf(log_sum);
 
 		auto draw_count = 0;
 		auto loss_count = 0;
 		for (auto i = 0; i < this->root->child_node_num; i++)
 		{
-			auto& edge = edges[i];
+			Edge& edge = edges[i];
 			if (edge.is_win())
 			{
 				this->root_edge_label = EdgeLabel::WIN;
@@ -358,7 +358,7 @@ namespace search::mcts
 			if (edge.is_draw())
 				draw_count++;
 
-			auto n = edge.visit_count.load();
+			uint32_t n = edge.visit_count.load();
 			float q, u;	
 			if (n == 0)
 			{
@@ -371,7 +371,7 @@ namespace search::mcts
 				u = c * sqrtf(log_sum / n);
 			}
 
-			auto score = q + u;
+			float score = q + u;
 			if (score > max_score)
 			{
 				max_score = score;
@@ -395,12 +395,12 @@ namespace search::mcts
 		constexpr auto C_BASE = UCB_FACTOR_BASE;
 		constexpr auto C_INIT = UCB_FACTOR_INIT;
 
-		auto edges = parent->edges.get();
+		Edge* edges = parent->edges.get();
 		auto max_idx = 0;
-		auto max_score = -INFINITY;
-		auto sum = parent->visit_count.load();
-		auto log_sum = utils::log(sum);
-		auto c = C_INIT + utils::log((1.0f + sum + C_BASE) / C_BASE);
+		float max_score = -INFINITY;
+		uint32_t sum = parent->visit_count.load();
+		float log_sum = utils::log(static_cast<float>(sum));
+		float c = C_INIT + utils::log((1.0f + sum + C_BASE) / C_BASE);
 		auto default_u = (sum == 0) ? 0.0f : sqrtf(log_sum);
 		auto fpu = static_cast<float>(edge_to_parent.expected_reward());	// 未訪問ノードは親ノードの価値でUCBを計算する.
 
@@ -408,7 +408,7 @@ namespace search::mcts
 		auto loss_count = 0;
 		for (auto i = 0; i < parent->child_node_num; i++)
 		{
-			auto& edge = edges[i];
+			Edge& edge = edges[i];
 			if (edge.is_win())
 			{
 				// 親ノードからみて勝利確定の辺があれば, 親ノードの親からみれば敗北確定.
@@ -425,7 +425,7 @@ namespace search::mcts
 			if (edge.is_draw())
 				draw_count++;	
 
-			auto n = edge.visit_count.load();
+			uint32_t n = edge.visit_count.load();
 			float q, u;
 			if (n == 0)
 			{
@@ -438,7 +438,7 @@ namespace search::mcts
 				u = c * sqrtf(log_sum / n);
 			}
 
-			auto score = q + u;
+			float score = q + u;
 			if (score > max_score)
 			{
 				max_score = score;
@@ -460,13 +460,13 @@ namespace search::mcts
 
 	int32_t select_max_visit_count_child_node(Node* parent)
 	{
-		auto edges = parent->edges.get();
+		Edge* edges = parent->edges.get();
 		uint32_t max_visit_count = 0;
 		auto max_idx = 0;
 
 		for (auto i = 0; i < parent->child_node_num; i++)
 		{
-			auto& edge = edges[i];
+			Edge& edge = edges[i];
 
 			if (edge.is_win())
 				return i;
@@ -485,10 +485,10 @@ namespace search::mcts
 
 	void UCT::get_top2_edges(Edge*& best, Edge*& second_best)
 	{
-		auto edges = this->root->edges.get();
+		Edge* edges = this->root->edges.get();
 		for (size_t i = 0; i < this->root->child_node_num; i++)
 		{
-			auto& edge = edges[i];
+			Edge& edge = edges[i];
 			if (edge.visit_count > best->visit_count)
 			{
 				second_best = best;
@@ -568,7 +568,7 @@ namespace search::mcts
 		auto idx = select_max_visit_count_child_node(root);
 		pv.emplace_back(root->edges[idx].move.coord);
 
-		auto child_node = root->child_nodes ? root->child_nodes[idx].get() : nullptr;
+		Node* child_node = root->child_nodes ? root->child_nodes[idx].get() : nullptr;
 		if (child_node && child_node->is_expanded())
 			get_pv(child_node, pv);
 		else if (pv.size() >= 2 && pv[pv.size() - 1] == BoardCoordinate::PASS && pv[pv.size() - 2] == BoardCoordinate::PASS)
@@ -583,8 +583,8 @@ namespace search::mcts
 	{
 		this->search_info_mutex.lock();
 
-		auto& root_eval = this->_search_info.root_eval;
-		auto& child_evals = this->_search_info.child_evals;
+		MoveEvaluation& root_eval = this->_search_info.root_eval;
+		vector<MoveEvaluation>& child_evals = this->_search_info.child_evals;
 		child_evals.clear();
 		GameInfo game_info(this->root_state, PositionFeature(this->root_state));
 
@@ -599,7 +599,7 @@ namespace search::mcts
 		for (auto i = 0; i < this->root->child_node_num; i++)
 		{
 			MoveEvaluation child_eval;
-			auto& edge = this->root->edges[i];
+			Edge& edge = this->root->edges[i];
 			child_eval.move = edge.move.coord;
 			child_eval.effort = static_cast<double>(edge.visit_count) / this->root->visit_count;
 			child_eval.playout_count = edge.visit_count;

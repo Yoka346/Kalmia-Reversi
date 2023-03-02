@@ -134,7 +134,7 @@ namespace protocol
 		oss << fixed;
 		for (size_t i = 0; i < hint_num && i < multi_pv.size(); i++)
 		{
-			auto& item = multi_pv[i];
+			const MultiPVItem& item = multi_pv[i];
 
 			oss << "search ";
 			for (auto& move : item.pv)
@@ -257,7 +257,7 @@ namespace protocol
 				}
 
 			GGFReversiGame game(iss.str().substr(static_cast<size_t>(iss.tellg()) + 1));
-			for (auto& move : game.moves)
+			for (const GGFMove& move : game.moves)
 			{
 				if (!game.position.update(move.coord))
 				{
@@ -274,7 +274,7 @@ namespace protocol
 			auto move_num = current_pos.get_next_moves(moves);
 			for (auto i = 0; i < move_num; i++)
 			{
-				auto& move = moves[i];
+				Move& move = moves[i];
 				current_pos.calc_flipped_discs(move);
 				current_pos.update(move);
 
@@ -293,7 +293,7 @@ namespace protocol
 			GameTimerOptions* times[2] = { &game.black_thinking_time, &game.white_thinking_time };
 			for (auto color = DiscColor::BLACK; color <= DiscColor::WHITE; color++)
 			{
-				auto& time = *times[color];
+				GameTimerOptions& time = *times[color];
 				if (time.main_time_ms != milliseconds::zero() && time.increment_ms != milliseconds::zero())
 				{
 					this->engine->set_main_time(color, time.main_time_ms);

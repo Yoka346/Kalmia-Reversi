@@ -240,7 +240,7 @@ namespace search::mcts
 		// 複数スレッドで探索する際に, 特定のノードに探索が集中しないようにするために探索中のノードに与える一時的なペナルティ.
 		static constexpr int32_t VIRTUAL_LOSS = 3;
 
-		static constexpr Array<double, 3> GAME_RESULT_TO_REWARD = { 1.0, 0.0, 0.5 };
+		static constexpr Array<float, 3> GAME_RESULT_TO_REWARD = { 1.0f, 0.0f, 0.5f };
 
 		evaluation::ValueFunction<evaluation::ValueRepresentation::WIN_RATE> value_func;
 
@@ -281,18 +281,18 @@ namespace search::mcts
 		void visit_root_node(int32_t thread_id, GameInfo& game_info);
 
 		template<bool AFTER_PASS>
-		double visit_node(int32_t thread_id, GameInfo& game_info, Node* current_node, Edge& edge_to_current_node);
+		float visit_node(int32_t thread_id, GameInfo& game_info, Node* current_node, Edge& edge_to_current_node);
 
 		int32_t select_root_child_node();
 		int32_t select_child_node(Node* parent, Edge& edge_to_parent);
 
-		double predict_reward(GameInfo& game_info) { return 1.0 - this->value_func.predict(game_info.feature()); }
+		float predict_reward(GameInfo& game_info) { return 1.0f - this->value_func.predict(game_info.feature()); }
 
 		/**
 		* @fn
 		* @brief 親ノードと選択された辺に報酬を付与しつつ, virtual lossを取り除く.
 		**/
-		void update_statistic(Node* node, Edge& edge, double reward)
+		void update_statistic(Node* node, Edge& edge, double reward)	// ほかの個所では報酬はfloat型だが, 加算時にdoubleにする.
 		{
 			if constexpr (VIRTUAL_LOSS != 1)
 			{
@@ -342,6 +342,6 @@ namespace search::mcts
 		void get_pv(Node* root, std::vector<reversi::BoardCoordinate>& pv);
 	};
 
-	template double UCT::visit_node<true>(int32_t, GameInfo&, Node*, Edge&);
-	template double UCT::visit_node<false>(int32_t, GameInfo&, Node*, Edge&);
+	template float UCT::visit_node<true>(int32_t, GameInfo&, Node*, Edge&);
+	template float UCT::visit_node<false>(int32_t, GameInfo&, Node*, Edge&);
 }

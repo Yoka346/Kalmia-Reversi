@@ -35,7 +35,7 @@ namespace evaluation
 		utils::Array<T, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE6]> diag_line6;
 		utils::Array<T, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE5]> diag_line5;
 		utils::Array<T, PATTERN_FEATURE_NUM[PatternKind::DIAG_LINE4]> diag_line4;
-		T bias = 0.0f;
+		T bias = 0;
 
 
 		void pack(PackedValueFuncParam<T>& packed_param)
@@ -86,7 +86,7 @@ namespace evaluation
 			this->diag_line6.clear();
 			this->diag_line5.clear();
 			this->diag_line4.clear();
-			this->bias = 0.0f;
+			this->bias = 0;
 		}
 
 		/**
@@ -122,7 +122,7 @@ namespace evaluation
 				int32_t i = 0;
 				for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
 				{
-					auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
+					uint16_t symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
 					if (f <= symmetric_f)
 						packed[i++] = param[f];
 				}
@@ -134,7 +134,7 @@ namespace evaluation
 				auto offset = PATTERN_FEATURE_OFFSET[KIND];
 				for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
 				{
-					auto opponent_f = TO_OPPONENT_FEATURE[offset + f];
+					uint16_t opponent_f = TO_OPPONENT_FEATURE[offset + f];
 					dest[opponent_f] = param[f];
 				}
 			}
@@ -145,7 +145,7 @@ namespace evaluation
 				auto offset = PATTERN_FEATURE_OFFSET[KIND];
 				for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
 				{
-					auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
+					uint16_t symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
 					dest[f] = (symmetric_f < f) ? dest[symmetric_f] : static_cast<DestType>(param[f] * scale_rate);
 				}
 			}
@@ -201,7 +201,7 @@ namespace evaluation
 			int32_t i = 0;
 			for (int32_t f = 0; f < PATTERN_FEATURE_NUM[KIND]; f++)
 			{
-				auto symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
+				uint16_t symmetric_f = TO_SYMMETRIC_FEATURE[offset + f];
 				expanded[f] = (symmetric_f < f) ? expanded[symmetric_f] : param[i++];
 			}
 		}
@@ -268,7 +268,7 @@ namespace evaluation
 		**/
 		FORCE_INLINE float predict(int32_t phase, const PositionFeature& pos_feature) const
 		{
-			auto& w = this->weight[phase][pos_feature.side_to_move()];
+			const ValueFuncParam<int16_t>& w = this->weight[phase][pos_feature.side_to_move()];
 			auto& f = pos_feature.features;
 			int32_t v =
 				w.corner3x3[f[0]] + w.corner3x3[f[1]] + w.corner3x3[f[2]] + w.corner3x3[f[3]]
@@ -285,7 +285,7 @@ namespace evaluation
 				+ w.diag_line4[f[42]] + w.diag_line4[f[43]] + w.diag_line4[f[44]] + w.diag_line4[f[45]]
 				+ w.bias;
 
-			auto fv = v / WEIGHT_SCALE;
+			float fv = v / WEIGHT_SCALE;
 			if constexpr (VALUE_REPS == ValueRepresentation::WIN_RATE)
 				fv = utils::std_sigmoid(v / WEIGHT_SCALE);	
 

@@ -34,8 +34,9 @@ namespace io
 		void flush() 
 		{ 
 			this->os->flush(); 
-			this->os_mutex.try_lock();
-			this->os_mutex.unlock(); 
+			std::unique_lock<std::mutex> lock(this->os_mutex, std::defer_lock);
+			if(lock.owns_lock())
+				this->os_mutex.unlock(); 
 		}
 
 	private:

@@ -110,7 +110,7 @@ namespace reversi
 				return true;
 			}
 
-			auto flipped = this->_bitboard.calc_flipped_discs(coord);;
+			uint64_t flipped = this->_bitboard.calc_flipped_discs(coord);;
 			this->_side_to_move = opponent_color();
 			this->_bitboard.update(coord, flipped);
 			return true;

@@ -92,7 +92,7 @@ namespace book
 		this->_stats.link_count = 0;
 		for (size_t i = 0; i < this->_positions.length(); i++)
 		{
-			auto& pos = this->_positions[i];
+			EdaxBookPosition& pos = this->_positions[i];
 
 			read_file(ifs, pos.board.player);
 			read_file(ifs, pos.board.opponent);
@@ -113,7 +113,7 @@ namespace book
 
 			for (auto i = 0; i < link_num; i++)
 			{
-				auto& link = pos.links[i];
+				EdaxBookLink& link = pos.links[i];
 				read_file(ifs, link.score);
 				read_file(ifs, link.move);
 			}

@@ -41,7 +41,7 @@ namespace learn
 			this->final_disc_diff = byte_swap_16(this->final_disc_diff);
 			this->wld = byte_swap_16(this->wld);
 			auto swapped = BYTE_SWAP_32(*reinterpret_cast<uint32_t*>(&this->eval_score));
-			this->eval_score = *reinterpret_cast<float*>(swapped);
+			this->eval_score = *reinterpret_cast<float*>(&swapped);
 		}
 	}
 
@@ -107,7 +107,7 @@ namespace learn
 				auto save = true;
 
 				// GGFのREプロパティは, 中押し勝ちであっても+64.0と記録されるケースがあるので, 実際に着手してスコアを確認する.
-				for (auto& move : game.moves)
+				for (const GGFMove& move : game.moves)
 				{
 					if (move.coord == BoardCoordinate::PASS)
 					{
@@ -120,7 +120,7 @@ namespace learn
 						continue;
 					}
 
-					auto& item = items[loc++];
+					TrainDataItem& item = items[loc++];
 					item.position = pos.bitboard();
 					item.next_move = move.coord;
 
@@ -139,17 +139,17 @@ namespace learn
 
 				items[loc].position = pos.bitboard();
 				items[loc].next_move = BoardCoordinate::NULL_COORD;
-				auto disc_diff = items[loc].final_disc_diff = pos.get_disc_diff() * 10;
+				int16_t disc_diff = items[loc].final_disc_diff = pos.get_disc_diff() * 10;
 				items[loc].wld = (disc_diff == 0) ? 500 : (disc_diff > 0) ? 1000 : 0;
 				if (pos.side_to_move() != game.position.side_to_move())
 					disc_diff = -disc_diff;
 
 				auto i = 0;
-				for (auto& move : game.moves)
+				for (const GGFMove& move : game.moves)
 				{
 					if (move.coord != BoardCoordinate::PASS)
 					{
-						auto& item = items[i++];
+						TrainDataItem& item = items[i++];
 						item.final_disc_diff = disc_diff;
 						item.wld = (disc_diff == 0) ? 500 : (disc_diff > 0) ? 1000 : 0;
 						item.write_to(ofs);
@@ -188,9 +188,9 @@ namespace learn
 
 			// 盤面のハッシュ値で分類.
 			unordered_map<uint64_t, vector<TrainDataItem*>> train_data_set;
-			for (auto& item : train_data)
+			for (TrainDataItem& item : train_data)
 			{
-				auto hash_code = item.position.calc_hash_code();
+				uint64_t hash_code = item.position.calc_hash_code();
 				auto ptr = train_data_set.find(hash_code);
 				if (ptr != train_data_set.end())
 					ptr->second.emplace_back(&item);
@@ -200,12 +200,12 @@ namespace learn
 
 			for (auto& [_, data] : train_data_set)
 			{
-				auto head_item = data[0];
+				TrainDataItem* head_item = data[0];
 
 				int64_t disc_diff_sum = 0;
 				uint64_t wld_sum = 0;
 				auto eval_score_sum = 0.0;
-				for (auto& item : data)
+				for (const TrainDataItem* item : data)
 				{
 					assert(item->position == head_item->position);
 					disc_diff_sum += item->final_disc_diff;
@@ -216,7 +216,7 @@ namespace learn
 				auto count = data.size();
 				head_item->final_disc_diff = static_cast<int16_t>(disc_diff_sum / count);
 				head_item->wld = static_cast<int16_t>(wld_sum / count);
-				head_item->eval_score = eval_score_sum / count;
+				head_item->eval_score = static_cast<float>(eval_score_sum / count);
 				head_item->write_to(ofs);
 				out_count++;
 			}

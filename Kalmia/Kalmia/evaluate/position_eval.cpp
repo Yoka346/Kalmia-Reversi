@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include <type_traits>
 
 using namespace std;
@@ -67,7 +68,7 @@ namespace evaluation
 		int32_t phase_count = -1;
 		while (!ifs.eof() && ++phase_count != this->_phase_num)
 		{
-			auto& pw = packed_weight[phase_count];
+			PackedValueFuncParam<float>& pw = packed_weight[phase_count];
 			read_param<PatternKind::CORNER3x3>(ifs, pw.corner3x3, swap_byte);
 			read_param<PatternKind::CORNER_EDGE_X>(ifs, pw.corner_edge_x, swap_byte);
 			read_param<PatternKind::EDGE_2X>(ifs, pw.edge_2x, swap_byte);
@@ -93,12 +94,12 @@ namespace evaluation
 	template<ValueRepresentation VALUE_REPS>
 	void ValueFunction<VALUE_REPS>::expand_packed_weight(PackedWeight& packed_weight)
 	{
-		ValueFuncParam<float> param;
+		auto param = make_unique<ValueFuncParam<float>>();
 		for (size_t i = 0; i < packed_weight.length(); i++)
 		{
-			packed_weight[i].expand(param);
+			packed_weight[i].expand(*param);
 			// ロードした重みは, WEIGHT_SCALEでスケーリングして整数に変換する. メモリ使用量の節約と高速化のため.
-			param.scale<int16_t>(this->weight[i][reversi::Player::FIRST], WEIGHT_SCALE);
+			param->scale<int16_t>(this->weight[i][reversi::Player::FIRST], WEIGHT_SCALE);
 		}
 		copy_player_weight_to_opponent();
 	}
@@ -121,14 +122,14 @@ namespace evaluation
 		ofs.write(&b, 1);
 
 		PackedWeight packed_weight(this->_phase_num);
-		ValueFuncParam<float> param;	
+		auto param = make_unique<ValueFuncParam<float>>();
 		for (int32_t phase = 0; phase < this->_phase_num; phase++)
 		{
-			auto& pw = packed_weight[phase];
+			PackedValueFuncParam<float>& pw = packed_weight[phase];
 			// ファイルに保存するときは, 1 / WEIGHT_SCALE 倍してスケールを戻し, float型として保存する.
 			// 改修の過程でWIGHT_SCALEの値が変わっても, 過去に学習した重みを使えるようにするため.
-			this->weight[phase][Player::FIRST].scale<float>(param, 1.0f / WEIGHT_SCALE);
-			param.pack(pw);
+			this->weight[phase][Player::FIRST].scale<float>(*param, 1.0f / WEIGHT_SCALE);
+			param->pack(pw);
 			write_param<PatternKind::CORNER3x3>(ofs, pw.corner3x3);
 			write_param<PatternKind::CORNER_EDGE_X>(ofs, pw.corner_edge_x);
 			write_param<PatternKind::EDGE_2X>(ofs, pw.edge_2x);
@@ -151,8 +152,8 @@ namespace evaluation
 		for (int32_t i = 0; i < this->_phase_num; i++)
 		{
 			auto& w = this->weight[i];
-			auto& player_param = w[Player::FIRST];
-			auto& opponent_param = w[Player::SECOND];
+			ValueFuncParam<int16_t>& player_param = w[Player::FIRST];
+			ValueFuncParam<int16_t>& opponent_param = w[Player::SECOND];
 			player_param.to_opponent(opponent_param);
 		}
 	}

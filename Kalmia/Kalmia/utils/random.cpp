@@ -21,7 +21,7 @@ uint64_t Random::next_64(uint64_t upper_bound)
 	if (upper_bound <= 1)
 		return 0;
 
-	auto n = log2_ceiling(upper_bound);
+	int32_t n = log2_ceiling(upper_bound);
 	uint64_t res;
 	while ((res = (this->rand() >> (64 - n))) >= upper_bound);
 	assert(res < upper_bound);

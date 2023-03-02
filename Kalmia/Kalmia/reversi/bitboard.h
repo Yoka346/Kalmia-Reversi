@@ -46,7 +46,7 @@ namespace reversi
 
 		void put_player_disc_at(BoardCoordinate coord)
 		{
-			auto bit = COORD_TO_BIT[coord];
+			uint64_t bit = COORD_TO_BIT[coord];
 			this->player |= bit;
 
 			if (this->opponent & bit)
@@ -55,7 +55,7 @@ namespace reversi
 
 		void put_opponent_disc_at(BoardCoordinate coord)
 		{
-			auto bit = COORD_TO_BIT[coord];
+			uint64_t bit = COORD_TO_BIT[coord];
 			this->opponent |= bit;
 
 			if (this->player & bit)
@@ -64,7 +64,7 @@ namespace reversi
 
 		void remove_disc_at(BoardCoordinate coord)
 		{
-			auto bit = COORD_TO_BIT[coord];
+			uint64_t bit = COORD_TO_BIT[coord];
 			if (this->player & bit)
 				this->player ^= bit;
 
@@ -74,21 +74,21 @@ namespace reversi
 
 		void update(const BoardCoordinate& coord, const uint64_t& flipped)
 		{
-			auto player = this->player;
+			uint64_t player = this->player;
 			this->player = this->opponent ^ flipped;
 			this->opponent = player | (COORD_TO_BIT[coord] | flipped);
 		}
 
 		void undo(const BoardCoordinate& coord, const uint64_t& flipped)
 		{
-			auto player = this->player;
+			uint64_t player = this->player;
 			this->player = this->opponent ^ (COORD_TO_BIT[coord] | flipped);
 			this->opponent = player | flipped;
 		}
 
 		void swap()
 		{
-			auto tmp = this->player;
+			uint64_t tmp = this->player;
 			this->player = this->opponent;
 			this->opponent = tmp;
 		}
@@ -96,8 +96,8 @@ namespace reversi
 		uint64_t calc_hash_code() const
 		{
 			auto p = reinterpret_cast<const uint8_t*>(this);
-			uint64_t h0 = 0;
-			uint64_t h1 = 0;
+			auto h0 = 0ULL;
+			auto h1 = 0ULL;
 			utils::LoopUnroller<8>()(
 				[&](const int32_t i)
 				{

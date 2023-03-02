@@ -76,7 +76,7 @@ namespace evaluation
 
 		// 次に裏返ったディスクについて更新.
 		int32_t coord;
-		auto flipped = move.flipped;
+		uint64_t flipped = move.flipped;
 		FOREACH_BIT(coord, flipped)
 			LoopUnroller<FeatureTable::V16_LEN>()(
 				[&](const int32_t i) { features[i] = _mm256_sub_epi16(features[i], FEATURE_TABLE_DIFF[coord].t_v16[i]); });
@@ -98,7 +98,7 @@ namespace evaluation
 
 		// 次に裏返ったディスクについて更新.
 		int32_t coord;
-		auto flipped = move.flipped;
+		uint64_t flipped = move.flipped;
 		FOREACH_BIT(coord, flipped)
 			LoopUnroller<FeatureTable::V16_LEN>()(
 				[&](const int32_t i) { features[i] = _mm256_add_epi16(features[i], FEATURE_TABLE_DIFF[coord].t_v16[i]); });
@@ -122,7 +122,7 @@ namespace evaluation
 
 		// 次に裏返ったディスクについて更新.
 		int32_t coord;
-		auto flipped = move.flipped;
+		uint64_t flipped = move.flipped;
 		FOREACH_BIT(coord, flipped)
 			LoopUnroller<FeatureTable::V8_LEN>()(
 				[&](const int32_t i) { features[i] = _mm_sub_epi16(features[i], FEATURE_TABLE_DIFF[coord].t_v8[i]); });
@@ -144,7 +144,7 @@ namespace evaluation
 
 		// 次に裏返ったディスクについて更新.
 		int32_t coord;
-		auto flipped = move.flipped;
+		uint64_t flipped = move.flipped;
 		FOREACH_BIT(coord, flipped)
 			LoopUnroller<FeatureTable::V8_LEN>()(
 				[&](const int32_t i) { features[i] = _mm_add_epi16(features[i], FEATURE_TABLE_DIFF[coord].t_v8[i]); });
@@ -169,7 +169,7 @@ namespace evaluation
 
 		// 次に裏返ったディスクについて更新.
 		int32_t coord;
-		auto flipped = move.flipped;
+		uint64_t flipped = move.flipped;
 		FOREACH_BIT(coord, flipped)
 			LoopUnroller<FeatureTable::LEN>()(
 				[&](const int32_t i) { features[i] -= FEATURE_TABLE_DIFF[coord].t[i]; });
@@ -192,7 +192,7 @@ namespace evaluation
 
 		// 次に裏返ったディスクについて更新.
 		int32_t coord;
-		auto flipped = move.flipped;
+		uint64_t flipped = move.flipped;
 		FOREACH_BIT(coord, flipped)
 			LoopUnroller<FeatureTable::LEN>()(
 				[&](const int32_t i) { features[i] += FEATURE_TABLE_DIFF[coord].t[i]; });

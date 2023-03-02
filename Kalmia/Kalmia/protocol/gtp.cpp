@@ -419,7 +419,7 @@ namespace protocol
 	{
 		constexpr char SYMBOLS[3] = { 'X', 'O', '.' };
 
-		auto& pos = this->engine->position();
+		const Position& pos = this->engine->position();
 		ostringstream oss;
 		oss << " ";
 		for (int32_t i = 0; i < BOARD_SIZE; i++)
@@ -472,7 +472,7 @@ namespace protocol
 
 	void GTP::exec_rules_legal_moves_command(int id, istringstream& args)
 	{
-		auto& pos = this->engine->position();
+		const Position& pos = this->engine->position();
 		Array<Move, MAX_MOVE_NUM> moves;
 		auto move_num = pos.get_next_moves(moves);
 		if (!move_num)
@@ -490,7 +490,7 @@ namespace protocol
 
 	void GTP::exec_rules_final_result_command(int id, istringstream& args)
 	{
-		auto& pos = this->engine->position();
+		const Position& pos = this->engine->position();
 		if (!pos.is_gameover())
 		{
 			gtp_success(id, "Game has not been over yet.");

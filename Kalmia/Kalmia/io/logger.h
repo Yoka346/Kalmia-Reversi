@@ -10,20 +10,11 @@ namespace io
 	* @detail コードをシンプルにするために利用する. 使用例としては, あるデータの出力先が指定されている場合とそうでない場合があるとき, このNullStreamを用いれば,
 	* 特に面倒な場合分けは必要なくなる.
 	**/
-	class NullStream : public std::streambuf, public std::ostream
+	class NullStream : public std::ostream
 	{
+		using int_type = std::char_traits<char>::int_type;
 	public:
-		NullStream() : buf_(), std::ostream(this) {}
-
-	protected:
-		virtual int overflow(int c)
-		{
-			setp(buf_, buf_ + sizeof(buf_));
-			return (c == eof()) ? '\0' : c;
-		}
-
-	private:
-		char buf_[128];
+		NullStream() : std::ostream(nullptr) {}
 	};
 
 	/**

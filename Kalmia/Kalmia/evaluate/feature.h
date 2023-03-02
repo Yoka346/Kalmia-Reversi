@@ -58,7 +58,7 @@ namespace evaluation
     constexpr utils::Array<size_t, PATTERN_KIND_NUM> PATTERN_FEATURE_OFFSET([](size_t* data, size_t len)
         {
             size_t offset = 0;
-            for (auto kind = 0; kind < PATTERN_KIND_NUM; kind++)
+            for (int32_t kind = 0; kind < PATTERN_KIND_NUM; kind++)
             {
                 data[kind] = offset;
                 offset += PATTERN_FEATURE_NUM[kind];
@@ -148,7 +148,7 @@ namespace evaluation
         { PATTERN_SIZE[DIAG_LINE4], {reversi::H5, reversi::G6, reversi::F7, reversi::E8}}
     };
 
-    constexpr int32_t to_feature_idx(PatternKind kind, uint16_t feature) { return PATTERN_FEATURE_OFFSET[kind] + feature; }
+    constexpr size_t to_feature_idx(PatternKind kind, uint16_t feature) { return PATTERN_FEATURE_OFFSET[kind] + feature; }
 
     constexpr uint16_t mirror_feature(uint16_t feature, int32_t size)
     {
