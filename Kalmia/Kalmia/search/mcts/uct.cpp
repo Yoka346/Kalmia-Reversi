@@ -225,12 +225,12 @@ namespace search::mcts
 			this->_node_count_per_thread[thread_id]++;
 			game_info.position().calc_flipped_discs(edge_to_child.move);
 			game_info.update(edge_to_child.move);
-			update_statistic(this->root.get(), edge_to_child, predict_reward(game_info));
+			update_stats(this->root.get(), edge_to_child, predict_reward(game_info));
 		}
 		else
 		{
 			game_info.update(edge_to_child.move);
-			update_statistic(this->root.get(), edge_to_child, visit_node<false>(thread_id, game_info, this->root->child_nodes[child_idx].get(), edge_to_child));
+			update_stats(this->root.get(), edge_to_child, visit_node<false>(thread_id, game_info, this->root->child_nodes[child_idx].get(), edge_to_child));
 		}
 	}
 
@@ -321,7 +321,7 @@ namespace search::mcts
 			reward = visit_node<false>(thread_id, game_info, child_node, edge_to_child);
 		}
 
-		update_statistic(current_node, edge_to_child, reward);	// ノードと辺の探索情報を更新.
+		update_stats(current_node, edge_to_child, reward);	// ノードと辺の探索情報を更新.
 		return 1.0f - reward;
 	}
 

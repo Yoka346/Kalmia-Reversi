@@ -292,7 +292,7 @@ namespace search::mcts
 		* @fn
 		* @brief eƒm[ƒh‚Æ‘I‘ğ‚³‚ê‚½•Ó‚É•ñV‚ğ•t—^‚µ‚Â‚Â, virtual loss‚ğæ‚èœ‚­.
 		**/
-		void update_statistic(Node* node, Edge& edge, double reward)	// ‚Ù‚©‚ÌŒÂŠ‚Å‚Í•ñV‚ÍfloatŒ^‚¾‚ª, ‰ÁZ‚Édouble‚É‚·‚é.
+		void update_stats(Node* node, Edge& edge, double reward)	// ‚Ù‚©‚ÌŒÂŠ‚Å‚Í•ñV‚ÍfloatŒ^‚¾‚ª, ‰ÁZ‚Édouble‚É‚·‚é.
 		{
 			if constexpr (VIRTUAL_LOSS != 1)
 			{
